@@ -1,0 +1,331 @@
+{
+  "name": "Test: Persist and Export Pipeline",
+  "description": "End-to-end test workflow for persist-articles and export-latest-news",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        0
+      ],
+      "id": "c8c947c1-5cb5-4610-b67a-25f069ced22a",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Create sample articles for testing\nconst sampleArticles = [\n  {\n    source: 'Dev.to',\n    title: 'How to Write Better Tests for Your CI/CD Pipeline',\n    url: 'https://dev.to/example/how-to-write-better-tests',\n    content: 'A comprehensive guide to testing practices in continuous integration. Covers unit tests, integration tests, and end-to-end testing strategies for modern CI/CD pipelines.',\n    tags: ['Python', 'Testing', 'CI/CD', 'GitHub Actions'],\n    published_at: '2026-07-12T14:30:00Z',\n    score: 87\n  },\n  {\n    source: 'Hacker News',\n    title: 'Vitest 2.1 reaches feature parity with Jest on CommonJS',\n    url: 'https://example.com/vitest-2-1-cjs',\n    content: 'After two years of gradual porting, the last CommonJS-only Jest features now work in Vitest, removing a barrier to migration for legacy monorepos.',\n    tags: ['vitest', 'jest', 'testing'],\n    published_at: '2026-07-12T16:00:00Z',\n    score: 92\n  },\n  {\n    source: 'Reddit',\n    title: 'Prompt Injection Patterns in LLM-Based QA Agents',\n    url: 'https://example.com/llm-qa-injection',\n    content: 'Security researchers document four common injection vectors in agent-based testing tools when using untrusted test data, with mitigations for each.',\n    tags: ['security', 'llm', 'testing'],\n    published_at: '2026-07-13T10:30:00Z',\n    score: 78\n  }\n];\n\nreturn sampleArticles.map(article => ({ json: article }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -600,
+        0
+      ],
+      "id": "69887994-bf76-4ce2-b2dc-9118300e566f",
+      "name": "Create Sample Articles"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Normalize title for deduplication\nfunction normalizeTitle(title) {\n  return title\n    .toLowerCase()\n    .trim()\n    .replace(/[^a-z0-9-]/g, '-')\n    .replace(/-+/g, '-')\n    .replace(/-$/, '');\n}\n\n// Infer category\nfunction inferCategory(article) {\n  const text = `${article.title || ''} ${article.content || ''}`.toLowerCase();\n  \n  if (['test', 'testing', 'qa', 'automation'].some(w => text.includes(w))) {\n    return 'test-automation';\n  }\n  if (['ai', 'llm', 'gpt', 'agent', 'prompt'].some(w => text.includes(w))) {\n    return 'ai';\n  }\n  if (['architecture', 'deploy', 'performance', 'scaling'].some(w => text.includes(w))) {\n    return 'engineering';\n  }\n  if (['tool', 'script', 'library', 'framework'].some(w => text.includes(w))) {\n    return 'tooling';\n  }\n  \n  return 'qa-practice';\n}\n\n// Generate ID\nfunction generateId() {\n  return 'article-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);\n}\n\nconst article = $json;\n\nreturn {\n  json: {\n    ...article,\n    id: article.id || generateId(),\n    title: article.title || 'Untitled',\n    summary: (article.content || '').substring(0, 1000),\n    url: article.url || '',\n    source: article.source || 'Unknown',\n    category: article.category || inferCategory(article),\n    publishedAt: article.published_at || new Date().toISOString(),\n    tags: Array.isArray(article.tags) ? article.tags.join(',') : (article.tags || ''),\n    addedAt: new Date().toISOString(),\n    score: article.score || 50,\n    seenCount: 1,\n    dedupKey: (article.source || 'Unknown') + '|' + normalizeTitle(article.title || 'untitled')\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        0
+      ],
+      "id": "3ca4569b-61e5-4078-a411-a6ec0a589ebe",
+      "name": "Map Fields to Schema"
+    },
+    {
+      "parameters": {
+        "resource": "data",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "550e8400-e29b-41d4-a716-446655440001",
+          "mode": "list",
+          "cachedResultName": "canonical_articles"
+        },
+        "columns": {
+          "mappings": [
+            {
+              "columnId": "id",
+              "columnName": "id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "columnId": "title",
+              "columnName": "title",
+              "value": "={{ $json.title }}"
+            },
+            {
+              "columnId": "summary",
+              "columnName": "summary",
+              "value": "={{ $json.summary }}"
+            },
+            {
+              "columnId": "url",
+              "columnName": "url",
+              "value": "={{ $json.url }}"
+            },
+            {
+              "columnId": "source",
+              "columnName": "source",
+              "value": "={{ $json.source }}"
+            },
+            {
+              "columnId": "category",
+              "columnName": "category",
+              "value": "={{ $json.category }}"
+            },
+            {
+              "columnId": "publishedAt",
+              "columnName": "publishedAt",
+              "value": "={{ $json.publishedAt }}"
+            },
+            {
+              "columnId": "tags",
+              "columnName": "tags",
+              "value": "={{ $json.tags }}"
+            },
+            {
+              "columnId": "addedAt",
+              "columnName": "addedAt",
+              "value": "={{ $json.addedAt }}"
+            },
+            {
+              "columnId": "score",
+              "columnName": "score",
+              "value": "={{ $json.score }}"
+            },
+            {
+              "columnId": "seenCount",
+              "columnName": "seenCount",
+              "value": "={{ $json.seenCount }}"
+            },
+            {
+              "columnId": "dedupKey",
+              "columnName": "dedupKey",
+              "value": "={{ $json.dedupKey }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.data",
+      "typeVersion": 3.1,
+      "position": [
+        -200,
+        0
+      ],
+      "id": "4c947965-f853-4902-a20f-64377f9e2396",
+      "name": "Insert to canonical_articles",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "resource": "data",
+        "operation": "executeQuery",
+        "dataTableId": {
+          "__rl": true,
+          "value": "550e8400-e29b-41d4-a716-446655440001",
+          "mode": "list",
+          "cachedResultName": "canonical_articles"
+        },
+        "query": "SELECT id, title, source, score, publishedAt, category FROM canonical_articles ORDER BY addedAt DESC LIMIT 20"
+      },
+      "type": "n8n-nodes-base.data",
+      "typeVersion": 3.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1615f538-a770-4739-ac53-9c0fa5247c28",
+      "name": "Verify: Last 20 Articles"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Transform article for export\nconst article = $json.json || $json;\nconst tags = typeof article.tags === 'string' \n  ? article.tags.split(',').map(t => t.trim()).filter(t => t)\n  : (Array.isArray(article.tags) ? article.tags : []);\n\nreturn {\n  json: {\n    id: article.id,\n    title: article.title,\n    summary: article.summary,\n    url: article.url,\n    source: article.source,\n    category: article.category || 'qa-practice',\n    publishedAt: article.publishedAt,\n    tags: tags\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "id": "4b343930-dd13-49e6-94c7-3b912eb4af2b",
+      "name": "Transform to Export Schema"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Build export object\nconst articles = $input.all().map(item => item.json);\n\nconst today = new Date();\nconst dateStr = today.toISOString().split('T')[0];\nconst updatedAt = today.toISOString();\n\nreturn [{\n  json: {\n    date: dateStr,\n    updatedAt: updatedAt,\n    articles: articles\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "id": "2e4abdab-adb6-4c76-a043-6b75763808d1",
+      "name": "Build Export Object"
+    },
+    {
+      "parameters": {
+        "operation": "toJSON",
+        "sourceProperty": "json",
+        "indent": 2,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        0
+      ],
+      "id": "7524201a-6c35-4ea5-b5d6-81cd953e7349",
+      "name": "Convert to JSON"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ $env.EXPORT_FILE_PATH || '/qa-news/public/latest.json' }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        0
+      ],
+      "id": "957b74ef-bf8d-4650-9fb2-d49a640a9af5",
+      "name": "Write latest.json (Test)"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Summarize test results\nconst output = $input.all().map(item => item.json)[0];\nconst exportPath = process.env.EXPORT_FILE_PATH || '/qa-news/public/latest.json';\n\nreturn [{\n  json: {\n    test_status: 'COMPLETE',\n    timestamp: new Date().toISOString(),\n    articles_inserted: 3,\n    articles_in_db: '$json(\"verify-articles\").length',\n    export_file: exportPath,\n    export_data: {\n      date: output.date,\n      updatedAt: output.updatedAt,\n      article_count: output.articles.length\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "id": "6b864741-0a1b-485c-8fa1-25438f11ef9e",
+      "name": "Test Summary"
+    }
+  ],
+  "connections": {
+    "c8c947c1-5cb5-4610-b67a-25f069ced22a": {
+      "main": [
+        [
+          {
+            "node": "69887994-bf76-4ce2-b2dc-9118300e566f",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "69887994-bf76-4ce2-b2dc-9118300e566f": {
+      "main": [
+        [
+          {
+            "node": "3ca4569b-61e5-4078-a411-a6ec0a589ebe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3ca4569b-61e5-4078-a411-a6ec0a589ebe": {
+      "main": [
+        [
+          {
+            "node": "4c947965-f853-4902-a20f-64377f9e2396",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4c947965-f853-4902-a20f-64377f9e2396": {
+      "main": [
+        [
+          {
+            "node": "1615f538-a770-4739-ac53-9c0fa5247c28",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1615f538-a770-4739-ac53-9c0fa5247c28": {
+      "main": [
+        [
+          {
+            "node": "4b343930-dd13-49e6-94c7-3b912eb4af2b",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4b343930-dd13-49e6-94c7-3b912eb4af2b": {
+      "main": [
+        [
+          {
+            "node": "2e4abdab-adb6-4c76-a043-6b75763808d1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2e4abdab-adb6-4c76-a043-6b75763808d1": {
+      "main": [
+        [
+          {
+            "node": "7524201a-6c35-4ea5-b5d6-81cd953e7349",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7524201a-6c35-4ea5-b5d6-81cd953e7349": {
+      "main": [
+        [
+          {
+            "node": "957b74ef-bf8d-4650-9fb2-d49a640a9af5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "957b74ef-bf8d-4650-9fb2-d49a640a9af5": {
+      "main": [
+        [
+          {
+            "node": "6b864741-0a1b-485c-8fa1-25438f11ef9e",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "tags": [],
+  "pinned": false,
+  "triggerCount": 0,
+  "versionId": "50cde56f-2fc1-4322-a5c3-bc138777630a"
+}
