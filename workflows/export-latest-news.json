@@ -5,7 +5,7 @@
     {
       "parameters": {
         "mode": "cronExpression",
-        "cronExpression": "0 8 * * *"
+        "cronExpression": "5 8 * * *"
       },
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.1,
@@ -14,8 +14,8 @@
         0
       ],
       "id": "schedule-trigger",
-      "name": "Daily Schedule (08:00 UTC)",
-      "note": "Runs at 08:00 UTC daily (after M3 Daily Brief)"
+      "name": "Daily Schedule (08:05 UTC)",
+      "note": "Runs at 08:05 UTC daily (after M3 Daily Brief completes at 08:00)"
     },
     {
       "parameters": {
@@ -27,7 +27,7 @@
           "mode": "list",
           "cachedResultName": "canonical_articles"
         },
-        "query": "SELECT * FROM data_table_row WHERE dataTableId = '550e8400-e29b-41d4-a716-446655440001' ORDER BY (jsonData->>'publishedAt') DESC LIMIT 100"
+        "query": "SELECT * FROM data_table_row WHERE dataTableId = '550e8400-e29b-41d4-a716-446655440001' AND (jsonData->>'score')::INTEGER >= 50 ORDER BY (jsonData->>'publishedAt') DESC LIMIT 100"
       },
       "type": "n8n-nodes-base.data",
       "typeVersion": 3.1,
@@ -85,7 +85,7 @@
     {
       "parameters": {
         "operation": "write",
-        "fileName": "/qa-news/public/latest.json",
+        "fileName": "={{ $env.EXPORT_FILE_PATH || '/app/latest.json' }}",
         "options": {}
       },
       "type": "n8n-nodes-base.readWriteFile",
@@ -95,7 +95,7 @@
         0
       ],
       "id": "write-file",
-      "name": "Write latest.json"
+      "name": "Write latest.json (parameterized path)"
     },
     {
       "parameters": {
@@ -114,7 +114,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "// Log export completion\nconst itemCount = $input.all().length;\n\nreturn [{\n  json: {\n    status: 'export_complete',\n    timestamp: new Date().toISOString(),\n    articlesExported: itemCount,\n    file: '/qa-news/public/latest.json'\n  }\n}];"
+        "jsCode": "// Log export completion\nconst itemCount = $input.all().length;\nconst exportPath = process.env.EXPORT_FILE_PATH || '/app/latest.json';\n\nreturn [{\n  json: {\n    status: 'export_complete',\n    timestamp: new Date().toISOString(),\n    articlesExported: itemCount,\n    file: exportPath\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

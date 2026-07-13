@@ -29,17 +29,101 @@
     },
     {
       "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "// Check if article already exists in Data Table\n// This will be done in the next node (Data Table Query)\nreturn $json;"
+        "operation": "executeQuery",
+        "dataTableId": {
+          "__rl": true,
+          "value": "550e8400-e29b-41d4-a716-446655440001",
+          "mode": "list",
+          "cachedResultName": "canonical_articles"
+        },
+        "query": "SELECT id, dedupKey, seenCount, score FROM data_table_row WHERE dataTableId = '550e8400-e29b-41d4-a716-446655440001' AND jsonData->>'dedupKey' = $1 AND (jsonData->>'addedAt')::timestamp > now() - interval '30 days' LIMIT 1"
       },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "type": "n8n-nodes-base.data",
+      "typeVersion": 3.1,
       "position": [
         0,
         0
       ],
+      "id": "check-duplicate",
+      "name": "Check for Duplicate (30-day window)"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Check if article was found in last 30 days\nconst isDuplicate = $input.all().length > 0;\nconst existingRow = isDuplicate ? $input.all()[0] : null;\n\nreturn {\n  json: {\n    isDuplicate: isDuplicate,\n    existingId: existingRow?.id || null,\n    existingSeenCount: existingRow?.seenCount || 0,\n    existingScore: existingRow?.score || null\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "id": "evaluate-duplicate",
+      "name": "Evaluate Duplicate Status"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// For UPDATE path: increment seenCount and update score\nconst article = $json;\nconst isDuplicate = $json.isDuplicate;\n\nif (!isDuplicate) {\n  return null; // Skip for new articles\n}\n\nreturn {\n  json: {\n    existingId: article.existingId,\n    newSeenCount: (article.existingSeenCount || 0) + 1,\n    newScore: Math.max(article.existingScore || 0, article.score || 50)\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        -200
+      ],
+      "id": "prepare-update",
+      "name": "Prepare for UPDATE"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// For INSERT path: prepare new article\nconst article = $json;\nconst isDuplicate = $json.isDuplicate;\n\nif (isDuplicate) {\n  return null; // Skip for duplicates\n}\n\nreturn article;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        200
+      ],
       "id": "prepare-insert",
-      "name": "Prepare for Insert"
+      "name": "Prepare for INSERT"
+    },
+    {
+      "parameters": {
+        "resource": "data",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "550e8400-e29b-41d4-a716-446655440001",
+          "mode": "list",
+          "cachedResultName": "canonical_articles"
+        },
+        "rowId": "={{ $json.existingId }}",
+        "columns": {
+          "mappings": [
+            {
+              "columnId": "seenCount",
+              "columnName": "seenCount",
+              "value": "={{ $json.newSeenCount }}"
+            },
+            {
+              "columnId": "score",
+              "columnName": "score",
+              "value": "={{ $json.newScore }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.data",
+      "typeVersion": 3.1,
+      "position": [
+        600,
+        -200
+      ],
+      "id": "update-article",
+      "name": "UPDATE: Increment seenCount & score",
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -119,26 +203,26 @@
       "type": "n8n-nodes-base.data",
       "typeVersion": 3.1,
       "position": [
-        200,
-        0
+        600,
+        200
       ],
       "id": "insert-article",
-      "name": "Insert to canonical_articles",
+      "name": "INSERT: New article to canonical_articles",
       "continueOnFail": true
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Log successful insert with ID\nconst article = $json.json || $json;\nreturn {\n  json: {\n    status: 'persisted',\n    id: article.id,\n    title: article.title,\n    source: article.source,\n    dedupKey: article.dedupKey,\n    score: article.score\n  }\n};"
+        "jsCode": "// Log result (INSERT or UPDATE)\nconst article = $json;\nconst operation = article.existingId ? 'updated' : 'inserted';\nconst title = article.title || article.newTitle || 'Unknown';\nconst source = article.source || 'Unknown';\n\nreturn {\n  json: {\n    status: operation,\n    operation: operation === 'updated' ? 'updated (seenCount++, score adjusted)' : 'inserted (new)',\n    id: article.id || article.existingId,\n    title: title,\n    source: source,\n    dedupKey: article.dedupKey,\n    score: article.score || article.newScore\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        400,
+        800,
         0
       ],
-      "id": "log-success",
-      "name": "Log Persisted Article"
+      "id": "log-result",
+      "name": "Log INSERT/UPDATE Result"
     },
     {
       "parameters": {
@@ -149,15 +233,15 @@
           "mode": "list",
           "cachedResultName": "canonical_articles"
         },
-        "query": "SELECT id, title, source, score, publishedAt FROM canonical_articles ORDER BY addedAt DESC LIMIT 10"
+        "query": "SELECT id, title, source, score, seenCount, publishedAt FROM canonical_articles ORDER BY addedAt DESC LIMIT 10"
       },
       "type": "n8n-nodes-base.data",
       "typeVersion": 3.1,
       "position": [
-        600,
+        1000,
         0
       ],
-      "id": "verify-insert",
+      "id": "verify-persist",
       "name": "Verify: Last 10 Articles"
     }
   ],
@@ -177,7 +261,45 @@
       "main": [
         [
           {
+            "node": "check-duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check-duplicate": {
+      "main": [
+        [
+          {
+            "node": "evaluate-duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "evaluate-duplicate": {
+      "main": [
+        [
+          {
+            "node": "prepare-update",
+            "type": "main",
+            "index": 0
+          },
+          {
             "node": "prepare-insert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prepare-update": {
+      "main": [
+        [
+          {
+            "node": "update-article",
             "type": "main",
             "index": 0
           }
@@ -195,22 +317,33 @@
         ]
       ]
     },
-    "insert-article": {
+    "update-article": {
       "main": [
         [
           {
-            "node": "log-success",
+            "node": "log-result",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "log-success": {
+    "insert-article": {
       "main": [
         [
           {
-            "node": "verify-insert",
+            "node": "log-result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "log-result": {
+      "main": [
+        [
+          {
+            "node": "verify-persist",
             "type": "main",
             "index": 0
           }
