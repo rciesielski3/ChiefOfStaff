@@ -1,0 +1,190 @@
+{
+  "name": "Test: Insert Sample Article into canonical_articles",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerType": "manualTrigger"
+      },
+      "id": "manual-trigger-1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "id",
+              "value": "test-article-001"
+            },
+            {
+              "name": "title",
+              "value": "How to Write Better Tests for Your CI/CD Pipeline"
+            },
+            {
+              "name": "summary",
+              "value": "A comprehensive guide to testing practices in continuous integration. Covers unit tests, integration tests, and end-to-end testing strategies for modern CI/CD pipelines."
+            },
+            {
+              "name": "url",
+              "value": "https://dev.to/example/how-to-write-better-tests"
+            },
+            {
+              "name": "source",
+              "value": "Dev.to"
+            },
+            {
+              "name": "category",
+              "value": "test-automation"
+            },
+            {
+              "name": "publishedAt",
+              "value": "=new Date('2024-07-12T14:30:00Z').toISOString()"
+            },
+            {
+              "name": "tags",
+              "value": "Python,Testing,CI/CD,GitHub Actions"
+            },
+            {
+              "name": "addedAt",
+              "value": "=new Date().toISOString()"
+            },
+            {
+              "name": "score",
+              "value": "87"
+            },
+            {
+              "name": "seenCount",
+              "value": "1"
+            },
+            {
+              "name": "dedupKey",
+              "value": "Dev.to|how-to-write-better-tests-for-your-ci-cd-pipeline"
+            }
+          ]
+        }
+      },
+      "id": "set-article-data",
+      "name": "Set Article Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [200, 0]
+    },
+    {
+      "parameters": {
+        "mode": "upsert",
+        "resource": "data",
+        "dataTableName": "canonical_articles",
+        "columns": [
+          {
+            "column": "id",
+            "value": "={{$json.id}}"
+          },
+          {
+            "column": "title",
+            "value": "={{$json.title}}"
+          },
+          {
+            "column": "summary",
+            "value": "={{$json.summary}}"
+          },
+          {
+            "column": "url",
+            "value": "={{$json.url}}"
+          },
+          {
+            "column": "source",
+            "value": "={{$json.source}}"
+          },
+          {
+            "column": "category",
+            "value": "={{$json.category}}"
+          },
+          {
+            "column": "publishedAt",
+            "value": "={{$json.publishedAt}}"
+          },
+          {
+            "column": "tags",
+            "value": "={{$json.tags}}"
+          },
+          {
+            "column": "addedAt",
+            "value": "={{$json.addedAt}}"
+          },
+          {
+            "column": "score",
+            "value": "={{$json.score}}"
+          },
+          {
+            "column": "seenCount",
+            "value": "={{$json.seenCount}}"
+          },
+          {
+            "column": "dedupKey",
+            "value": "={{$json.dedupKey}}"
+          }
+        ]
+      },
+      "id": "upsert-to-canonical-articles",
+      "name": "Upsert to canonical_articles",
+      "type": "n8n-nodes-base.dataDb",
+      "typeVersion": 1,
+      "position": [400, 0]
+    },
+    {
+      "parameters": {
+        "resource": "data",
+        "dataTableName": "canonical_articles",
+        "limit": 10,
+        "sortBy": "addedAt",
+        "sortOrder": "desc"
+      },
+      "id": "verify-insert",
+      "name": "Verify Insert (Last 10 Articles)",
+      "type": "n8n-nodes-base.dataDb",
+      "typeVersion": 1,
+      "position": [600, 0]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Article Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Article Data": {
+      "main": [
+        [
+          {
+            "node": "Upsert to canonical_articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert to canonical_articles": {
+      "main": [
+        [
+          {
+            "node": "Verify Insert (Last 10 Articles)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1"
+}
