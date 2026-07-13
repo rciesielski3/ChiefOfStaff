@@ -1,15 +1,17 @@
 {
+  "id": "550e8400-e29b-41d4-a716-446655440200",
   "name": "Test: Insert Sample Article into canonical_articles",
   "nodes": [
     {
-      "parameters": {
-        "triggerType": "manualTrigger"
-      },
+      "parameters": {},
       "id": "manual-trigger-1",
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [0, 0]
+      "position": [
+        0,
+        0
+      ]
     },
     {
       "parameters": {
@@ -41,7 +43,7 @@
             },
             {
               "name": "publishedAt",
-              "value": "=new Date('2024-07-12T14:30:00Z').toISOString()"
+              "value": "2024-07-12T14:30:00Z"
             },
             {
               "name": "tags",
@@ -49,7 +51,7 @@
             },
             {
               "name": "addedAt",
-              "value": "=new Date().toISOString()"
+              "value": "2024-07-13T12:00:00Z"
             },
             {
               "name": "score",
@@ -70,73 +72,79 @@
       "name": "Set Article Data",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3,
-      "position": [200, 0]
+      "position": [
+        200,
+        0
+      ]
     },
     {
       "parameters": {
         "mode": "upsert",
-        "resource": "data",
         "dataTableName": "canonical_articles",
-        "columns": [
-          {
-            "column": "id",
-            "value": "={{$json.id}}"
-          },
-          {
-            "column": "title",
-            "value": "={{$json.title}}"
-          },
-          {
-            "column": "summary",
-            "value": "={{$json.summary}}"
-          },
-          {
-            "column": "url",
-            "value": "={{$json.url}}"
-          },
-          {
-            "column": "source",
-            "value": "={{$json.source}}"
-          },
-          {
-            "column": "category",
-            "value": "={{$json.category}}"
-          },
-          {
-            "column": "publishedAt",
-            "value": "={{$json.publishedAt}}"
-          },
-          {
-            "column": "tags",
-            "value": "={{$json.tags}}"
-          },
-          {
-            "column": "addedAt",
-            "value": "={{$json.addedAt}}"
-          },
-          {
-            "column": "score",
-            "value": "={{$json.score}}"
-          },
-          {
-            "column": "seenCount",
-            "value": "={{$json.seenCount}}"
-          },
-          {
-            "column": "dedupKey",
-            "value": "={{$json.dedupKey}}"
-          }
-        ]
+        "columns": {
+          "mappings": [
+            {
+              "columnName": "id",
+              "value": "={{$json.id}}"
+            },
+            {
+              "columnName": "title",
+              "value": "={{$json.title}}"
+            },
+            {
+              "columnName": "summary",
+              "value": "={{$json.summary}}"
+            },
+            {
+              "columnName": "url",
+              "value": "={{$json.url}}"
+            },
+            {
+              "columnName": "source",
+              "value": "={{$json.source}}"
+            },
+            {
+              "columnName": "category",
+              "value": "={{$json.category}}"
+            },
+            {
+              "columnName": "publishedAt",
+              "value": "={{$json.publishedAt}}"
+            },
+            {
+              "columnName": "tags",
+              "value": "={{$json.tags}}"
+            },
+            {
+              "columnName": "addedAt",
+              "value": "={{$json.addedAt}}"
+            },
+            {
+              "columnName": "score",
+              "value": "={{$json.score}}"
+            },
+            {
+              "columnName": "seenCount",
+              "value": "={{$json.seenCount}}"
+            },
+            {
+              "columnName": "dedupKey",
+              "value": "={{$json.dedupKey}}"
+            }
+          ]
+        }
       },
       "id": "upsert-to-canonical-articles",
       "name": "Upsert to canonical_articles",
       "type": "n8n-nodes-base.dataDb",
       "typeVersion": 1,
-      "position": [400, 0]
+      "position": [
+        400,
+        0
+      ]
     },
     {
       "parameters": {
-        "resource": "data",
         "dataTableName": "canonical_articles",
         "limit": 10,
         "sortBy": "addedAt",
@@ -146,7 +154,10 @@
       "name": "Verify Insert (Last 10 Articles)",
       "type": "n8n-nodes-base.dataDb",
       "typeVersion": 1,
-      "position": [600, 0]
+      "position": [
+        600,
+        0
+      ]
     }
   ],
   "connections": {
@@ -184,7 +195,9 @@
       ]
     }
   },
-  "active": false,
-  "settings": {},
-  "versionId": "1"
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "active": false
 }
