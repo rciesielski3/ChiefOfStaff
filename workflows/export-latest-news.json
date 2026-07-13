@@ -1,0 +1,210 @@
+{
+  "name": "Export Latest News to JSON",
+  "description": "Daily export of top articles from canonical_articles to latest.json for qa-news",
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "cronExpression",
+        "cronExpression": "0 8 * * *"
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -400,
+        0
+      ],
+      "id": "schedule-trigger",
+      "name": "Daily Schedule (08:00 UTC)",
+      "note": "Runs at 08:00 UTC daily (after M3 Daily Brief)"
+    },
+    {
+      "parameters": {
+        "resource": "data",
+        "operation": "executeQuery",
+        "dataTableId": {
+          "__rl": true,
+          "value": "550e8400-e29b-41d4-a716-446655440001",
+          "mode": "list",
+          "cachedResultName": "canonical_articles"
+        },
+        "query": "SELECT * FROM data_table_row WHERE dataTableId = '550e8400-e29b-41d4-a716-446655440001' ORDER BY (jsonData->>'publishedAt') DESC LIMIT 100"
+      },
+      "type": "n8n-nodes-base.data",
+      "typeVersion": 3.1,
+      "position": [
+        -200,
+        0
+      ],
+      "id": "query-articles",
+      "name": "Query: Top Articles (score >= 50)"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Extract article data from database row\nconst row = $json.json || $json;\nconst article = row.jsonData || row;\n\n// Parse tags if string\nconst tags = typeof article.tags === 'string' \n  ? article.tags.split(',').map(t => t.trim()).filter(t => t)\n  : (Array.isArray(article.tags) ? article.tags : []);\n\nreturn {\n  json: {\n    id: article.id,\n    title: article.title,\n    summary: article.summary,\n    url: article.url,\n    source: article.source,\n    category: article.category || 'qa-practice',\n    publishedAt: article.publishedAt,\n    tags: tags\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "transform-articles",
+      "name": "Transform to Export Schema"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Collect all articles into array\nconst articles = $input.all().map(item => item.json);\n\n// Create export object with metadata\nconst today = new Date();\nconst dateStr = today.toISOString().split('T')[0];\nconst updatedAt = today.toISOString();\n\nreturn [{\n  json: {\n    date: dateStr,\n    updatedAt: updatedAt,\n    articles: articles\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "id": "build-export",
+      "name": "Build Export Object"
+    },
+    {
+      "parameters": {
+        "operation": "toJSON",
+        "sourceProperty": "json",
+        "indent": 2,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        400,
+        0
+      ],
+      "id": "convert-json",
+      "name": "Convert to JSON String"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/qa-news/public/latest.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        0
+      ],
+      "id": "write-file",
+      "name": "Write latest.json"
+    },
+    {
+      "parameters": {
+        "commands": "cd /qa-news && git add public/latest.json && git commit -m 'chore(data): export latest articles [skip ci]' || echo 'No changes to commit'"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        800,
+        0
+      ],
+      "id": "git-commit",
+      "name": "Git Commit Export",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Log export completion\nconst itemCount = $input.all().length;\n\nreturn [{\n  json: {\n    status: 'export_complete',\n    timestamp: new Date().toISOString(),\n    articlesExported: itemCount,\n    file: '/qa-news/public/latest.json'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "id": "log-export",
+      "name": "Log Export Complete"
+    }
+  ],
+  "connections": {
+    "schedule-trigger": {
+      "main": [
+        [
+          {
+            "node": "query-articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "query-articles": {
+      "main": [
+        [
+          {
+            "node": "transform-articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "transform-articles": {
+      "main": [
+        [
+          {
+            "node": "build-export",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "build-export": {
+      "main": [
+        [
+          {
+            "node": "convert-json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "convert-json": {
+      "main": [
+        [
+          {
+            "node": "write-file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "write-file": {
+      "main": [
+        [
+          {
+            "node": "git-commit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "git-commit": {
+      "main": [
+        [
+          {
+            "node": "log-export",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {}
+}

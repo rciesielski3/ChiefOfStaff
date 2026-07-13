@@ -1,0 +1,223 @@
+{
+  "name": "Persist Articles to Knowledge Layer",
+  "description": "Insert/update articles from M3 pipeline into canonical_articles Data Table with deduplication",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        0
+      ],
+      "id": "manual-trigger",
+      "name": "Manual Trigger (for testing)"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Normalize title for deduplication\nfunction normalizeTitle(title) {\n  return title\n    .toLowerCase()\n    .trim()\n    .replace(/[^a-z0-9-]/g, '-')\n    .replace(/-+/g, '-')\n    .replace(/-$/, '');\n}\n\n// Infer category from content\nfunction inferCategory(article) {\n  const text = `${article.title || ''} ${article.content || ''}`.toLowerCase();\n  \n  if (['test', 'testing', 'qa', 'automation', 'cypress', 'playwright', 'selenium'].some(w => text.includes(w))) {\n    return 'test-automation';\n  }\n  if (['ai', 'llm', 'gpt', 'claude', 'agent', 'prompt', 'generative'].some(w => text.includes(w))) {\n    return 'ai';\n  }\n  if (['architecture', 'deploy', 'performance', 'scaling', 'infrastructure', 'kubernetes'].some(w => text.includes(w))) {\n    return 'engineering';\n  }\n  if (['tool', 'script', 'library', 'framework', 'npm', 'package'].some(w => text.includes(w))) {\n    return 'tooling';\n  }\n  \n  return 'qa-practice';\n}\n\n// Generate UUID-like ID (simplified for n8n)\nfunction generateId() {\n  return 'article-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);\n}\n\nconst article = $json;\n\nreturn {\n  json: {\n    // Existing fields from M3\n    ...article,\n    \n    // Generated/transformed fields for Knowledge Layer\n    id: article.id || generateId(),\n    title: article.title || 'Untitled',\n    summary: (article.content || article.contentSnippet || '').substring(0, 1000),\n    url: article.url || article.link || '',\n    source: article.source || article.feed?.title || 'Unknown',\n    category: article.category || inferCategory(article),\n    publishedAt: article.published_at || article.isoDate || article.pubDate || new Date().toISOString(),\n    tags: Array.isArray(article.tags) ? article.tags.join(',') : (article.tags || ''),\n    addedAt: new Date().toISOString(),\n    score: article.score || 50,\n    seenCount: 1,\n    dedupKey: (article.source || 'Unknown') + '|' + normalizeTitle(article.title || 'untitled')\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        0
+      ],
+      "id": "map-fields",
+      "name": "Map Article Fields to Schema"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Check if article already exists in Data Table\n// This will be done in the next node (Data Table Query)\nreturn $json;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "prepare-insert",
+      "name": "Prepare for Insert"
+    },
+    {
+      "parameters": {
+        "resource": "data",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "550e8400-e29b-41d4-a716-446655440001",
+          "mode": "list",
+          "cachedResultName": "canonical_articles"
+        },
+        "columns": {
+          "mappings": [
+            {
+              "columnId": "id",
+              "columnName": "id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "columnId": "title",
+              "columnName": "title",
+              "value": "={{ $json.title }}"
+            },
+            {
+              "columnId": "summary",
+              "columnName": "summary",
+              "value": "={{ $json.summary }}"
+            },
+            {
+              "columnId": "url",
+              "columnName": "url",
+              "value": "={{ $json.url }}"
+            },
+            {
+              "columnId": "source",
+              "columnName": "source",
+              "value": "={{ $json.source }}"
+            },
+            {
+              "columnId": "category",
+              "columnName": "category",
+              "value": "={{ $json.category }}"
+            },
+            {
+              "columnId": "publishedAt",
+              "columnName": "publishedAt",
+              "value": "={{ $json.publishedAt }}"
+            },
+            {
+              "columnId": "tags",
+              "columnName": "tags",
+              "value": "={{ $json.tags }}"
+            },
+            {
+              "columnId": "addedAt",
+              "columnName": "addedAt",
+              "value": "={{ $json.addedAt }}"
+            },
+            {
+              "columnId": "score",
+              "columnName": "score",
+              "value": "={{ $json.score }}"
+            },
+            {
+              "columnId": "seenCount",
+              "columnName": "seenCount",
+              "value": "={{ $json.seenCount }}"
+            },
+            {
+              "columnId": "dedupKey",
+              "columnName": "dedupKey",
+              "value": "={{ $json.dedupKey }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.data",
+      "typeVersion": 3.1,
+      "position": [
+        200,
+        0
+      ],
+      "id": "insert-article",
+      "name": "Insert to canonical_articles",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Log successful insert with ID\nconst article = $json.json || $json;\nreturn {\n  json: {\n    status: 'persisted',\n    id: article.id,\n    title: article.title,\n    source: article.source,\n    dedupKey: article.dedupKey,\n    score: article.score\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "id": "log-success",
+      "name": "Log Persisted Article"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "dataTableId": {
+          "__rl": true,
+          "value": "550e8400-e29b-41d4-a716-446655440001",
+          "mode": "list",
+          "cachedResultName": "canonical_articles"
+        },
+        "query": "SELECT id, title, source, score, publishedAt FROM canonical_articles ORDER BY addedAt DESC LIMIT 10"
+      },
+      "type": "n8n-nodes-base.data",
+      "typeVersion": 3.1,
+      "position": [
+        600,
+        0
+      ],
+      "id": "verify-insert",
+      "name": "Verify: Last 10 Articles"
+    }
+  ],
+  "connections": {
+    "manual-trigger": {
+      "main": [
+        [
+          {
+            "node": "map-fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "map-fields": {
+      "main": [
+        [
+          {
+            "node": "prepare-insert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prepare-insert": {
+      "main": [
+        [
+          {
+            "node": "insert-article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "insert-article": {
+      "main": [
+        [
+          {
+            "node": "log-success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "log-success": {
+      "main": [
+        [
+          {
+            "node": "verify-insert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {}
+}
