@@ -29,6 +29,14 @@ async function main(): Promise<void> {
     // Export latest 50 articles
     const latest = await exportLatestNews(store, 50);
 
+    // Validation: Detect empty store (CRITICAL #3)
+    if (latest.items.length === 0) {
+      console.warn('[Export Latest News] ⚠️  WARNING: Export produced 0 articles');
+      console.warn('[Export Latest News] Store may be empty or not yet populated by daily-brief');
+      console.warn('[Export Latest News] Check: data/canonical_articles.ndjson exists and has content');
+      process.exit(1);  // Fail workflow so operators notice
+    }
+
     // Ensure output directory exists
     const outputDir = path.dirname(outputPath);
     await fs.mkdir(outputDir, { recursive: true });

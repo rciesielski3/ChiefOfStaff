@@ -261,4 +261,13 @@ describe('exportLatestNews', () => {
     expect(result.items).toHaveLength(3);
     // All articles should be present since they're all equally recent
   });
+
+  it('detects and fails when store is empty (CRITICAL #3)', async () => {
+    const emptyStore = new MockArticleStore([]);
+
+    const result = await exportLatestNews(emptyStore, 50);
+
+    expect(result.items.length).toBe(0);
+    // CLI will detect this and fail with process.exit(1) to prevent silent empty exports
+  });
 });
