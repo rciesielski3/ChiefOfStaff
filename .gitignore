@@ -2,9 +2,11 @@
 .env
 .env.local
 .env.*.local
+.env.example
 
 # Node
 node_modules/
+package-lock.json
 
 # Build outputs
 dist/
@@ -27,3 +29,47 @@ npm-debug.log*
 
 # Docker
 docker-compose.override.yml
+
+# Sensitive data & credentials
+*.key
+*.pem
+*secret*
+*credential*
+*token*
+.aws/
+.ssh/
+
+# Workflow exports & test files (n8n, config)
+*.json.backup
+*-test.json
+test-workflow.json
+test_minimal_workflow.json
+*workflow*.json
+Config*.json
+Error*.json
+*Trigger*.json
+*Radar*.json
+*Brief*.json
+*Aggregator*.json
+Save*.json
+workflows/*/
+
+# Sensitive directories
+backups/
+.superpowers/sdd/
+secrets/
+
+# Temporary files
+*.zip
+qa-news-updates.zip
+qa-news.zip
+
+# Generated documentation from other phases
+PAIOS*.md
+*Roadmap*.md
+*Review*.md
+*Vault*.md
+*Vision*.md
+*Handover*.md
+*Knowledge*.md
+M1-*.md
