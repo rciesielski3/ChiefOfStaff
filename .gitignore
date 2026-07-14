@@ -6,7 +6,7 @@
 
 # Node
 node_modules/
-package-lock.json
+# package-lock.json is REQUIRED for npm ci in CI/CD workflows — DO NOT ignore
 
 # Build outputs
 dist/
