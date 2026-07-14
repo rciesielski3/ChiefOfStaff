@@ -1,5 +1,22 @@
 name: Export Latest News
 
+# RACE CONDITION ACKNOWLEDGEMENT:
+# This workflow runs at 08:05 UTC, 5 minutes after daily-brief.yml (08:00 UTC).
+# The 5-minute gap provides a buffer to allow the Daily Brief workflow to complete
+# and push changes to the main repository before this workflow executes.
+#
+# Known race condition: If Daily Brief takes longer than 5 minutes or encounters
+# network issues, this workflow may attempt to export and push before Daily Brief
+# has completed, resulting in:
+# - Potential merge conflicts in git push operations
+# - Stale data being exported if Daily Brief is still running
+# - Concurrent pushes to the qa-news repository
+#
+# Current mitigation: The 5-minute delay provides a time buffer for completion.
+# This should be monitored in production, and consider implementing:
+# - Workflow sequencing via gh workflow run --wait (future enhancement)
+# - Locking mechanism for data export (future enhancement)
+
 on:
   schedule:
     - cron: '5 8 * * *'  # 08:05 UTC daily (after Daily Brief)
