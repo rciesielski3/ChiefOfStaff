@@ -44,7 +44,7 @@ jobs:
         run: npx ts-node src/cli/export-latest-news.ts
 
       - name: Commit latest.json
-       run: |
+        run: |
           cd qa-news
           git config user.name "PAIOS Bot"
           git config user.email "bot@paios.local"
