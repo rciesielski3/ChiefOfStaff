@@ -23,7 +23,7 @@ PAIOS has successfully implemented four functional milestones (M1-M4) with a cle
 - Restore procedure not operationalized or tested
 - Deployment automation lacking
 
-**Recommendation**: Proceed to Phase 2 (Operationalization) with focus on production readiness gaps.
+**Status**: Ready for production deployment after operational readiness tasks (P1.0) are completed.
 
 ---
 
@@ -94,9 +94,9 @@ Validate → Markdown → Consumers (Telegram + Vault)
 
 ### D. M4: Knowledge Layer (Partially Complete ⚠️)
 
-**Status**: Phase 1 (persistence) complete; Phase 2 (QA News public interface) requires API wiring
+**Status**: Persistence infrastructure complete; API layer required for full implementation
 
-**Phase 1: Persistence Infrastructure ✓**
+**Persistence Infrastructure ✓**
 
 **What Works**:
 - `canonical_articles` data table created with 12 columns (id, title, summary, url, source, category, publishedAt, tags, addedAt, score, seenCount, dedupKey)
@@ -118,9 +118,9 @@ Validate → Markdown → Consumers (Telegram + Vault)
 - **Git commits hardcoded**: Export workflow auto-commits but git credentials not documented
 - **No archival strategy**: Canonical table growth unbounded; cleanup/archival not addressed
 
-**Phase 2: QA News Public Interface ⚠️**
+**API Layer & Public Interface ⚠️ (Required for P1.4)**
 
-**Status**: Frontend deployed (Next.js, GitHub Pages ready), but disconnected from live data
+**Status**: Frontend deployed (Next.js, GitHub Pages ready), but requires API integration for live data
 
 **What Works**:
 - qa-news Next.js app built and rendering static data
@@ -134,38 +134,9 @@ Validate → Markdown → Consumers (Telegram + Vault)
 - **Search functionality**: Listed in planned features but not yet wired to knowledge layer
 - **API layer missing**: No REST API for qa-news (or other future consumers) to query canonical_articles by filters (date, category, score)
 
-**Assessment**: M4 Phase 1 is production-ready; Phase 2 requires API layer implementation before M4 is truly complete.
+**Assessment**: Persistence layer is production-ready; API layer (P1.4) required to complete M4 and enable live QA News updates.
 
 ---
-
-### E. M5-M6: Future Milestones (Design Review)
-
-**M5: Weekly/Monthly Briefs** (Not yet implemented)
-
-**Design Intent**:
-- Aggregate weekly/monthly summaries from canonical_articles
-- Extend M3 approach to longer time windows
-- Separate consumers from daily processing
-
-**Gaps in Design**:
-- Weekly/monthly AI synthesis not specified (re-run Claude on week's articles?)
-- Retention strategy for weekly/monthly outputs not documented
-- Scheduling not planned (when does aggregation run?)
-
-**M6: API & Search** (Not yet implemented)
-
-**Design Intent**:
-- REST API exposing canonical_articles with filtering (date, category, score)
-- Full-text search over article content
-- Serve qa-news and future consumers
-
-**Gaps in Design**:
-- API technology not chosen (Fastify? Django? n8n REST trigger?)
-- Search backend not selected (PostgreSQL full-text? Elasticsearch?)
-- Pagination not addressed
-- Rate limiting/authentication not planned
-
-**Assessment**: M5-M6 architecture sound in principle; detailed design needed before Phase 2 starts.
 
 ---
 
@@ -241,19 +212,19 @@ Validate → Markdown → Consumers (Telegram + Vault)
    - Holds n8n project data AND canonical_articles knowledge layer
    - No replication
    - Loss = complete system reset required
-   - Mitigation: Backup procedure needed in Phase 2
+   - Mitigation: Automated backup procedure with regular testing required
 
 3. **Telegram API**
    - All consumer notifications go through Telegram
    - If Telegram API unavailable, no alerts generated
    - No fallback channel (email, SMS, Slack)
-   - Mitigation: Add monitoring/alerting in Phase 2
+   - Mitigation: Implement workflow monitoring and alerting with backup notification channel
 
 4. **Vault Git Repository**
    - M3 daily brief saved to local git repo (via vault)
    - No remote tracking
    - Single point for archive access
-   - Mitigation: Set up git remote + backup in Phase 2
+   - Mitigation: Configure git remote and backup strategy
 
 **Grade**: C- (backup/HA planning needed for production)
 
@@ -314,7 +285,7 @@ Validate → Markdown → Consumers (Telegram + Vault)
    - No structured logging (JSON) for metrics parsing
    - No correlationID for tracing M3 → persist → export flow
 
-**Grade**: D (production ops not ready; must implement in Phase 2)
+**Grade**: D (production ops not ready; critical for P1.0 completion)
 
 ---
 
@@ -454,97 +425,6 @@ Validate → Markdown → Consumers (Telegram + Vault)
 
 ---
 
-### Phase 2: Feature Completion (After Phase 1)
-
-#### P2.1 — MEDIUM: Operationalize M4 QA News live updates
-- **Goal**: QA News reflects latest M3 output in real-time
-- **Tasks** (depends on P1.4 API):
-  - [ ] Update qa-news to fetch from API (not latest.json)
-  - [ ] Add auto-refresh trigger (daily at 08:10 UTC, 15 min after M3)
-  - [ ] Test live update pipeline end-to-end
-  - [ ] Document deployment to GitHub Pages with API access
-- **Effort**: 2 days
-- **Dependency**: P1.4 (API must exist)
-- **Owner**: Frontend
-
----
-
-#### P2.2 — MEDIUM: Finalize M5 design (Weekly/Monthly briefs)
-- **Goal**: Specification for M5 implementation (not implementation, just design)
-- **Tasks**:
-  - [ ] Define weekly brief synthesis (Claude re-run on top 20 weekly articles?)
-  - [ ] Define monthly brief (aggregate of weeklies or new Claude run?)
-  - [ ] Specify storage (in canonical_articles? separate table?)
-  - [ ] Design scheduling (weekly run on Sunday? monthly on 1st?)
-  - [ ] Design consumers (Telegram weekly, Vault archive, QA News timeline?)
-- **Effort**: 1 day
-- **Dependency**: None
-- **Owner**: Product/Architecture
-
-**Related Files to Create**:
-- `docs/DESIGN_M5.md` — Weekly/Monthly brief architecture
-
----
-
-#### P2.3 — MEDIUM: Design M6 full implementation (M6 implementation itself deferred)
-- **Goal**: Specification for search, filtering, pagination
-- **Tasks**:
-  - [ ] Finalize API spec (query syntax, filtering operators)
-  - [ ] Choose search backend (PostgreSQL FTS? Elasticsearch?)
-  - [ ] Design pagination (cursor-based or offset-based?)
-  - [ ] Design authentication (API keys? OAuth?)
-  - [ ] Spec advanced features (faceted search, saved searches, export)
-  - [ ] Document performance targets (p99 latency, throughput)
-- **Effort**: 2 days
-- **Dependency**: P1.4 (basic API exists)
-- **Owner**: Product/Architecture
-
-**Related Files to Create**:
-- `docs/DESIGN_M6.md` — Search & filter API design
-
----
-
-### Phase 3: Maintenance & Scaling
-
-#### P3.1 — LOW: Refactor workflow complexity (long-term maintainability)
-- **Goal**: Reduce cognitive load, enable easier testing
-- **Tasks**:
-  - [ ] Convert complex n8n expressions to JavaScript code nodes
-  - [ ] Extract validation logic into reusable functions
-  - [ ] Add type hints/comments to workflow transformations
-- **Effort**: 3 days (optional, not blocking)
-- **Dependency**: None
-- **Owner**: Backend
-
----
-
-#### P3.2 — LOW: Implement comprehensive logging
-- **Goal**: Debug production issues, trace data flow
-- **Tasks**:
-  - [ ] Set up centralized logging (ELK stack or cloud logging)
-  - [ ] Add structured logging to all workflows (JSON, correlationID)
-  - [ ] Retain n8n logs persistently
-  - [ ] Create debug dashboard (trace M3 → persist → export)
-- **Effort**: 3 days
-- **Dependency**: P1.3 (after ops baseline)
-- **Owner**: Platform/DevOps
-
----
-
-#### P3.3 — LOW: Performance tuning & optimization
-- **Goal**: Prepare for scale (more sources, higher scoring throughput)
-- **Tasks**:
-  - [ ] Profile M3 workflow (which steps are slowest?)
-  - [ ] Optimize data table queries (add indexes, tune pagination)
-  - [ ] Cache M3 normalization logic (if repeated per source)
-  - [ ] Measure end-to-end latency (sources → persist → export)
-  - [ ] Set performance targets (M3 < 10 min, export < 2 min)
-- **Effort**: 4 days
-- **Dependency**: P1.3 (need monitoring to measure)
-- **Owner**: Backend/Platform
-
----
-
 ## Part 4: Risk & Recommendations
 
 ### Deployment Risk Assessment
@@ -555,44 +435,34 @@ Validate → Markdown → Consumers (Telegram + Vault)
 | Backup not tested, restore fails | HIGH | CRITICAL | P1.1 (test restore) |
 | M3 fails silently, no one notices | MEDIUM | HIGH | P1.3 (alerting) |
 | PostgreSQL corrupts, data lost | MEDIUM | CRITICAL | P1.1 (backup) |
-| QA News shows stale data | MEDIUM | MEDIUM | P2.1 (live API) |
+| QA News shows stale data | MEDIUM | MEDIUM | P1.4 (API layer) |
 | Telegram API outage, no fallback channel | LOW | MEDIUM | P1.3 (add fallback) |
 
 ### Go/No-Go Criteria for VPS Migration
 
-**Must Complete Before Migration**:
+**Must Complete for P1.0**:
 - [ ] P1.1 — Backup & restore tested end-to-end
 - [ ] P1.2 — All env vars parameterized, tested on VPS-like path setup
 - [ ] P1.3 — Operational monitoring in place (can detect M3 failures)
 - [ ] P1.4 — API layer working (M4 complete)
 - [ ] P1.5 — Deployment docs written and validated
 
-**Nice to Have Before Migration**:
-- P2.1 — QA News live updates (can use export-based approach initially)
-- P2.2/P2.3 — M5/M6 design finalized (not blocking)
-- P3.x — Logging/performance (defer to post-launch optimization)
-
-### Recommendations for Next Phase
+### Recommendations for P1.0 Completion
 
 1. **Immediately** (Next 1-2 days):
    - Execute P1.2 (parameterize paths) — VPS migration is blocked without this
    - Start P1.1 (backup setup) — critical for data safety
-   - Plan P1.3 (monitoring) — enables confidence in Phase 2
+   - Plan P1.3 (monitoring) — enables production confidence
 
 2. **Week 2-3** (P1 Completion):
    - Complete P1.1, P1.3, P1.5 in parallel
    - Complete P1.4 (API) — enables M4 to be truly complete
    - Validate all docs against local environment
 
-3. **Week 3-4** (VPS Readiness):
+3. **Week 3-4** (Production Readiness):
    - Test full deployment on VPS-like environment
    - Perform restore procedure test
-   - Green-light migration decision
-
-4. **Post-Migration**:
-   - Operationalize M4 QA News updates (P2.1)
-   - Begin M5 design & implementation
-   - Revisit performance tuning (P3.3)
+   - Green-light for VPS migration
 
 ---
 
@@ -603,9 +473,8 @@ PAIOS architecture is **fundamentally sound** and ready for production deploymen
 **Critical Path to Production**:
 1. **P1.1-P1.5** must be completed before VPS migration (2 weeks)
 2. **M4 API layer** completes the knowledge layer (P1.4, 4 days)
-3. **M5-M6** can proceed in parallel after Phase 1
 
-**Confidence Level**: **80%** for migration by end of July 2026, assuming Phase 1 completion.
+**Confidence Level**: **80%** for production readiness by end of July 2026, assuming P1.0 completion.
 
 ---
 

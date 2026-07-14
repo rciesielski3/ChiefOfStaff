@@ -13,7 +13,6 @@ Build a Personal AI Operating System that continuously collects, normalizes, sco
 ## Success Metrics
 - M3: Daily Brief delivers before 08:00 UTC, every weekday
 - M4: QA News live and updated daily
-- M5+: Retention and expansion into Weekly/Monthly/Search
 - P1.0: System reproducible via restore procedure
 
 ## Current Status
@@ -21,5 +20,4 @@ Build a Personal AI Operating System that continuously collects, normalizes, sco
 - M2 (Daily Brief MVP): ✅ Complete
 - M3 (Reddit Radar): ✅ Complete
 - M4 (Knowledge Layer + QA News): ✅ Complete, operationalizing
-- M5-M6: Planned (Weekly, Monthly, VPS)
 - P1.0 (Production Readiness): In progress

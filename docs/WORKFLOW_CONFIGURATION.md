@@ -15,7 +15,7 @@ The M4 workflows (persist-articles and export-latest-news) require environment v
 
 ### VAULT_PATH
 - **Purpose**: Path to the vault/knowledge base directory
-- **Used by**: Future workflows that require vault access
+- **Used by**: Vault persistence and archival workflows
 - **Example value**: `/Users/rafalciesielski/Developer/ChiefofStaff/vault`
 - **Description**: Location of article vault or knowledge base storage
 
