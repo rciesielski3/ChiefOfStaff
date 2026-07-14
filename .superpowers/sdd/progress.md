@@ -28,3 +28,9 @@ Task 5: Test restore procedure
 - Baseline: c3b35f4
 - Current: 5040923 (Task 3)
 - Blockers Fixed: 3/5 tasks complete
+
+Task 4: Import M4 workflows and verify locally
+- Commits: 210271f (import), ae0e7b9c3c28ab0b9 (fix/verify)
+- Status: COMPLETE (spec ✅, quality ✅ with note on persistence artifacts)
+- Note: Workflows imported, tested, verified working; no git artifacts but operationalization confirmed
+
