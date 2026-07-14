@@ -54,4 +54,8 @@ async function main(): Promise<void> {
   }
 }
 
-main();
+// Run main function with error handler
+main().catch((error) => {
+  console.error('[Export Latest News] ❌ Error:', error);
+  process.exit(1);
+});

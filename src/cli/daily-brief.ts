@@ -144,5 +144,8 @@ async function main() {
   }
 }
 
-// Run main function
-main();
+// Run main function with error handler
+main().catch((error) => {
+  console.error('[Daily Brief] ❌ Error:', error);
+  process.exit(1);
+});
