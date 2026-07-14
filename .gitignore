@@ -64,12 +64,8 @@ secrets/
 qa-news-updates.zip
 qa-news.zip
 
-# Generated documentation from other phases
-PAIOS*.md
-*Roadmap*.md
-*Review*.md
-*Vault*.md
-*Vision*.md
-*Handover*.md
-*Knowledge*.md
-M1-*.md
+# Generated documentation from other phases (root-level files only)
+/PAIOS*.md
+/PAIOS-*.md
+/M1-*.md
+# Note: Do NOT ignore files in docs/ subdirectory — this pattern only applies to root
