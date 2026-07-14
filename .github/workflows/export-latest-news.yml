@@ -23,11 +23,17 @@ jobs:
       - name: Export Latest News
         run: npx ts-node src/cli/export-latest-news.ts
 
-      - name: Push to QA News
+      - name: Commit latest.json
         run: |
           cd qa-news
           git config user.name "PAIOS Bot"
           git config user.email "bot@paios.local"
           git add public/latest.json
           git commit -m "chore: update latest.json from knowledge layer" || true
-          git push
+
+      - name: Push to remote (with auth)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
+          git push origin HEAD:main
