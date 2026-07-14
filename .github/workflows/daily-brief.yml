@@ -1,15 +1,5 @@
 name: Daily Brief
 
-# RACE CONDITION ACKNOWLEDGEMENT:
-# This workflow runs at 08:00 UTC, 5 minutes before export-latest-news.yml (08:05 UTC).
-# The 5-minute gap provides a buffer to allow the Daily Brief to complete and push
-# its changes before export-latest-news begins. However, a race condition exists if:
-# 1. Daily Brief takes longer than 5 minutes to complete
-# 2. Both workflows push conflicting changes simultaneously
-#
-# Current mitigation: The 5-minute delay provides time for completion.
-# This is a known limitation and should be monitored for in production logs.
-
 on:
   schedule:
     - cron: '0 8 * * *'  # 08:00 UTC daily
