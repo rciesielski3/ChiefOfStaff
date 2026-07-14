@@ -1,5 +1,24 @@
 name: Daily Brief
 
+# RACE CONDITION ACKNOWLEDGEMENT:
+# This workflow runs at 08:00 UTC daily and commits changes to the main repository.
+# The export-latest-news.yml workflow depends on this workflow completing within
+# 5 minutes (export-latest-news starts at 08:05 UTC).
+#
+# Known race condition: If Daily Brief takes longer than 5 minutes or encounters
+# network issues, the dependent export workflow may start before this workflow completes,
+# resulting in:
+# - Export workflow reading stale data from the knowledge layer
+# - Merge conflicts when export-latest-news.yml attempts concurrent pushes to qa-news
+# - Potential data inconsistencies between canonical articles and exported news
+#
+# Current mitigation: Auth-based push handling minimizes conflicts. The 5-minute
+# buffer between workflow starts provides time for completion. Workflow execution time
+# should be monitored in production to ensure consistent completion within the buffer.
+# Consider implementing:
+# - Workflow sequencing via gh workflow run --wait (future enhancement)
+# - Locking mechanism for canonical articles writes (future enhancement)
+
 on:
   schedule:
     - cron: '0 8 * * *'  # 08:00 UTC daily
