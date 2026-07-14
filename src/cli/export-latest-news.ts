@@ -16,40 +16,100 @@ import { NdJsonArticleStore } from '../business-logic/article-store';
  * 3. Write JSON output to qa-news/public/latest.json
  * 4. Log status and exit
  */
+
+// Helper function for structured logging with timestamps
+function logStructured(stage: string, data: Record<string, any>): void {
+  const timestamp = new Date().toISOString();
+  const fields = Object.entries(data)
+    .map(([key, value]) => `${key}=${JSON.stringify(value)}`)
+    .join(' ');
+  console.log(`[${timestamp}] [${stage}] ${fields}`);
+}
+
 async function main(): Promise<void> {
+  const workflowStartTime = Date.now();
   try {
+    const startTime = new Date().toISOString();
+    logStructured('WORKFLOW_START', { timestamp: startTime });
+
     // Resolve paths relative to project root
     const projectRoot = path.resolve(__dirname, '../..');
     const storeFilePath = path.join(projectRoot, 'data/canonical_articles.ndjson');
     const outputPath = path.join(projectRoot, 'qa-news/public/latest.json');
+    logStructured('PATHS_RESOLVED', {
+      projectRoot,
+      storeFilePath,
+      outputPath
+    });
 
     // Create article store
+    const storeCreateTime = Date.now();
+    logStructured('STORE_INIT_START', { storeFilePath });
     const store = new NdJsonArticleStore(storeFilePath);
+    const storeCreateDuration = Date.now() - storeCreateTime;
+    logStructured('STORE_INIT_COMPLETE', { durationMs: storeCreateDuration });
 
     // Export latest 50 articles
-    const latest = await exportLatestNews(store, 50);
+    const exportStartTime = Date.now();
+    const exportLimit = 50;
+    logStructured('EXPORT_START', { limit: exportLimit });
+    const latest = await exportLatestNews(store, exportLimit);
+    const exportDuration = Date.now() - exportStartTime;
+    logStructured('EXPORT_COMPLETE', {
+      articleCount: latest.items.length,
+      exportDate: latest.date,
+      durationMs: exportDuration
+    });
 
     // Validation: Detect empty store (CRITICAL #3)
     if (latest.items.length === 0) {
       console.warn('[Export Latest News] ⚠️  WARNING: Export produced 0 articles');
       console.warn('[Export Latest News] Store may be empty or not yet populated by daily-brief');
       console.warn('[Export Latest News] Check: data/canonical_articles.ndjson exists and has content');
+      logStructured('VALIDATION_FAILED', {
+        reason: 'empty_export',
+        expectedMinArticles: 1,
+        actualArticles: 0
+      });
       process.exit(1);  // Fail workflow so operators notice
     }
 
     // Ensure output directory exists
+    const mkdirStartTime = Date.now();
     const outputDir = path.dirname(outputPath);
+    logStructured('MKDIR_START', { outputDir });
     await fs.mkdir(outputDir, { recursive: true });
+    const mkdirDuration = Date.now() - mkdirStartTime;
+    logStructured('MKDIR_COMPLETE', { durationMs: mkdirDuration });
 
     // Write JSON export
+    const writeStartTime = Date.now();
+    logStructured('WRITE_START', {
+      outputPath,
+      articleCount: latest.items.length
+    });
     await fs.writeFile(outputPath, JSON.stringify(latest, null, 2));
+    const writeDuration = Date.now() - writeStartTime;
+    logStructured('WRITE_COMPLETE', { durationMs: writeDuration });
 
     // Log status
     console.log(`✓ Exported ${latest.items.length} articles to ${outputPath}`);
     console.log(`  Date: ${latest.date}`);
     console.log(`  Updated: ${latest.updatedAt}`);
+
+    const totalDuration = Date.now() - workflowStartTime;
+    logStructured('WORKFLOW_COMPLETE', {
+      totalDurationMs: totalDuration,
+      articleCount: latest.items.length,
+      outputPath
+    });
   } catch (error) {
+    const totalDuration = Date.now() - workflowStartTime;
     console.error('✗ Export failed:', error instanceof Error ? error.message : error);
+    logStructured('WORKFLOW_ERROR', {
+      error: error instanceof Error ? error.message : String(error),
+      totalDurationMs: totalDuration
+    });
     process.exit(1);
   }
 }
@@ -57,5 +117,8 @@ async function main(): Promise<void> {
 // Run main function with error handler
 main().catch((error) => {
   console.error('[Export Latest News] ❌ Error:', error);
+  logStructured('WORKFLOW_ERROR_UNCAUGHT', {
+    error: error instanceof Error ? error.message : String(error)
+  });
   process.exit(1);
 });
