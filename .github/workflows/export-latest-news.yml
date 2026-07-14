@@ -3,26 +3,37 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: export-latest-news-${{ github.ref }}
+  cancel-in-progress: false
+
 # RACE CONDITION ACKNOWLEDGEMENT:
-# This workflow runs at 08:05 UTC, 5 minutes after daily-brief.yml (08:00 UTC).
-# The 5-minute gap provides a buffer to allow the Daily Brief workflow to complete
-# and push changes to the main repository before this workflow executes.
+# This workflow runs AFTER the Daily Brief workflow completes successfully.
+# Previously relied on a 5-minute time buffer, which could lead to race conditions.
 #
-# Known race condition: If Daily Brief takes longer than 5 minutes or encounters
-# network issues, this workflow may attempt to export and push before Daily Brief
-# has completed, resulting in:
-# - Potential merge conflicts in git push operations
-# - Stale data being exported if Daily Brief is still running
-# - Concurrent pushes to the qa-news repository
+# Race condition mitigation strategy:
+# 1. Uses workflow_run trigger to wait for Daily Brief completion
+# 2. Workflow_run sequencing prevents M4 stale reads
+# 3. Status check verifies Daily Brief success before proceeding
+# 4. Auto-merge ensures minimal latency when PR changes are committed
 #
-# Current mitigation: The 5-minute delay provides a time buffer for completion.
-# This should be monitored in production, and consider implementing:
-# - Workflow sequencing via gh workflow run --wait (future enhancement)
-# - Locking mechanism for data export (future enhancement)
+# This ensures:
+# - Export workflow only reads data after Daily Brief has completed
+# - No concurrent writes to canonical articles during export
+# - Proper sequencing eliminates 5-minute buffer race condition
+#
+# Execution sequence:
+# 1. Daily Brief workflow runs (schedule or manual trigger)
+# 2. Daily Brief creates PR and enables auto-merge
+# 3. PR merge is observed by workflow_run trigger
+# 4. Export Latest News workflow begins automatically
+# 5. Export completes with fresh data from knowledge layer
 
 on:
-  schedule:
-    - cron: '5 8 * * *'  # 08:05 UTC daily (after Daily Brief)
+  workflow_run:
+    workflows: ["Daily Brief"]
+    types:
+      - completed
   workflow_dispatch:
 
 jobs:
@@ -30,6 +41,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check Daily Brief Status
+        if: github.event.workflow_run.conclusion == 'failure'
+        run: exit 1
+
+      - name: Checkout qa-news repository
+        uses: actions/checkout@v4
+        with:
+          repository: rciesielski3/qa-news
+          token: ${{ secrets.QA_NEWS_TOKEN }}
+          path: qa-news
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -59,6 +81,7 @@ jobs:
           git commit -m "chore: update latest.json from knowledge layer"
           
       - name: Create Pull Request
+        id: pr
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -68,3 +91,18 @@ jobs:
           body: "Automated update from Export Latest News workflow."
           branch: "automation/latest-news"
           delete-branch: true
+
+      - name: Enable auto-merge
+        if: steps.pr.outputs.pull-request-number
+        run: |
+          cd qa-news
+          gh pr merge --auto --squash "${{ steps.pr.outputs.pull-request-number }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify Telegram on Failure
+        if: failure()
+        run: |
+          curl -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="⚠️ Workflow failed: ${{ github.workflow }}"

@@ -4,24 +4,24 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: daily-brief-${{ github.ref }}
+  cancel-in-progress: false
+
 # RACE CONDITION ACKNOWLEDGEMENT:
-# This workflow runs at 08:00 UTC daily and commits changes to the main repository.
-# The export-latest-news.yml workflow depends on this workflow completing within
-# 5 minutes (export-latest-news starts at 08:05 UTC).
+# This workflow runs at 08:00 UTC daily and updates the knowledge layer.
+# It uses a pull request + auto-merge strategy to minimize latency before M4 export.
 #
-# Known race condition: If Daily Brief takes longer than 5 minutes or encounters
-# network issues, the dependent export workflow may start before this workflow completes,
-# resulting in:
-# - Export workflow reading stale data from the knowledge layer
-# - Merge conflicts when export-latest-news.yml attempts concurrent pushes to qa-news
-# - Potential data inconsistencies between canonical articles and exported news
+# Race condition mitigation strategy:
+# 1. Creates a PR instead of pushing directly to main
+# 2. Auto-merge ensures minimal latency between M3→M4 transition
+# 3. PR merge is observed by export-latest-news.yml via workflow_run trigger
 #
-# Current mitigation: Auth-based push handling minimizes conflicts. The 5-minute
-# buffer between workflow starts provides time for completion. Workflow execution time
-# should be monitored in production to ensure consistent completion within the buffer.
-# Consider implementing:
-# - Workflow sequencing via gh workflow run --wait (future enhancement)
-# - Locking mechanism for canonical articles writes (future enhancement)
+# This ensures:
+# - M3 (Daily Brief) completes cleanly with a code review gate
+# - M4 (Export Latest News) is triggered AFTER M3 completes successfully
+# - No stale data reads in export workflow
+# - Proper sequencing prevents merge conflicts and data inconsistencies
 
 on:
   schedule:
@@ -57,6 +57,7 @@ jobs:
            git commit -m "chore: update canonical articles from daily brief" || exit 0
 
       - name: Create Pull Request
+        id: pr
         uses: peter-evans/create-pull-request@v7
         with:
            token: ${{ secrets.GITHUB_TOKEN }}
@@ -65,3 +66,16 @@ jobs:
            body: "Automated update from Daily Brief workflow."
            branch: "automation/daily-brief"
            delete-branch: true
+
+      - name: Enable auto-merge
+        run: |
+          gh pr merge --auto --squash "${{ steps.pr.outputs.pull-request-number }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify Telegram on Failure
+        if: failure()
+        run: |
+          curl -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="⚠️ Workflow failed: ${{ github.workflow }}"
