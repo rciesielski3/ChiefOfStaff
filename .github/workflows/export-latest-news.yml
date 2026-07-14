@@ -35,5 +35,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
+          cd qa-news
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/rciesielski3/qa-news
           git push origin HEAD:main
