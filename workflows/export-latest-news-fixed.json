@@ -127,77 +127,77 @@
     }
   ],
   "connections": {
-    "be35072c-5004-4fbd-9b35-03b522f16b79": {
+    "Daily Schedule (08:05 UTC)": {
       "main": [
         [
           {
-            "node": "cd060070-412d-496f-83e5-39e690e4f110",
+            "node": "Query: Top Articles (score >= 50)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "cd060070-412d-496f-83e5-39e690e4f110": {
+    "Query: Top Articles (score >= 50)": {
       "main": [
         [
           {
-            "node": "e6e5a9bb-4925-423b-a7f4-f26ff22b5fe0",
+            "node": "Transform to Export Schema",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "e6e5a9bb-4925-423b-a7f4-f26ff22b5fe0": {
+    "Transform to Export Schema": {
       "main": [
         [
           {
-            "node": "06e1ad6a-be1d-4f22-be03-1d9cea7ea6c9",
+            "node": "Build Export Object",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "06e1ad6a-be1d-4f22-be03-1d9cea7ea6c9": {
+    "Build Export Object": {
       "main": [
         [
           {
-            "node": "6f816d59-0651-42df-8569-167dc94bb2a6",
+            "node": "Convert to JSON String",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "6f816d59-0651-42df-8569-167dc94bb2a6": {
+    "Convert to JSON String": {
       "main": [
         [
           {
-            "node": "9058cf06-f621-4b4f-8708-ce4c47aa5346",
+            "node": "Write latest.json (parameterized path)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "9058cf06-f621-4b4f-8708-ce4c47aa5346": {
+    "Write latest.json (parameterized path)": {
       "main": [
         [
           {
-            "node": "8c340fe8-3470-460f-bb81-2e73fe016b34",
+            "node": "Git Commit Export",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "8c340fe8-3470-460f-bb81-2e73fe016b34": {
+    "Git Commit Export": {
       "main": [
         [
           {
-            "node": "fe308349-0a38-4b9e-bf0d-fb67672d4267",
+            "node": "Log Export Complete",
             "type": "main",
             "index": 0
           }
@@ -210,5 +210,6 @@
   "tags": [],
   "pinned": false,
   "triggerCount": 0,
-  "versionId": "48334b6d-358b-46fa-a174-dc5acec20623"
+  "versionId": "48334b6d-358b-46fa-a174-dc5acec20623",
+  "id": "b5356a1328a048a2b425"
 }

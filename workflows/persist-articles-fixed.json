@@ -1,0 +1,361 @@
+{
+  "name": "Persist Articles to Knowledge Layer",
+  "description": "Insert/update articles from M3 pipeline into canonical_articles Data Table with deduplication",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        0
+      ],
+      "id": "368a328e-a34b-4410-85a2-daab6e3b1a44",
+      "name": "Manual Trigger (for testing)"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Normalize title for deduplication\nfunction normalizeTitle(title) {\n  return title\n    .toLowerCase()\n    .trim()\n    .replace(/[^a-z0-9-]/g, '-')\n    .replace(/-+/g, '-')\n    .replace(/-$/, '');\n}\n\n// Infer category from content\nfunction inferCategory(article) {\n  const text = `${article.title || ''} ${article.content || ''}`.toLowerCase();\n  \n  if (['test', 'testing', 'qa', 'automation', 'cypress', 'playwright', 'selenium'].some(w => text.includes(w))) {\n    return 'test-automation';\n  }\n  if (['ai', 'llm', 'gpt', 'claude', 'agent', 'prompt', 'generative'].some(w => text.includes(w))) {\n    return 'ai';\n  }\n  if (['architecture', 'deploy', 'performance', 'scaling', 'infrastructure', 'kubernetes'].some(w => text.includes(w))) {\n    return 'engineering';\n  }\n  if (['tool', 'script', 'library', 'framework', 'npm', 'package'].some(w => text.includes(w))) {\n    return 'tooling';\n  }\n  \n  return 'qa-practice';\n}\n\n// Generate UUID-like ID (simplified for n8n)\nfunction generateId() {\n  return 'article-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);\n}\n\nconst article = $json;\n\nreturn {\n  json: {\n    // Existing fields from M3\n    ...article,\n    \n    // Generated/transformed fields for Knowledge Layer\n    id: article.id || generateId(),\n    title: article.title || 'Untitled',\n    summary: (article.content || article.contentSnippet || '').substring(0, 1000),\n    url: article.url || article.link || '',\n    source: article.source || article.feed?.title || 'Unknown',\n    category: article.category || inferCategory(article),\n    publishedAt: article.published_at || article.isoDate || article.pubDate || new Date().toISOString(),\n    tags: Array.isArray(article.tags) ? article.tags.join(',') : (article.tags || ''),\n    addedAt: new Date().toISOString(),\n    score: article.score || 50,\n    seenCount: 1,\n    dedupKey: (article.source || 'Unknown') + '|' + normalizeTitle(article.title || 'untitled')\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        0
+      ],
+      "id": "94c42fae-bf72-4f4b-bf54-173f14d757e4",
+      "name": "Map Article Fields to Schema"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "dataTableId": {
+          "__rl": true,
+          "value": "550e8400-e29b-41d4-a716-446655440001",
+          "mode": "list",
+          "cachedResultName": "canonical_articles"
+        },
+        "query": "SELECT id, dedupKey, seenCount, score FROM data_table_row WHERE dataTableId = '550e8400-e29b-41d4-a716-446655440001' AND jsonData->>'dedupKey' = $1 AND (jsonData->>'addedAt')::timestamp > now() - interval '30 days' LIMIT 1"
+      },
+      "type": "n8n-nodes-base.data",
+      "typeVersion": 3.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "276a9c91-335b-489d-a61a-ee0bc05459d6",
+      "name": "Check for Duplicate (30-day window)"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Check if article was found in last 30 days\nconst isDuplicate = $input.all().length > 0;\nconst existingRow = isDuplicate ? $input.all()[0] : null;\n\nreturn {\n  json: {\n    isDuplicate: isDuplicate,\n    existingId: existingRow?.id || null,\n    existingSeenCount: existingRow?.seenCount || 0,\n    existingScore: existingRow?.score || null\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "id": "ee1a360c-5710-4d3c-90ca-6ef45e985fe1",
+      "name": "Evaluate Duplicate Status"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// For UPDATE path: increment seenCount and update score\nconst article = $json;\nconst isDuplicate = $json.isDuplicate;\n\nif (!isDuplicate) {\n  return null; // Skip for new articles\n}\n\nreturn {\n  json: {\n    existingId: article.existingId,\n    newSeenCount: (article.existingSeenCount || 0) + 1,\n    newScore: Math.max(article.existingScore || 0, article.score || 50)\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        -200
+      ],
+      "id": "8b57c8e0-f2fc-4b78-94d6-47ab3351e02b",
+      "name": "Prepare for UPDATE"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// For INSERT path: prepare new article\nconst article = $json;\nconst isDuplicate = $json.isDuplicate;\n\nif (isDuplicate) {\n  return null; // Skip for duplicates\n}\n\nreturn article;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        200
+      ],
+      "id": "4b964471-7558-49cc-8224-1a98bbbfe1cc",
+      "name": "Prepare for INSERT"
+    },
+    {
+      "parameters": {
+        "resource": "data",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "550e8400-e29b-41d4-a716-446655440001",
+          "mode": "list",
+          "cachedResultName": "canonical_articles"
+        },
+        "rowId": "={{ $json.existingId }}",
+        "columns": {
+          "mappings": [
+            {
+              "columnId": "seenCount",
+              "columnName": "seenCount",
+              "value": "={{ $json.newSeenCount }}"
+            },
+            {
+              "columnId": "score",
+              "columnName": "score",
+              "value": "={{ $json.newScore }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.data",
+      "typeVersion": 3.1,
+      "position": [
+        600,
+        -200
+      ],
+      "id": "d31574e3-c0b4-4f8a-8f57-b3b0887a834f",
+      "name": "UPDATE: Increment seenCount & score",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "resource": "data",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "550e8400-e29b-41d4-a716-446655440001",
+          "mode": "list",
+          "cachedResultName": "canonical_articles"
+        },
+        "columns": {
+          "mappings": [
+            {
+              "columnId": "id",
+              "columnName": "id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "columnId": "title",
+              "columnName": "title",
+              "value": "={{ $json.title }}"
+            },
+            {
+              "columnId": "summary",
+              "columnName": "summary",
+              "value": "={{ $json.summary }}"
+            },
+            {
+              "columnId": "url",
+              "columnName": "url",
+              "value": "={{ $json.url }}"
+            },
+            {
+              "columnId": "source",
+              "columnName": "source",
+              "value": "={{ $json.source }}"
+            },
+            {
+              "columnId": "category",
+              "columnName": "category",
+              "value": "={{ $json.category }}"
+            },
+            {
+              "columnId": "publishedAt",
+              "columnName": "publishedAt",
+              "value": "={{ $json.publishedAt }}"
+            },
+            {
+              "columnId": "tags",
+              "columnName": "tags",
+              "value": "={{ $json.tags }}"
+            },
+            {
+              "columnId": "addedAt",
+              "columnName": "addedAt",
+              "value": "={{ $json.addedAt }}"
+            },
+            {
+              "columnId": "score",
+              "columnName": "score",
+              "value": "={{ $json.score }}"
+            },
+            {
+              "columnId": "seenCount",
+              "columnName": "seenCount",
+              "value": "={{ $json.seenCount }}"
+            },
+            {
+              "columnId": "dedupKey",
+              "columnName": "dedupKey",
+              "value": "={{ $json.dedupKey }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.data",
+      "typeVersion": 3.1,
+      "position": [
+        600,
+        200
+      ],
+      "id": "488dacc2-042e-4749-9c09-919825fe606b",
+      "name": "INSERT: New article to canonical_articles",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Log result (INSERT or UPDATE)\nconst article = $json;\nconst operation = article.existingId ? 'updated' : 'inserted';\nconst title = article.title || article.newTitle || 'Unknown';\nconst source = article.source || 'Unknown';\n\nreturn {\n  json: {\n    status: operation,\n    operation: operation === 'updated' ? 'updated (seenCount++, score adjusted)' : 'inserted (new)',\n    id: article.id || article.existingId,\n    title: title,\n    source: source,\n    dedupKey: article.dedupKey,\n    score: article.score || article.newScore\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "id": "39dc70df-6c04-4453-928c-8b61760f963d",
+      "name": "Log INSERT/UPDATE Result"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "dataTableId": {
+          "__rl": true,
+          "value": "550e8400-e29b-41d4-a716-446655440001",
+          "mode": "list",
+          "cachedResultName": "canonical_articles"
+        },
+        "query": "SELECT id, title, source, score, seenCount, publishedAt FROM canonical_articles ORDER BY addedAt DESC LIMIT 10"
+      },
+      "type": "n8n-nodes-base.data",
+      "typeVersion": 3.1,
+      "position": [
+        1000,
+        0
+      ],
+      "id": "be32d518-6f84-49cc-a837-e69b87eb8056",
+      "name": "Verify: Last 10 Articles"
+    }
+  ],
+  "connections": {
+    "Manual Trigger (for testing)": {
+      "main": [
+        [
+          {
+            "node": "Map Article Fields to Schema",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Article Fields to Schema": {
+      "main": [
+        [
+          {
+            "node": "Check for Duplicate (30-day window)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Duplicate (30-day window)": {
+      "main": [
+        [
+          {
+            "node": "Evaluate Duplicate Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Duplicate Status": {
+      "main": [
+        [
+          {
+            "node": "Prepare for UPDATE",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare for INSERT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare for UPDATE": {
+      "main": [
+        [
+          {
+            "node": "UPDATE: Increment seenCount & score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare for INSERT": {
+      "main": [
+        [
+          {
+            "node": "INSERT: New article to canonical_articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UPDATE: Increment seenCount & score": {
+      "main": [
+        [
+          {
+            "node": "Log INSERT/UPDATE Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "INSERT: New article to canonical_articles": {
+      "main": [
+        [
+          {
+            "node": "Log INSERT/UPDATE Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log INSERT/UPDATE Result": {
+      "main": [
+        [
+          {
+            "node": "Verify: Last 10 Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "tags": [],
+  "pinned": false,
+  "triggerCount": 0,
+  "versionId": "8df477a7-0437-4284-8222-b17d84bd8150",
+  "id": "e5f466dfed924326bb50"
+}
