@@ -106,6 +106,20 @@ docker-compose up -d
 - **Local Development:** `false` (easier testing)
 - **VPS:** `false` (use reverse proxy authentication)
 
+#### N8N_API_GATEWAY_AUTH (Hardcoded)
+- **Type:** String
+- **Value:** `none` (hardcoded in docker-compose.yml line 37)
+- **Required:** No (not user-configurable for MVP)
+- **Description:** API gateway authentication mode
+- **Note:** This is hardcoded in docker-compose.yml and cannot be overridden via .env for MVP. To change this in the future, update docker-compose.yml
+
+#### N8N_ENABLE_AUTHORIZATION (Hardcoded)
+- **Type:** Boolean
+- **Value:** `false` (hardcoded in docker-compose.yml line 38)
+- **Required:** No (not user-configurable for MVP)
+- **Description:** Enable n8n authorization/permission system
+- **Note:** This is hardcoded in docker-compose.yml and cannot be overridden via .env for MVP. To change this in the future, update docker-compose.yml
+
 #### N8N_DB_TYPE
 - **Type:** String (postgres or sqlite)
 - **Required:** No (default: sqlite)
@@ -165,6 +179,14 @@ docker-compose up -d
 - **Required:** Yes (if using postgres container)
 - **Description:** PostgreSQL container environment
 - **Must match:** N8N_DB_* values
+
+#### POSTGRES_HOST
+- **Type:** String (hostname or IP)
+- **Required:** No (default: postgres)
+- **Description:** PostgreSQL server hostname for external connections
+- **Local Development:** `postgres` (Docker service name)
+- **VPS:** `postgres` (Docker service name) or external hostname if using managed database
+- **Note:** This variable is used when connecting to PostgreSQL from other services or tools (not directly by n8n, which uses N8N_DB_HOST)
 
 ### Telegram Integration
 
