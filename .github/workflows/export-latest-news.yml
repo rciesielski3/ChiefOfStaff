@@ -1,0 +1,33 @@
+name: Export Latest News
+
+on:
+  schedule:
+    - cron: '5 8 * * *'  # 08:05 UTC daily (after Daily Brief)
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Export Latest News
+        run: npx ts-node src/cli/export-latest-news.ts
+
+      - name: Push to QA News
+        run: |
+          cd qa-news
+          git config user.name "PAIOS Bot"
+          git config user.email "bot@paios.local"
+          git add public/latest.json
+          git commit -m "chore: update latest.json from knowledge layer" || true
+          git push
