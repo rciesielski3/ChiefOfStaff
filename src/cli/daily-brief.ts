@@ -5,6 +5,9 @@ import { normalizeArticle } from '../business-logic/normalize-article';
 import { scoreArticles, DEFAULT_CONFIG } from '../business-logic/score-article';
 import { generateBrief, generatePlainTextBrief } from '../business-logic/generate-brief';
 import { sendTelegram, sendTelegramMock } from '../business-logic/telegram';
+import { NdJsonArticleStore } from '../business-logic/article-store';
+import { persistArticles } from '../business-logic/persist-articles';
+import path from 'path';
 
 /**
  * RSS sources to fetch from
@@ -102,6 +105,12 @@ async function main() {
     console.log('[Daily Brief] Generating markdown brief...');
     const markdownBrief = generateBrief(scoredArticles, briefCount);
     console.log(`[Daily Brief] Generated brief (${markdownBrief.length} chars)\n`);
+
+    // Persist articles to canonical store (CRITICAL FIX #1)
+    const storeFilePath = path.join(process.cwd(), 'data/canonical_articles.ndjson');
+    const store = new NdJsonArticleStore(storeFilePath);
+    await persistArticles(scoredArticles, store);
+    console.log(`[Daily Brief] Persisted ${scoredArticles.length} articles to store`);
 
     // Send to Telegram
     console.log('[Daily Brief] Sending to Telegram...');
