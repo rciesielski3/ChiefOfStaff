@@ -1,4 +1,7 @@
 name: Export Latest News
+permissions:
+  contents: write
+  pull-requests: write
 
 # RACE CONDITION ACKNOWLEDGEMENT:
 # This workflow runs at 08:05 UTC, 5 minutes after daily-brief.yml (08:00 UTC).
@@ -42,16 +45,19 @@ jobs:
 
       - name: Commit latest.json
         run: |
-          cd qa-news
-          git config user.name "PAIOS Bot"
-          git config user.email "bot@paios.local"
-          git add public/latest.json
-          git commit -m "chore: update latest.json from knowledge layer" || true
+           cd qa-news
+           git config user.name "PAIOS Bot"
+           git config user.email "bot@paios.local"
+           git add public/latest.json
+           git commit -m "chore: update latest.json from knowledge layer" || exit 0
 
-      - name: Push to remote (with auth)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cd qa-news
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/rciesielski3/qa-news
-          git push origin HEAD:main
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: qa-news
+          commit-message: "chore: update latest.json from knowledge layer"
+          title: "chore: update latest.json"
+          body: "Automated update from Export Latest News workflow."
+          branch: "automation/latest-news"
+          delete-branch: true
