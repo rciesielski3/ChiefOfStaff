@@ -44,13 +44,20 @@ jobs:
         run: npx ts-node src/cli/export-latest-news.ts
 
       - name: Commit latest.json
-        run: |
-           cd qa-news
-           git config user.name "PAIOS Bot"
-           git config user.email "bot@paios.local"
-           git add public/latest.json
-           git commit -m "chore: update latest.json from knowledge layer" || exit 0
+       run: |
+          cd qa-news
+          git config user.name "PAIOS Bot"
+          git config user.email "bot@paios.local"
 
+          git add public/latest.json
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          
+          git commit -m "chore: update latest.json from knowledge layer"
+          
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
