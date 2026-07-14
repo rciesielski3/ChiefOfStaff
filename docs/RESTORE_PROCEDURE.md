@@ -78,17 +78,17 @@ Start the PAIOS system using Docker Compose:
 
 ```bash
 # From the paios directory
-docker-compose up -d
+docker compose up -d
 
 # Verify all containers are running
-docker-compose ps
+docker compose ps
 ```
 
 Expected output: All containers showing "Up" status
 - n8n: The workflow automation engine
 - postgres: Database for n8n and vault storage
-- vault: Git-based document storage
-- Any other configured services
+
+**Note:** The current MVP deployment (verified 2026-07-14) does not include a vault service. Vault integration (git-based document storage) can be added in future iterations if needed.
 
 ### Step 5: Import n8n Workflows
 
@@ -98,9 +98,11 @@ Access n8n and import workflows:
 2. Log in with your n8n credentials (or set them up if first time)
 3. Import workflows from the repository:
    ```bash
-   # Copy workflow files to n8n storage location
-   docker-compose exec n8n mkdir -p /home/node/.n8n/workflows
-   docker-compose cp workflows/. n8n:/home/node/.n8n/workflows/
+   # Create workflows directory in n8n container
+   docker compose exec n8n mkdir -p /home/node/.n8n/workflows
+   
+   # Copy workflow JSON files into n8n container
+   docker cp workflows/*.json n8n:/home/node/.n8n/workflows/
    
    # Or use n8n UI to import: Settings > Import Workflows
    ```
@@ -115,18 +117,27 @@ Access n8n and import workflows:
 Verify that all core functions are operational:
 
 ```bash
-# Check Telegram connectivity
-# Send a test message from n8n workflow UI
-# Expected: Message appears in your Telegram chat
-
-# Check vault commits
-docker-compose exec vault git log --oneline | head -5
-
 # Verify database connectivity
-docker-compose exec postgres psql -U paios -c "\dt"
+docker compose exec postgres psql -U paios -d paios -c "\dt"
 
 # Check n8n logs for errors
-docker-compose logs -f n8n | head -20
+docker compose logs n8n | tail -30
+
+# Verify n8n API is responsive
+curl -s http://localhost:5678 | head -c 100
+
+# Check database table count (should be 100+)
+docker compose exec postgres psql -U paios -d paios -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public';"
+
+# Verify latest.json export file exists
+test -f qa-news/public/latest.json && echo "✓ latest.json exists" || echo "✗ latest.json not found"
+
+# Optional: Check vault commits (only if vault service is deployed)
+# docker compose exec vault git log --oneline | head -5
+
+# Optional: Test Telegram connectivity
+# Send a test message from n8n workflow UI in browser
+# Expected: Message appears in your Telegram chat
 ```
 
 ### Step 7: Enable Scheduled Jobs
@@ -146,27 +157,30 @@ Enable daily scheduled workflows in n8n UI:
 
 Verify the restore is complete:
 
-- [ ] Docker containers running (`docker-compose ps`)
+- [ ] Docker containers running (`docker compose ps`)
 - [ ] n8n accessible at http://localhost:5678
 - [ ] Workflows imported and visible in n8n UI
-- [ ] Telegram test message sent successfully
-- [ ] Vault storage has git history (at least 1 commit)
+- [ ] Database tables created (100+ tables via psql)
+- [ ] latest.json export file exists (qa-news/public/latest.json)
 - [ ] Scheduled jobs are enabled in n8n
-- [ ] No errors in Docker logs (`docker-compose logs`)
-- [ ] All volumes mounted correctly (`docker-compose exec n8n ls -la /data`)
+- [ ] No errors in Docker logs (`docker compose logs`)
+- [ ] All volumes mounted correctly (`docker compose exec n8n ls -la /home/node/.n8n`)
+- [ ] (Optional) Telegram test message sent successfully
+- [ ] (Optional) Vault storage has git history (only if vault service deployed)
 
 ### Rollback (If Something Goes Wrong)
 
 If the restore fails, clean up and start over:
 
 ```bash
-# Stop and remove all containers
-docker-compose down -v
+# Stop and remove all containers and volumes
+docker compose down -v
 
-# Remove Docker volumes to start fresh
-docker volume rm paios_n8n_data paios_postgres_data paios_vault_data
+# Alternatively, remove Docker volumes manually to start fresh
+# docker volume rm paios_n8n_data paios_postgres_data
 
 # Start from Step 4 (Start Docker Compose)
+docker compose up -d
 ```
 
 ---
