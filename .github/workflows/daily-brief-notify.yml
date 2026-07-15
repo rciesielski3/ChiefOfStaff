@@ -1,0 +1,106 @@
+name: Daily Brief Monitoring & Alerts
+
+permissions:
+  actions: read
+  contents: read
+
+on:
+  workflow_run:
+    workflows: ['Daily Brief']
+    types: [completed]
+  schedule:
+    # Check workflow health every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:  # Manual trigger for testing
+
+jobs:
+  check-workflow-health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Daily Brief Status
+        id: check
+        run: |
+          # Get the latest Daily Brief workflow run
+          LATEST_RUN=$(gh run list --workflow=daily-brief.yml --limit=1 --json conclusion,createdAt,status)
+          echo "Latest run: $LATEST_RUN"
+
+          # Extract conclusion and status
+          CONCLUSION=$(echo "$LATEST_RUN" | jq -r '.[0].conclusion // "unknown"')
+          STATUS=$(echo "$LATEST_RUN" | jq -r '.[0].status // "unknown"')
+          CREATED=$(echo "$LATEST_RUN" | jq -r '.[0].createdAt // "unknown"')
+
+          echo "conclusion=$CONCLUSION" >> $GITHUB_OUTPUT
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          echo "created=$CREATED" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Alert on Workflow Failure
+        if: steps.check.outputs.conclusion == 'failure'
+        run: |
+          echo "⚠️ Daily Brief workflow failed!"
+          echo "Status: ${{ steps.check.outputs.conclusion }}"
+          echo "Last run: ${{ steps.check.outputs.created }}"
+
+          # Send Telegram notification if secrets are available
+          if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+            curl -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+              -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+              -d text="🚨 *Production Alert*: Daily Brief workflow failed%0AStatus: ${{ steps.check.outputs.conclusion }}%0ATime: ${{ steps.check.outputs.created }}" \
+              -d parse_mode="Markdown"
+          fi
+
+          exit 1
+
+      - name: Alert on Workflow Timeout
+        if: steps.check.outputs.status == 'queued' || steps.check.outputs.status == 'in_progress'
+        run: |
+          echo "⏱️ Daily Brief workflow is taking longer than expected"
+          echo "Status: ${{ steps.check.outputs.status }}"
+          echo "Created: ${{ steps.check.outputs.created }}"
+
+      - name: Confirm Workflow Success
+        if: steps.check.outputs.conclusion == 'success'
+        run: |
+          echo "✅ Daily Brief workflow completed successfully"
+          echo "Last run: ${{ steps.check.outputs.created }}"
+
+  check-data-quality:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+        if: always()
+
+      - name: Validate canonical articles file
+        if: always()
+        run: |
+          if [ ! -f "data/canonical_articles.ndjson" ]; then
+            echo "❌ canonical_articles.ndjson not found"
+            exit 1
+          fi
+
+          # Check file is not empty
+          if [ ! -s "data/canonical_articles.ndjson" ]; then
+            echo "❌ canonical_articles.ndjson is empty"
+            exit 1
+          fi
+
+          # Validate NDJSON format (each line is valid JSON)
+          LINE_COUNT=$(wc -l < data/canonical_articles.ndjson)
+          VALID_COUNT=$(cat data/canonical_articles.ndjson | jq -e . >/dev/null 2>&1 && echo "0" || wc -l < data/canonical_articles.ndjson)
+
+          echo "✅ Data quality check passed"
+          echo "   - File exists and contains data"
+          echo "   - Line count: $LINE_COUNT"
+
+      - name: Alert on Data Quality Issue
+        if: failure()
+        run: |
+          echo "🚨 Data quality issue detected"
+          if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+            curl -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+              -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+              -d text="🚨 *Data Quality Alert*: canonical_articles.ndjson validation failed" \
+              -d parse_mode="Markdown"
+          fi
