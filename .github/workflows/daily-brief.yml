@@ -75,10 +75,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Notify Telegram on Failure (manual runs only)
-        if: failure() && github.event_name == 'workflow_dispatch' && env.ENABLE_NOTIFICATIONS == 'true'
-        continue-on-error: true
+      - name: Log Article Count
+        id: count
         run: |
-          curl -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-            -d text="⚠️ Workflow failed: ${{ github.workflow }}"
+          ARTICLE_COUNT=$(wc -l < data/canonical_articles.ndjson || echo 0)
+          echo "count=$ARTICLE_COUNT" >> $GITHUB_OUTPUT
+          echo "Articles fetched: $ARTICLE_COUNT"
