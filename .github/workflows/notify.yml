@@ -111,6 +111,51 @@ jobs:
         env:
           PREV_ARTICLE_COUNT: ${{ vars.PREV_ARTICLE_COUNT || '0' }}
 
+      - name: Get Export Count
+        id: export_count
+        if: |
+          steps.context.outputs.workflow_name == 'Export Latest News' &&
+          steps.context.outputs.status == 'success'
+        run: |
+          # Download artifacts from export-latest-news workflow
+          gh run download ${{ steps.context.outputs.run_id }} \
+            --repo ${{ github.repository }} \
+            --dir /tmp/export_artifacts || true
+
+          # Count articles in latest.json from qa-news repo
+          # Since we don't have direct access to qa-news artifacts, check the GitHub API
+          # Note: the Contents API line-wraps base64 content at 60 chars, so strip
+          # newlines before decoding or @base64d fails on the embedded line breaks.
+          EXPORT_COUNT=$(gh api repos/rciesielski3/qa-news/contents/public/latest.json \
+            --jq '.content | gsub("\n"; "") | @base64d | fromjson | .articles | length' 2>/dev/null || echo 0)
+
+          echo "count=$EXPORT_COUNT" >> $GITHUB_OUTPUT
+          echo "Export count: $EXPORT_COUNT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Send Smart Success Notification (Export)
+        if: |
+          steps.context.outputs.workflow_name == 'Export Latest News' &&
+          steps.context.outputs.status == 'success' &&
+          env.ENABLE_NOTIFICATIONS == 'true'
+        continue-on-error: true
+        run: |
+          EXPORT_COUNT=${{ steps.export_count.outputs.count }}
+
+          # Always alert on success for export (it runs less frequently)
+          if [ "$EXPORT_COUNT" -eq 0 ]; then
+            MESSAGE="⚠️ Export: 0 articles exported (check export logic)"
+          else
+            MESSAGE="✅ Export: $EXPORT_COUNT articles exported to qa-news"
+          fi
+
+          curl -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="$MESSAGE" \
+            -d parse_mode="HTML"
+
       - name: Update Previous Article Count
         if: |
           steps.context.outputs.workflow_name == 'Daily Brief' &&
