@@ -32,10 +32,10 @@ Ran all test suites.
 
 **Command:**
 ```bash
-npx ts-node src/cli/daily-brief.ts \
-  --rss-url "https://feeds.arstechnica.com/arstechnica/index" \
-  --telegram-token "test-token" \
-  --chat-id "test-chat"
+export TELEGRAM_BOT_TOKEN="test-token"
+export TELEGRAM_CHAT_ID="test-chat"
+export DRY_RUN="true"
+npx ts-node src/cli/daily-brief.ts
 ```
 
 **Duration:** ~40 seconds
@@ -80,7 +80,7 @@ Persisted 1085 articles to: /Users/rafalciesielski/Developer/ChiefofStaff/data/c
 
 **Command:**
 ```bash
-npx ts-node src/cli/export-latest-news.ts --output qa-news.json
+npx ts-node src/cli/export-latest-news.ts
 ```
 
 **Duration:** ~23ms
