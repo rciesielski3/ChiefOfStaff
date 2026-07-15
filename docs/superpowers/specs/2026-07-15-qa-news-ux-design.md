@@ -30,22 +30,27 @@ Redesign qa-news website to clearly position it as an AI-curated news pipeline w
    - Nav uses boxed treatment for active state (consistent across all pages)
 
 2. **Stats Bar** (prominent, secondary color)
-   - Content: "1,110 sources scanned · 50 articles selected · Updated 06:00 UTC"
+   - Content: "5 feeds tracked · 1,110 articles scanned · 50 selected · Last update: 06:00 UTC"
    - Monospace font for technical feel
-   - Clickable (links to About page)
-   - Always visible/sticky on scroll
+   - Desktop: Sticky on scroll
+   - Mobile: Static (hide on scroll-down to reclaim viewport)
+   - Right side: "How it works →" affordance (clickable link to About)
+   - Makes the bar obviously interactive, not silent
 
 3. **Daily Brief Card** (distinct visual container)
    - Title: "Daily Brief — Top Picks"
-   - Layout: Grid or card-based (6 curated articles)
-   - Visual distinction: Border + light background + contained padding
+   - Layout: Grid or card-based (6 curated articles, each with category dot + label)
+   - Visual distinction: Brand accent border (not category-specific) + light background + contained padding
+   - Each article shows category color dot and label (WCAG AA compliant)
    - Separated visually from Latest News below
+   - Not affected by filters (editorial, stays fixed)
 
 4. **Latest News Feed**
-   - Title: "Latest News — All Selected Articles"
+   - Title: "Latest News — All 50 Selected Articles"
    - Layout: Reverse-chronological list
+   - Includes the 6 Daily Brief picks (marked with "Top Pick" badge)
    - Plain styling (no container, flows naturally)
-   - Starts directly below Daily Brief card
+   - Filters apply to this feed only (Daily Brief stays fixed/editorial)
 
 5. **Footer**
    - Links, PAIOS branding, update schedule
@@ -66,18 +71,17 @@ Structure (top to bottom):
    - Subheading: "Your personal AI news curator"
 
 2. **Pipeline Visualization** (visual walkthrough with steps)
-   - Step 1: **Sources** — "1,110+ sources scanned daily (OpenAI, Google AI, Cloudflare, Microsoft, Lobsters)"
-   - Step 2: **Fetching** — "Articles ingested and persisted to knowledge layer"
-   - Step 3: **Selection Model** — "AI-powered scoring: relevance, freshness, quality"
-   - Step 4: **Scoring** — "Articles ranked by predicted value"
-   - Step 5: **Publication** — "Top 50 articles published daily at 08:00 UTC"
+   - Step 1: **Ingestion** — "5 feeds tracked · 1,110+ articles fetched daily at 06:00 UTC"
+   - Step 2: **Scoring** — "AI multi-factor ranking: relevance, freshness, quality, novelty"
+   - Step 3: **Selection** — "Top 50 articles ranked by predicted value to you"
+   - Step 4: **Publication** — "Updated and published at 08:00 UTC daily"
 
 3. **Key Metrics Section**
-   - Articles scanned per day: 1,110
-   - Articles selected: 50 (4.5% selection rate)
-   - Sources tracked: 5 major feeds
-   - Update frequency: Daily at 08:00 UTC
-   - Uptime: 100% (tracked)
+   - Feeds tracked: 5 (OpenAI Blog, Google AI, Cloudflare, Microsoft, Lobsters)
+   - Articles scanned daily: 1,110
+   - Articles selected daily: 50 (4.5% selection rate)
+   - Update cycle: Fetch at 06:00 UTC → Process & Score → Publish at 08:00 UTC
+   - Last successful run: [dynamic timestamp, e.g., "Today 06:00 UTC"]
 
 4. **How to Use Section**
    - "Click tags/categories to filter by topic"
@@ -96,28 +100,33 @@ Structure (top to bottom):
 
 ### Category Color Mapping (locked 1:1 across all pages)
 
-| Category | Color | Hex Code |
-|----------|-------|----------|
-| test-automation | Blue | #0EA5E9 |
-| qa-practice | Purple | #A855F7 |
-| tooling | Orange | #F97316 |
-| engineering | Green | #10B981 |
-| ai | Cyan | #06B6D4 |
+| Category | Bright (dots, chips, borders) | Text (labels, links) | Usage |
+|----------|-------------------------------|----------------------|-------|
+| test-automation | #0EA5E9 (blue) | #0369A1 (dark blue) | WCAG AA 5.2:1 |
+| qa-practice | #A855F7 (purple) | #6B21A8 (dark purple) | WCAG AA 5.1:1 |
+| tooling | #F97316 (orange) | #92400E (dark brown) | WCAG AA 6.5:1 |
+| engineering | #10B981 (green) | #065F46 (dark green) | WCAG AA 6.8:1 |
+| ai | #06B6D4 (cyan) | #155E75 (dark cyan) | WCAG AA 5.4:1 |
 
-**Rule:** Every instance (dot, label text, link, border) uses the same hex value. No variation between pages.
+**Rule:** 
+- **Bright color** used for: dots, chip backgrounds, card borders, highlights
+- **Text color** used for: labels, link text (WCAG AA compliant)
+- **Non-color signal:** Category name is always visible as text (colorblind accessible)
+- Consistent across Daily, Weekly, Monthly, About pages
 
 ### Component Styling
 
 | Component | Style | Behavior |
 |-----------|-------|----------|
-| **Category Dots** | Solid circle, category color | Clickable (filters) |
-| **Category Labels** | Text in same color as dot | Consistent 1:1 with dot |
-| **Tag Chips** | Subtle pill buttons: light bg + category color border, hover state | Clickable to filter; clear affordance |
-| **Stats Bar** | Secondary color background, monospace font | Always visible; links to About |
-| **Daily Brief Card** | Border (category color) + light background + padding | Clear visual container |
-| **Article Links** | Dark text, underline on hover | Standard link affordance |
-| **Active Filter Indicator** | Colored background (matching category) | Shows which filters are active |
+| **Category Dots** | Solid circle, bright category color (e.g. #0EA5E9) | Clickable (filters) |
+| **Category Labels** | Text in dark category variant (e.g. #0369A1) for WCAG AA 5.1:1+ | Consistent with dot color |
+| **Tag Chips** | Subtle pill buttons: light bg + bright category color border, hover state | Clickable to filter; clear affordance |
+| **Stats Bar** | Secondary color background, monospace font, "How it works →" link | Desktop: sticky on scroll; Mobile: static hide-on-scroll-down |
+| **Daily Brief Card** | Brand accent border (neutral) + light background + padding | Clear visual container, not category-specific |
+| **Article Links** | Dark text (category text variant), underline on hover | Standard link affordance, WCAG AA |
+| **Active Filter Indicator** | Bright category color background | Shows which filters are active |
 | **Clear Filters Button** | Secondary text link | Resets filters to show all |
+| **Empty State** | Centered text: "No articles match these filters · [Reset filters]" | Shows when filters return 0 results |
 
 ### Line Length
 
@@ -171,15 +180,18 @@ Structure (top to bottom):
 ### Tag & Category Filtering
 
 **Interaction Model:**
-- Click any tag or category dot/label → page filters to show only articles with that tag
-- Multiple filters can be active simultaneously (AND logic)
-- URL encodes filter state (e.g., `?category=ai&tag=llm`) for shareable filtered views
+- Click any tag or category dot/label → page filters articles
+- **Within same dimension (tags OR tags):** Multiple tags = show articles with ANY of those tags
+- **Across dimensions (category AND tags):** Category + tags = show articles with selected category AND any selected tag
+- URL encodes filter state (e.g., `?category=ai&tags=llm,eval`) for shareable filtered views
 
 **Visual Feedback:**
 - **Active filters:** Highlighted with category color background
-- **Status text:** "Showing X of 50 articles" or similar
+- **Status text:** "Showing X of Y articles" (dynamic Y, since article count varies daily)
 - **Clear button:** "Reset filters" link to return to full list
-- **Scope:** Works on Daily, Weekly, Monthly pages
+- **Empty state:** If filters return 0 results: "No articles match these filters · [Reset filters]"
+- **Scope:** Filters apply to Latest News feed only (Daily Brief stays fixed/editorial)
+- **Works on:** Daily, Weekly, Monthly pages
 
 ### Tag Chip Affordance (Fixed)
 
@@ -242,17 +254,19 @@ Structure (top to bottom):
 **Core Principle:** Make the PAIOS pipeline the star. Every element supports either understanding how curation works or exploring curated content.
 
 **Key Changes:**
-1. ✅ Dedup Daily/Latest (clear visual hierarchy: hero card vs. feed)
-2. ✅ Surface PAIOS story (stats bar + About page pipeline explainer)
-3. ✅ Functional filtering (tag/category clicks filter articles)
-4. ✅ Consistent styling (1:1 color mapping, line-length, nav states)
-5. ✅ Polish & fill gaps (metrics cards, proper spacing, affordances)
+1. ✅ Dedup Daily/Latest (Latest includes Top 6 marked with badge; filters only apply to feed)
+2. ✅ Surface PAIOS story (explicit stats + "How it works" affordance; timeline clarity: 06:00→08:00)
+3. ✅ Functional filtering (OR within dimensions, AND across; empty state for zero results)
+4. ✅ WCAG AA accessible (bright colors for affordance, dark variants for text; category names as non-color signal)
+5. ✅ Consistent styling (locked color mapping, pinned line-length, boxed nav state)
+6. ✅ Polish & fill gaps (metrics cards, proper spacing, mobile-aware sticky elements)
+7. ✅ Terminology clarity (5 feeds · 1,110 articles scanned · 50 selected)
 
 **Success Looks Like:**
-- Visitor lands → immediately sees "AI-curated" positioning
-- Explores About → understands how pipeline works
-- Clicks tags/categories → filters articles intuitively
-- Entire site feels intentional, polished, professional
+- Visitor lands → immediately sees "AI-curated" positioning (stats bar + "How it works →")
+- Explores About → understands 4-step pipeline (Ingest → Score → Select → Publish)
+- Clicks tags/categories → filters work intuitively without hitting zero-result dead ends
+- Entire site feels intentional, polished, professional; accessible to all users
 
 ---
 
@@ -262,6 +276,15 @@ Structure (top to bottom):
 **Data:** Latest.json structure supports tag/category metadata
 **Styling:** CSS/Tailwind for color system, layout, responsive design
 **No backend changes required** — filtering and display logic runs client-side
+
+**Critical Clarifications:**
+- **Filters apply to Latest News feed only** — Daily Brief is editorial and stays fixed regardless of filter state
+- **Filter scope:** Daily Brief shows top 6 from all 50; Latest News shows all 50 (with "Top Pick" badge for daily picks); both use same source data
+- **OR vs AND logic:** Multiple tags within one dimension (category) = OR; across dimensions (category + tags) = AND
+- **Line-length:** Pin to single value (e.g., `max-width: 70ch`), not a range
+- **URL state:** Filter state in query params must survive back/forward navigation; use `useSearchParams` + shallow routing (client-side for SSG)
+- **Dynamic counts:** "Showing X of Y articles" where Y changes daily; not hardcoded to 50
+- **Sample data indicator:** While in sample mode, show quiet "sample data" suffix near stats bar (not alarming style)
 
 ---
 
