@@ -87,11 +87,20 @@ jobs:
         run: |
           cd qa-news
 
-          # Update remote URL to use token for authentication
-          git remote set-url origin https://x-access-token:${{ secrets.QA_NEWS_TOKEN }}@github.com/rciesielski3/qa-news.git
+          # Verify we have changes
+          if git diff --quiet --exit-code main public/latest.json; then
+            echo "No changes to push"
+            exit 0
+          fi
 
+          # Update remote URL to use token for authentication (using basic auth)
+          echo "Setting up git authentication..."
+          git config --local http.https://github.com/.extraheader ""
+          git remote set-url origin "https://oauth2:${{ secrets.QA_NEWS_TOKEN }}@github.com/rciesielski3/qa-news.git"
+
+          # Ensure we're on the right branch with our changes
           git checkout -b automation/latest-news
-          git push -u origin automation/latest-news
+          git push -u origin automation/latest-news --force-with-lease
 
           # Create PR using GitHub CLI
           gh pr create \
