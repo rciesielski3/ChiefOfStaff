@@ -3,8 +3,7 @@
 import { fetchRSS } from '../business-logic/rss-fetch';
 import { normalizeArticle } from '../business-logic/normalize-article';
 import { scoreArticles, DEFAULT_CONFIG } from '../business-logic/score-article';
-import { generateBrief, generatePlainTextBrief } from '../business-logic/generate-brief';
-import { sendTelegram, sendTelegramMock } from '../business-logic/telegram';
+import { generateBrief } from '../business-logic/generate-brief';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { persistArticles } from '../business-logic/persist-articles';
 import path from 'path';
@@ -45,12 +44,13 @@ const RSS_SOURCES = [
  * 3. Score articles based on keywords and configuration
  * 4. Select top N articles
  * 5. Generate markdown brief
- * 6. Send to Telegram (or mock if DRY_RUN enabled)
+ * 6. Persist articles to the canonical NDJSON store
+ *
+ * This CLI does NOT send Telegram notifications. Telegram delivery is
+ * handled separately by the notify.yml GitHub Actions workflow, which is
+ * triggered after this workflow (daily-brief.yml) completes.
  *
  * Environment variables:
- * - TELEGRAM_BOT_TOKEN: Bot token from @BotFather
- * - TELEGRAM_CHAT_ID: Chat ID to send brief to
- * - DRY_RUN: If "true", mock send instead of real API call
  * - BRIEF_COUNT: Number of articles to include (default: 10)
  */
 
@@ -71,21 +71,14 @@ async function main() {
     logStructured('WORKFLOW_START', { timestamp: startTime });
 
     // Load configuration from environment
-    const botToken = process.env.TELEGRAM_BOT_TOKEN || '';
-    const chatId = process.env.TELEGRAM_CHAT_ID || '';
-    const dryRun = process.env.DRY_RUN === 'true';
     const briefCount = parseInt(process.env.BRIEF_COUNT || '10', 10);
 
     console.log(`[Daily Brief] Configuration:`);
-    console.log(`  - Dry run: ${dryRun}`);
     console.log(`  - Brief count: ${briefCount}`);
     console.log(`  - Sources: ${RSS_SOURCES.length}`);
     logStructured('CONFIG_LOADED', {
-      dryRun,
       briefCount,
-      sourceCount: RSS_SOURCES.length,
-      hasToken: !!botToken,
-      hasChatId: !!chatId
+      sourceCount: RSS_SOURCES.length
     });
     console.log('');
 
@@ -188,48 +181,14 @@ async function main() {
       durationMs: persistDuration
     });
 
-    // Send to Telegram
-    const telegramStartTime = Date.now();
-    console.log('[Daily Brief] Sending to Telegram...');
-    logStructured('TELEGRAM_START', {
-      isDryRun: dryRun,
-      hasCredentials: !!(botToken && chatId)
+    // Telegram notifications are now handled by the notify.yml workflow
+    // which is triggered when this workflow completes.
+    // The CLI no longer sends Telegram messages directly - it only persists articles.
+    console.log('[Daily Brief] Telegram notifications are handled by notify.yml workflow');
+    logStructured('TELEGRAM_SKIPPED', {
+      reason: 'delegated_to_notify_workflow',
+      info: 'Notifications are sent by notify.yml after this workflow completes'
     });
-    if (dryRun) {
-      console.log('[Daily Brief] DRY RUN - Mock send to Telegram\n');
-      await sendTelegramMock(markdownBrief, botToken || 'DRY_RUN_TOKEN', chatId || '0');
-      const telegramDuration = Date.now() - telegramStartTime;
-      logStructured('TELEGRAM_COMPLETE', {
-        mode: 'dry_run',
-        durationMs: telegramDuration
-      });
-    } else {
-      if (!botToken || !chatId) {
-        console.error(
-          '[Daily Brief] Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID'
-        );
-        console.error('              Set these environment variables to send to Telegram');
-        console.error('              Or use DRY_RUN=true for mock send\n');
-        logStructured('TELEGRAM_SKIPPED', {
-          reason: 'missing_credentials'
-        });
-
-        // Show preview anyway
-        console.log('[Daily Brief] Brief preview (first 500 chars):\n');
-        console.log(markdownBrief.substring(0, 500));
-        console.log('...\n');
-        process.exit(0);
-      }
-
-      // Generate plain text version for better Telegram readability
-      const plainText = generatePlainTextBrief(markdownBrief);
-      await sendTelegram(plainText, botToken, chatId);
-      const telegramDuration = Date.now() - telegramStartTime;
-      logStructured('TELEGRAM_COMPLETE', {
-        mode: 'production',
-        durationMs: telegramDuration
-      });
-    }
 
     const totalDuration = Date.now() - workflowStartTime;
     console.log('[Daily Brief] ✅ Complete!\n');
