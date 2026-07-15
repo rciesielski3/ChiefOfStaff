@@ -93,12 +93,17 @@ jobs:
             exit 0
           fi
 
-          # Update remote URL to use token for authentication (using basic auth)
+          # Clear any conflicting credential headers from previous checkout
+          git config --local --unset http.https://github.com/.extraheader || true
+
+          # Configure git with the token for authentication
           echo "Setting up git authentication..."
-          git config --local http.https://github.com/.extraheader ""
+          git config --local credential.helper store
+          echo "https://oauth2:${{ secrets.QA_NEWS_TOKEN }}@github.com" > ~/.git-credentials
+
+          # Update remote URL to use token embedded authentication
           git remote set-url origin "https://oauth2:${{ secrets.QA_NEWS_TOKEN }}@github.com/rciesielski3/qa-news.git"
 
-          # Ensure we're on the right branch with our changes
           git checkout -b automation/latest-news
           git push -u origin automation/latest-news --force-with-lease
 
