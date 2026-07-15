@@ -117,17 +117,14 @@ jobs:
           steps.context.outputs.workflow_name == 'Export Latest News' &&
           steps.context.outputs.status == 'success'
         run: |
-          # Download artifacts from export-latest-news workflow
-          gh run download ${{ steps.context.outputs.run_id }} \
-            --repo ${{ github.repository }} \
-            --dir /tmp/export_artifacts || true
-
           # Count articles in latest.json from qa-news repo
           # Since we don't have direct access to qa-news artifacts, check the GitHub API
           # Note: the Contents API line-wraps base64 content at 60 chars, so strip
           # newlines before decoding or @base64d fails on the embedded line breaks.
+          # Export schema is { date, updatedAt, items: Article[] } (see
+          # src/business-logic/export-latest-news.ts) — field is 'items', not 'articles'.
           EXPORT_COUNT=$(gh api repos/rciesielski3/qa-news/contents/public/latest.json \
-            --jq '.content | gsub("\n"; "") | @base64d | fromjson | .articles | length' 2>/dev/null || echo 0)
+            --jq '.content | gsub("\n"; "") | @base64d | fromjson | .items | length' 2>/dev/null || echo 0)
 
           echo "count=$EXPORT_COUNT" >> $GITHUB_OUTPUT
           echo "Export count: $EXPORT_COUNT"

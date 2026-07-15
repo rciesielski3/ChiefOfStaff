@@ -142,7 +142,7 @@ jobs:
       - name: Log Export Count
         id: export_count
         run: |
-          EXPORT_COUNT=$(jq '.articles | length' qa-news/public/latest.json 2>/dev/null || echo 0)
+          EXPORT_COUNT=$(jq '.items | length' qa-news/public/latest.json 2>/dev/null || echo 0)
           echo "count=$EXPORT_COUNT" >> $GITHUB_OUTPUT
           echo "Articles exported: $EXPORT_COUNT"
 
