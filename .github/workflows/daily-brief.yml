@@ -81,3 +81,11 @@ jobs:
           ARTICLE_COUNT=$(wc -l < data/canonical_articles.ndjson || echo 0)
           echo "count=$ARTICLE_COUNT" >> $GITHUB_OUTPUT
           echo "Articles fetched: $ARTICLE_COUNT"
+
+      - name: Upload Article Count Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: article-count-data
+          path: data/canonical_articles.ndjson
+          retention-days: 1

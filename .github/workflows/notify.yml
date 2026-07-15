@@ -12,6 +12,8 @@ jobs:
     env:
       ENABLE_NOTIFICATIONS: true
     steps:
+      - uses: actions/checkout@v4
+
       - name: Determine Workflow Context
         id: context
         run: |
@@ -22,6 +24,7 @@ jobs:
       - name: Get Previous Article Count
         id: previous_count
         if: steps.context.outputs.workflow_name == 'Daily Brief'
+        continue-on-error: true
         run: |
           # For MVP, use a simple approach: store count in a workflow variable
           # In future, could use artifacts or GitHub environment variables
@@ -36,6 +39,7 @@ jobs:
         if: |
           steps.context.outputs.workflow_name == 'Daily Brief' &&
           steps.context.outputs.status == 'success'
+        continue-on-error: true
         run: |
           # Download artifacts from the completed daily-brief workflow
           gh run download ${{ steps.context.outputs.run_id }} \
@@ -49,7 +53,7 @@ jobs:
             # Fallback: count from repository
             git config user.name "GitHub Actions"
             git config user.email "actions@github.com"
-            CURRENT_COUNT=$(git show ${{ github.event.workflow_run.head_commit.id }}:data/canonical_articles.ndjson | wc -l || echo 0)
+            CURRENT_COUNT=$(git show ${{ github.event.workflow_run.head_commit.id }}:data/canonical_articles.ndjson 2>/dev/null | wc -l) || CURRENT_COUNT=0
           fi
 
           echo "current_count=$CURRENT_COUNT" >> $GITHUB_OUTPUT
