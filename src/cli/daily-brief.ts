@@ -3,8 +3,7 @@
 import { fetchRSS } from '../business-logic/rss-fetch';
 import { normalizeArticle } from '../business-logic/normalize-article';
 import { scoreArticles, DEFAULT_CONFIG } from '../business-logic/score-article';
-import { generateBrief, generatePlainTextBrief } from '../business-logic/generate-brief';
-import { sendTelegram, sendTelegramMock } from '../business-logic/telegram';
+import { generateBrief } from '../business-logic/generate-brief';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { persistArticles } from '../business-logic/persist-articles';
 import path from 'path';
@@ -188,48 +187,14 @@ async function main() {
       durationMs: persistDuration
     });
 
-    // Send to Telegram
-    const telegramStartTime = Date.now();
-    console.log('[Daily Brief] Sending to Telegram...');
-    logStructured('TELEGRAM_START', {
-      isDryRun: dryRun,
-      hasCredentials: !!(botToken && chatId)
+    // Telegram notifications are now handled by the notify.yml workflow
+    // which is triggered when this workflow completes.
+    // The CLI no longer sends Telegram messages directly - it only persists articles.
+    console.log('[Daily Brief] Telegram notifications are handled by notify.yml workflow');
+    logStructured('TELEGRAM_SKIPPED', {
+      reason: 'delegated_to_notify_workflow',
+      info: 'Notifications are sent by notify.yml after this workflow completes'
     });
-    if (dryRun) {
-      console.log('[Daily Brief] DRY RUN - Mock send to Telegram\n');
-      await sendTelegramMock(markdownBrief, botToken || 'DRY_RUN_TOKEN', chatId || '0');
-      const telegramDuration = Date.now() - telegramStartTime;
-      logStructured('TELEGRAM_COMPLETE', {
-        mode: 'dry_run',
-        durationMs: telegramDuration
-      });
-    } else {
-      if (!botToken || !chatId) {
-        console.error(
-          '[Daily Brief] Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID'
-        );
-        console.error('              Set these environment variables to send to Telegram');
-        console.error('              Or use DRY_RUN=true for mock send\n');
-        logStructured('TELEGRAM_SKIPPED', {
-          reason: 'missing_credentials'
-        });
-
-        // Show preview anyway
-        console.log('[Daily Brief] Brief preview (first 500 chars):\n');
-        console.log(markdownBrief.substring(0, 500));
-        console.log('...\n');
-        process.exit(0);
-      }
-
-      // Generate plain text version for better Telegram readability
-      const plainText = generatePlainTextBrief(markdownBrief);
-      await sendTelegram(plainText, botToken, chatId);
-      const telegramDuration = Date.now() - telegramStartTime;
-      logStructured('TELEGRAM_COMPLETE', {
-        mode: 'production',
-        durationMs: telegramDuration
-      });
-    }
 
     const totalDuration = Date.now() - workflowStartTime;
     console.log('[Daily Brief] ✅ Complete!\n');
