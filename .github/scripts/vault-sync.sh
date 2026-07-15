@@ -22,6 +22,13 @@
 #
 #   Fixes #42. Implements exponential backoff for transient errors.
 #
+# Platform: written to run correctly on both BSD tools (macOS, its default
+# VAULT_PATH target) and GNU tools (Linux, in case it's ever wired into a
+# CI workflow). PR-number extraction uses a portable `sed` pattern instead
+# of `grep -P` (PCRE, missing from BSD grep), and the daily-note timestamp
+# update uses `perl -pi -e` instead of `sed -i` (whose in-place flag syntax
+# differs incompatibly between BSD and GNU sed).
+#
 
 set -e
 
@@ -119,10 +126,15 @@ tags: [vault-synced]
 EOF
     fi
 
-    # Check if commit is already in the note
-    if ! grep -q "$SHORT_HASH" "$DAILY_NOTE"; then
-        # Extract PR number if available
-        PR_NUMBER=$(echo "$MSG" | grep -oP '#\K[0-9]+' | head -1 || echo "")
+    # Check if commit is already in the note. Match the backtick-wrapped
+    # form (`$SHORT_HASH`) rather than the bare hash, since a bare 7-char
+    # short hash can be a substring of an unrelated 40-char full hash or
+    # other text already in the note, causing a false-positive skip.
+    if ! grep -q "\`$SHORT_HASH\`" "$DAILY_NOTE"; then
+        # Extract PR number if available. Uses a portable BRE sed pattern
+        # (not `grep -oP`) because macOS ships BSD grep, which lacks PCRE
+        # (-P) support; that flag only works if a GNU grep shadows it.
+        PR_NUMBER=$(echo "$MSG" | sed -n 's/.*#\([0-9][0-9]*\).*/\1/p' | head -1 || echo "")
         PR_LINK=""
         [ -n "$PR_NUMBER" ] && PR_LINK=" (PR #$PR_NUMBER)"
 
@@ -133,8 +145,12 @@ EOF
         # Append to daily note
         echo "$ENTRY" >> "$DAILY_NOTE"
 
-        # Update timestamp
-        sed -i '' "s/^updated: .*/updated: $(date +%Y-%m-%d)/" "$DAILY_NOTE"
+        # Update timestamp. Uses `perl -pi -e` instead of `sed -i` because
+        # BSD sed (macOS) requires a separate backup-suffix argument to -i
+        # while GNU sed (Linux) requires it attached with no space -
+        # neither form works on both platforms. perl's -pi -e is identical
+        # on both.
+        perl -pi -e "s/^updated: .*/updated: $(date +%Y-%m-%d)/" "$DAILY_NOTE"
 
         echo "  ✓ Added to $DAILY_NOTE"
     else
