@@ -39,6 +39,8 @@ on:
 jobs:
   export:
     runs-on: ubuntu-latest
+    env:
+      ENABLE_NOTIFICATIONS: true
     steps:
       - uses: actions/checkout@v4
 
@@ -82,26 +84,56 @@ jobs:
           
       - name: Create Pull Request
         id: pr
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          path: qa-news
-          commit-message: "chore: update latest.json from knowledge layer"
-          title: "chore: update latest.json"
-          body: "Automated update from Export Latest News workflow."
-          branch: "automation/latest-news"
-          delete-branch: true
-
-      - name: Enable auto-merge
-        if: steps.pr.outputs.pull-request-number
         run: |
           cd qa-news
-          gh pr merge --auto --squash "${{ steps.pr.outputs.pull-request-number }}"
+
+          # Verify we have changes
+          if git diff --quiet --exit-code main public/latest.json; then
+            echo "No changes to push"
+            exit 0
+          fi
+
+          # Clear any conflicting credential headers from previous checkout
+          git config --local --unset http.https://github.com/.extraheader || true
+
+          # Configure git with the token for authentication
+          echo "Setting up git authentication..."
+          git config --local credential.helper store
+          echo "https://oauth2:${{ secrets.QA_NEWS_TOKEN }}@github.com" > ~/.git-credentials
+
+          # Update remote URL to use token embedded authentication
+          git remote set-url origin "https://oauth2:${{ secrets.QA_NEWS_TOKEN }}@github.com/rciesielski3/qa-news.git"
+
+          git checkout -b automation/latest-news
+          git push -u origin automation/latest-news --force-with-lease
+
+          # Create PR using GitHub CLI
+          gh pr create \
+            --repo rciesielski3/qa-news \
+            --base main \
+            --head automation/latest-news \
+            --title "chore: update latest.json" \
+            --body "Automated update from Export Latest News workflow."
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.QA_NEWS_TOKEN }}
+
+      - name: Enable auto-merge
+        id: auto_merge
+        continue-on-error: true
+        run: |
+          # Get the PR number from the most recent PR
+          PR_NUMBER=$(gh pr list --repo rciesielski3/qa-news --head automation/latest-news --json number -q '.[0].number' 2>/dev/null || echo "")
+
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr merge --repo rciesielski3/qa-news --auto --squash "$PR_NUMBER"
+            echo "pr-number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.QA_NEWS_TOKEN }}
 
       - name: Notify Telegram on Failure
-        if: failure()
+        if: failure() && env.ENABLE_NOTIFICATIONS == 'true'
+        continue-on-error: true
         run: |
           curl -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \

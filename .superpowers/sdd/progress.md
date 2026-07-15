@@ -54,3 +54,34 @@
 **Total commits:** ~10 task+fix+progress commits  
 **Time elapsed:** ~8-10 hours real time  
 **All blockers cleared, system production-ready.**
+
+---
+
+## Production Readiness Plan — 2026-07-15
+
+**Task 1: Audit Current Workflow State** — ✅ COMPLETE
+- Commit: df0a483
+- Status: Spec ✅, Quality ✅
+- Findings: No blockers, real data flowing, workflows ready for production
+- Next: Enable scheduling (Task 2)
+
+**Task 2: Enable Scheduled Execution** — ✅ COMPLETE
+- Commit: 5e00a99
+- Status: Spec ✅, Quality ✅
+- Findings: Daily schedule enabled (08:00 UTC), manual triggers working
+- Next: Verify export auto-merge (Task 3)
+
+**Task 3: Verify Export Workflow Auto-Merge** — ✅ COMPLETE
+- Verification Date: 2026-07-15
+- Status: Spec ✅, Quality ✅
+- Auto-Merge Configuration:
+  - ✅ gh pr merge --auto --squash implemented in export-latest-news.yml
+  - ✅ pull-requests: write permission present
+  - ✅ PR step outputs properly referenced
+  - ✅ Daily Brief workflow also has auto-merge (M3→M4 sequencing)
+  - ✅ workflow_run trigger ensures proper sequencing
+  - ✅ Error handling and conditionals in place
+- Implementation: Commit 17c972c (critical workflow fixes)
+- Verification Report: /tmp/task-3-report.md
+- Next: Whole-branch review and merge to main
+
