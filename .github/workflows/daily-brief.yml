@@ -73,8 +73,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Notify Telegram on Failure
-        if: failure()
+      - name: Notify Telegram on Failure (manual runs only)
+        if: failure() && github.event_name == 'workflow_dispatch'
         run: |
           curl -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
