@@ -17,13 +17,13 @@ import { QA_NEWS_FEEDS } from './qa-news-feeds';
  * @returns JSON string of QA-News export
  */
 export async function generateQANewsExport(): Promise<string> {
-  console.log(`Fetching ${QA_NEWS_FEEDS.length} QA News feeds...`);
+  console.error(`Fetching ${QA_NEWS_FEEDS.length} QA News feeds...`);
 
   const allArticles: Article[] = [];
 
   for (const feed of QA_NEWS_FEEDS) {
     try {
-      console.log(`  Fetching ${feed.name}...`);
+      console.error(`  Fetching ${feed.name}...`);
       const rawArticles = await fetchRSS(feed.url, feed.name);
 
       const normalized = rawArticles.map(raw => normalizeArticle(raw));
@@ -35,7 +35,7 @@ export async function generateQANewsExport(): Promise<string> {
     }
   }
 
-  console.log(`Fetched ${allArticles.length} total articles`);
+  console.error(`Fetched ${allArticles.length} total articles`);
 
   const export_ = exportQANews(allArticles, 50);
   return JSON.stringify(export_, null, 2);
