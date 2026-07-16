@@ -21,7 +21,7 @@ jobs:
         id: check
         run: |
           # Get the latest Daily Brief workflow run
-          LATEST_RUN=$(gh run list --workflow=daily-brief.yml --limit=1 --json conclusion,createdAt,status)
+          LATEST_RUN=$(gh run list --repo rciesielski3/ChiefOfStaff --workflow=daily-brief.yml --limit=1 --json conclusion,createdAt,status)
           echo "Latest run: $LATEST_RUN"
 
           # Extract conclusion and status
