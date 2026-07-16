@@ -1,0 +1,63 @@
+name: Update QA News Data
+
+on:
+  schedule:
+    # Run daily at 9 AM UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  update-qa-news:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout ChiefofStaff
+        uses: actions/checkout@v4
+        with:
+          path: ChiefofStaff
+          token: ${{ secrets.QA_NEWS_TOKEN }}
+
+      - name: Checkout QA-News
+        uses: actions/checkout@v4
+        with:
+          repository: rciesielski3/qa-news
+          path: qa-news
+          token: ${{ secrets.QA_NEWS_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ChiefofStaff dependencies
+        working-directory: ChiefofStaff
+        run: npm ci
+
+      - name: Build ChiefofStaff
+        working-directory: ChiefofStaff
+        run: npm run build
+
+      - name: Generate QA-News export
+        working-directory: ChiefofStaff
+        run: |
+          npx ts-node src/cli/qa-news-export.ts > ../qa-news-export.json
+
+      - name: Validate JSON
+        run: |
+          cat ../qa-news-export.json | jq '.' > /dev/null || (echo "Invalid JSON"; exit 1)
+          ARTICLE_COUNT=$(cat ../qa-news-export.json | jq '.articles | length')
+          echo "Generated export with $ARTICLE_COUNT articles"
+
+      - name: Update QA-News latest.json
+        working-directory: qa-news
+        run: |
+          cp ../qa-news-export.json public/latest.json
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git add public/latest.json
+          git diff --cached --quiet || git commit -m "data: update latest articles from ChiefofStaff RSS feeds"
+
+      - name: Push to QA-News
+        working-directory: qa-news
+        run: |
+          git push origin main || echo "No changes to push"
