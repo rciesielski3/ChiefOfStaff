@@ -1,0 +1,52 @@
+{
+  "categories": {
+    "test-automation": {
+      "keywords": [
+        "test", "jest", "vitest", "cypress", "playwright", "e2e",
+        "unit test", "testing framework", "test suite", "test runner",
+        "mocha", "ava", "tap", "jasmine", "qunit", "webdriver",
+        "puppeteer", "testcafe", "nightwatch", "codeceptjs"
+      ],
+      "sourceMatches": ["Jest", "Vitest", "Cypress", "Playwright", "Testing"]
+    },
+    "qa-practice": {
+      "keywords": [
+        "qa", "quality assurance", "testing", "security", "vulnerability",
+        "owasp", "penetration", "best practice", "standard", "compliance",
+        "bug", "defect", "regression", "test case", "manual testing",
+        "accessibility", "wcag", "a11y", "performance testing"
+      ],
+      "sourceMatches": ["OWASP", "QA", "Security", "Sauce Labs"]
+    },
+    "tooling": {
+      "keywords": [
+        "tool", "framework", "library", "build", "webpack", "vite",
+        "config", "lint", "prettier", "eslint", "release", "version",
+        "package", "dependency", "npm", "yarn", "pnpm", "plugin",
+        "extension", "integration", "cli", "api", "sdk"
+      ],
+      "sourceMatches": ["Release", "Github", "Tools"]
+    },
+    "engineering": {
+      "keywords": [
+        "engineering", "architecture", "performance", "debug", "observability",
+        "logging", "monitoring", "scale", "deployment", "infrastructure",
+        "production", "devops", "ci/cd", "pipeline", "automation",
+        "optimization", "refactor", "pattern", "design", "scalability"
+      ],
+      "sourceMatches": ["Stripe", "GitHub", "Vercel", "Engineering", "Blog"]
+    },
+    "ai": {
+      "keywords": [
+        "ai", "artificial intelligence", "llm", "large language model",
+        "machine learning", "neural", "gpt", "claude", "model",
+        "embedding", "generative", "nlp", "deep learning", "transformer",
+        "fine-tune", "prompt", "agent", "reasoning", "hallucination"
+      ],
+      "sourceMatches": ["Anthropic", "OpenAI", "AI", "LLM"]
+    }
+  },
+  "defaults": {
+    "fallbackCategory": "engineering"
+  }
+}
