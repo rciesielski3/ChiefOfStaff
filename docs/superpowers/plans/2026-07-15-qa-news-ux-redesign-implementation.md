@@ -1,6 +1,8 @@
 # QA-News UX Redesign Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+**Status:** ✅ COMPLETE | All 10 tasks implemented and verified
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking completion.
 
 **Goal:** Redesign qa-news website to position PAIOS as an AI-curated pipeline, improve usability with functional filtering, and deliver polished, professional UX across all pages.
 
@@ -66,12 +68,12 @@
   - `categoryTextColor(category: string): string` — Dark text variant (e.g., `#0369A1`)
   - `categoryBgColor(category: string): string` — Light background variant for chips
 
-- [ ] **Step 1: Verify Tailwind setup**
+- [x] **Step 1: Verify Tailwind setup**
 
 Run: `npm list tailwindcss`
 Expected: Tailwind CSS installed (v3.4+)
 
-- [ ] **Step 2: Create color mapping in tailwind.config.ts**
+- [x] **Step 2: Create color mapping in tailwind.config.ts**
 
 ```typescript
 // tailwind.config.ts
@@ -109,7 +111,7 @@ const config: Config = {
 export default config
 ```
 
-- [ ] **Step 3: Create color utilities in lib/styles.ts**
+- [x] **Step 3: Create color utilities in lib/styles.ts**
 
 ```typescript
 // lib/styles.ts
@@ -165,7 +167,7 @@ export function getCategoryLabel(category: string): string {
 }
 ```
 
-- [ ] **Step 4: Set up global styles in app/globals.css**
+- [x] **Step 4: Set up global styles in app/globals.css**
 
 ```css
 /* app/globals.css */
@@ -211,7 +213,7 @@ body {
 }
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tailwind.config.ts lib/styles.ts app/globals.css
@@ -232,7 +234,7 @@ git commit -m "design: add color system and Tailwind configuration for 5-categor
   - Renders nav with boxed active state for current page
   - Nav items: Daily, Weekly, Monthly, About
 
-- [ ] **Step 1: Create Header component**
+- [x] **Step 1: Create Header component**
 
 ```typescript
 // components/Header.tsx
@@ -283,7 +285,7 @@ export function Header() {
 }
 ```
 
-- [ ] **Step 2: Update root layout to include Header**
+- [x] **Step 2: Update root layout to include Header**
 
 ```typescript
 // app/layout.tsx
@@ -311,7 +313,7 @@ export default function RootLayout({
 }
 ```
 
-- [ ] **Step 3: Test Header component renders and nav state works**
+- [x] **Step 3: Test Header component renders and nav state works**
 
 ```bash
 # Verify layout compiles
@@ -319,7 +321,7 @@ npm run build
 # Expected: Build succeeds with no TypeScript errors
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add components/Header.tsx app/layout.tsx
@@ -341,7 +343,7 @@ git commit -m "feat: add Header component with boxed navigation and active state
   - Sticky on desktop (position: sticky), static on mobile
   - Monospace font, secondary color background
 
-- [ ] **Step 1: Create StatsBar component**
+- [x] **Step 1: Create StatsBar component**
 
 ```typescript
 // components/StatsBar.tsx
@@ -384,18 +386,18 @@ export function StatsBar() {
 }
 ```
 
-- [ ] **Step 2: Verify component renders without errors**
+- [x] **Step 2: Verify component renders without errors**
 
 ```bash
 npm run build
 # Expected: No TypeScript errors
 ```
 
-- [ ] **Step 3: Test mobile responsiveness**
+- [x] **Step 3: Test mobile responsiveness**
 
 Note: Component uses `md:` breakpoint for mobile adjustments. Will verify in integration testing.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add components/StatsBar.tsx
@@ -418,7 +420,7 @@ git commit -m "feat: add StatsBar with update time and About link"
   - `useFiltering()` hook for state management
   - `FilterState` type: `{ category?: string; tags?: string[] }`
 
-- [ ] **Step 1: Create filtering logic in lib/filtering.ts**
+- [x] **Step 1: Create filtering logic in lib/filtering.ts**
 
 ```typescript
 // lib/filtering.ts
@@ -477,7 +479,7 @@ export function serializeFilterParams(filters: FilterState): URLSearchParams {
 }
 ```
 
-- [ ] **Step 2: Create useFiltering hook in hooks/useFiltering.ts**
+- [x] **Step 2: Create useFiltering hook in hooks/useFiltering.ts**
 
 ```typescript
 // hooks/useFiltering.ts
@@ -513,7 +515,7 @@ export function useFiltering() {
 }
 ```
 
-- [ ] **Step 3: Add tests for filtering logic**
+- [x] **Step 3: Add tests for filtering logic**
 
 ```typescript
 // __tests__/filtering.test.ts
@@ -560,14 +562,14 @@ describe('filtering', () => {
 })
 ```
 
-- [ ] **Step 4: Run filtering tests**
+- [x] **Step 4: Run filtering tests**
 
 ```bash
 npm test -- __tests__/filtering.test.ts
 # Expected: All tests pass
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/filtering.ts hooks/useFiltering.ts __tests__/filtering.test.ts
@@ -590,7 +592,7 @@ git commit -m "feat: add filtering logic with OR/AND semantics and URL persisten
   - `<ArticleList articles={Article[]} />` — Reverse-chronological feed
   - `<DailyBriefCard articles={Article[]} />` — Grid of 6 top articles
 
-- [ ] **Step 1: Create ArticleCard component**
+- [x] **Step 1: Create ArticleCard component**
 
 ```typescript
 // components/ArticleCard.tsx
@@ -651,7 +653,7 @@ export function ArticleCard({ article, isDailyPick = false, compact = false }: A
 }
 ```
 
-- [ ] **Step 2: Create ArticleList component**
+- [x] **Step 2: Create ArticleList component**
 
 ```typescript
 // components/ArticleList.tsx
@@ -682,7 +684,7 @@ export function ArticleList({ articles, dailyPickIds = new Set() }: ArticleListP
 }
 ```
 
-- [ ] **Step 3: Create DailyBriefCard component**
+- [x] **Step 3: Create DailyBriefCard component**
 
 ```typescript
 // components/DailyBriefCard.tsx
@@ -709,7 +711,7 @@ export function DailyBriefCard({ articles }: DailyBriefCardProps) {
 }
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add components/ArticleCard.tsx components/ArticleList.tsx components/DailyBriefCard.tsx
@@ -730,7 +732,7 @@ git commit -m "feat: add article card and list components with category color st
   - `<FilterBar categories={string[]} selectedCategory={string | undefined} onCategorySelect={(cat) => void} />` — Category dots
   - `<EmptyState onReset={() => void} />` — Empty state messaging
 
-- [ ] **Step 1: Create FilterBar component**
+- [x] **Step 1: Create FilterBar component**
 
 ```typescript
 // components/FilterBar.tsx
@@ -803,7 +805,7 @@ export function FilterBar({
 }
 ```
 
-- [ ] **Step 2: Create EmptyState component**
+- [x] **Step 2: Create EmptyState component**
 
 ```typescript
 // components/EmptyState.tsx
@@ -826,7 +828,7 @@ export function EmptyState({ onReset }: EmptyStateProps) {
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add components/FilterBar.tsx components/EmptyState.tsx
@@ -843,7 +845,7 @@ git commit -m "feat: add filter bar and empty state components"
 **Interfaces:**
 - Produces: About page with hero, pipeline visualization, metrics, how-to, FAQ
 
-- [ ] **Step 1: Create About page**
+- [x] **Step 1: Create About page**
 
 ```typescript
 // app/about/page.tsx
@@ -982,7 +984,7 @@ export default function AboutPage() {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add app/about/page.tsx
@@ -1000,7 +1002,7 @@ git commit -m "feat: add About page with pipeline visualization and FAQ"
 - Consumes: Latest.json article data
 - Produces: Daily page with stats bar, daily brief, latest news feed, and filtering
 
-- [ ] **Step 1: Create Daily page with filtering integration**
+- [x] **Step 1: Create Daily page with filtering integration**
 
 ```typescript
 // app/page.tsx
@@ -1089,14 +1091,14 @@ export default function DailyPage() {
 }
 ```
 
-- [ ] **Step 2: Verify page compiles and loads**
+- [x] **Step 2: Verify page compiles and loads**
 
 ```bash
 npm run build
 # Expected: Build succeeds
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/page.tsx
@@ -1114,7 +1116,7 @@ git commit -m "feat: add Daily page with filtering, Daily Brief card, and Latest
 **Interfaces:**
 - Same as Daily page but with weekly/monthly data aggregation
 
-- [ ] **Step 1: Create Weekly page**
+- [x] **Step 1: Create Weekly page**
 
 ```typescript
 // app/weekly/page.tsx
@@ -1191,7 +1193,7 @@ export default function WeeklyPage() {
 }
 ```
 
-- [ ] **Step 2: Create Monthly page**
+- [x] **Step 2: Create Monthly page**
 
 ```typescript
 // app/monthly/page.tsx
@@ -1267,7 +1269,7 @@ export default function MonthlyPage() {
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/weekly/page.tsx app/monthly/page.tsx
@@ -1284,7 +1286,7 @@ git commit -m "feat: add Weekly and Monthly pages with same layout and filtering
 **Interfaces:**
 - No new interfaces; refine existing ones for mobile
 
-- [ ] **Step 1: Test all pages on mobile breakpoints**
+- [x] **Step 1: Test all pages on mobile breakpoints**
 
 Use browser DevTools to test at 375px, 768px, 1024px viewports. Verify:
 - Stats bar hides on mobile scroll-down
@@ -1293,22 +1295,22 @@ Use browser DevTools to test at 375px, 768px, 1024px viewports. Verify:
 - Article list is readable
 - Navigation is accessible
 
-- [ ] **Step 2: Update StatsBar for mobile hide-on-scroll**
+- [x] **Step 2: Update StatsBar for mobile hide-on-scroll**
 
 Add scroll event listener to hide stats bar on mobile (already marked with `md:` breakpoints in component).
 
-- [ ] **Step 3: Test responsive navigation**
+- [x] **Step 3: Test responsive navigation**
 
 Verify nav items wrap correctly on small screens.
 
-- [ ] **Step 4: Final visual polish**
+- [x] **Step 4: Final visual polish**
 
 - Check line lengths (should be ~70ch)
 - Verify spacing is consistent
 - Check color contrast (WCAG AA)
 - Test on light/dark system preferences
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .
