@@ -9,7 +9,11 @@
     "test:watch": "jest --watch",
     "daily-brief": "ts-node src/cli/daily-brief.ts"
   },
-  "keywords": ["paios", "business-logic", "daily-brief"],
+  "keywords": [
+    "paios",
+    "business-logic",
+    "daily-brief"
+  ],
   "author": "Rafal Ciesielski",
   "license": "MIT",
   "devDependencies": {
@@ -21,6 +25,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
     "rss-parser": "^3.13.0"
   }
 }
