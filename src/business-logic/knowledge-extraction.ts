@@ -140,7 +140,7 @@ Only include facts with confidence >= 0.5. Extract 3–8 facts per chunk.
 FACTS:`;
 
     const message = await this.client.messages.create({
-      model: 'claude-opus-4-1-20250805',
+      model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022',
       max_tokens: this.MAX_TOKENS,
       messages: [
         {
