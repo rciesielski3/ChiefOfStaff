@@ -69,3 +69,4 @@ qa-news.zip
 /PAIOS-*.md
 /M1-*.md
 # Note: Do NOT ignore files in docs/ subdirectory — this pattern only applies to root
+.worktrees/
