@@ -60,8 +60,6 @@ jobs:
             echo "⏭️ Skipping Telegram notification (secrets not configured)"
           fi
 
-          exit 1
-
       - name: Alert on Workflow Timeout
         if: steps.check.outputs.status == 'queued' || steps.check.outputs.status == 'in_progress'
         run: |
