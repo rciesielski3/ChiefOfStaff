@@ -170,7 +170,7 @@ export class DomainClassifier {
         keywords: new Set([
           'javascript', 'js', 'node.js', 'npm', 'react', 'vue', 'angular',
           'typescript', 'async/await', 'promise', 'es6', 'callback',
-          'event loop', 'closure', 'hoisting', 'prototype', 'jsx',
+          'event loop', 'closure', 'hoisting', 'prototype', 'jsx', 'hooks',
         ]),
         preferredFactTypes: ['DEFINITION', 'TECHNIQUE', 'BENCHMARK'],
       },
@@ -411,28 +411,50 @@ export class DomainClassifier {
    */
   private countKeywordMatches(contentWords: Set<string>, keywords: Set<string>): number {
     let count = 0;
+    const contentArray = Array.from(contentWords);
+
     for (const keyword of keywords) {
       // Check exact word match (case-insensitive already handled)
       if (contentWords.has(keyword)) {
         count++;
+      } else if (keyword.includes(' ')) {
+        // Space-separated phrase: check for adjacent words in content
+        const phraseWords = keyword.split(' ');
+        if (this.phraseExistsAdjacent(contentArray, phraseWords)) {
+          count++;
+        }
       } else if (keyword.includes('-')) {
-        // For hyphenated keywords, check phrase match
+        // For hyphenated keywords, check for adjacent words
         const phrase = keyword.replace('-', ' ');
         const phraseWords = phrase.split(' ');
-        // All parts of the phrase must be present
-        if (phraseWords.every((w) => contentWords.has(w))) {
+        if (this.phraseExistsAdjacent(contentArray, phraseWords)) {
           count++;
         }
       } else if (keyword.includes('/')) {
-        // For slash-separated keywords, check phrase match
+        // For slash-separated keywords, check for adjacent words
         const parts = keyword.split('/');
-        // All parts of the slash keyword must be present
-        if (parts.every((p) => contentWords.has(p))) {
+        if (this.phraseExistsAdjacent(contentArray, parts)) {
           count += 0.5;
         }
       }
     }
     return Math.min(count, 10); // Cap at 10 to avoid overflow
+  }
+
+  /**
+   * Check if phrase words exist adjacent in content array
+   */
+  private phraseExistsAdjacent(contentArray: string[], phraseWords: string[]): boolean {
+    if (phraseWords.length === 0) return false;
+    if (phraseWords.length === 1) return contentArray.includes(phraseWords[0]);
+
+    for (let i = 0; i <= contentArray.length - phraseWords.length; i++) {
+      const chunk = contentArray.slice(i, i + phraseWords.length);
+      if (chunk.every((word, idx) => word === phraseWords[idx])) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
