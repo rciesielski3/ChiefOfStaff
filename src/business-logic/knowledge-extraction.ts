@@ -6,6 +6,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { randomUUID } from 'crypto';
 import {
   KnowledgeFact,
   FactExtractionRequest,
@@ -20,21 +21,34 @@ import {
  */
 export class KnowledgeExtractionService {
   private client: Anthropic;
+  private model: string;
   private readonly MAX_TOKENS = 2048;
   private readonly CHUNK_SIZE = 8000; // Split articles >8000 chars
+  private readonly VALID_MODELS = [
+    'claude-opus-4-8',
+    'claude-opus-4-7',
+    'claude-opus-4-6',
+    'claude-sonnet-5',
+    'claude-sonnet-4-6',
+    'claude-haiku-4-5',
+    'claude-3-5-sonnet-20241022',
+  ];
 
-  constructor(apiKey?: string) {
+  constructor(apiKey?: string, model?: string) {
     this.client = new Anthropic({
       apiKey: apiKey || process.env.ANTHROPIC_API_KEY,
     });
+
+    // Validate model at initialization (default to cheapest model: Haiku 4.5)
+    const configuredModel = model || process.env.CLAUDE_MODEL || 'claude-haiku-4-5';
+    if (!this.VALID_MODELS.includes(configuredModel)) {
+      throw new Error(
+        `Invalid Claude model: ${configuredModel}. Valid models: ${this.VALID_MODELS.join(', ')}`
+      );
+    }
+    this.model = configuredModel;
   }
 
-  /**
-   * Extract facts from a single article
-   *
-   * @param request Article data for extraction
-   * @returns Batch result with extracted facts
-   */
   async extractFacts(request: FactExtractionRequest): Promise<FactExtractionBatch> {
     const startTime = Date.now();
 
@@ -140,7 +154,7 @@ Only include facts with confidence >= 0.5. Extract 3–8 facts per chunk.
 FACTS:`;
 
     const message = await this.client.messages.create({
-      model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022',
+      model: this.model,
       max_tokens: this.MAX_TOKENS,
       messages: [
         {
@@ -150,7 +164,14 @@ FACTS:`;
       ],
     });
 
-    // Extract text from response
+    // Extract text from response (with null check)
+    if (!message.content || !message.content[0]) {
+      console.warn(
+        `Claude returned empty content for article ${request.article_id}${chunkLabel}`
+      );
+      return [];
+    }
+
     const responseText =
       message.content[0].type === 'text' ? message.content[0].text : '';
 
@@ -191,8 +212,8 @@ FACTS:`;
     articleId: string,
     rawFacts: ExtractedFactRaw[]
   ): KnowledgeFact[] {
-    return rawFacts.map((raw, index) => ({
-      id: `fact_${articleId}_${Date.now()}_${index}`,
+    return rawFacts.map((raw) => ({
+      id: `fact_${articleId}_${randomUUID()}`,
       article_id: articleId,
       content: raw.content,
       type: raw.type,

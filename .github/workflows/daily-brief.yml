@@ -48,6 +48,13 @@ jobs:
       - name: Generate Daily Brief
         run: npx ts-node src/cli/daily-brief.ts
 
+      - name: Verify Extraction Prerequisites
+        if: always()
+        run: |
+          test -n "${{ secrets.ANTHROPIC_API_KEY }}" || (echo "ANTHROPIC_API_KEY not configured" && exit 1)
+          test -f "data/canonical_articles.ndjson" || (echo "canonical_articles.ndjson not found" && exit 1)
+          echo "Extraction prerequisites verified"
+
       - name: Extract Knowledge Facts
         if: always()
         continue-on-error: true

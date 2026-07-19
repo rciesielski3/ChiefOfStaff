@@ -60,11 +60,21 @@ function calculateConfidenceStats(facts: KnowledgeFact[]): ValidationMetrics['co
   const confidences = facts.map(f => f.confidence).sort((a, b) => a - b);
   const n = confidences.length;
 
+  // Calculate median correctly for even/odd arrays
+  let median: number;
+  if (n % 2 === 1) {
+    // Odd: middle element
+    median = confidences[Math.floor(n / 2)];
+  } else {
+    // Even: average of two middle elements
+    median = (confidences[n / 2 - 1] + confidences[n / 2]) / 2;
+  }
+
   return {
     min: confidences[0],
     max: confidences[n - 1],
     mean: confidences.reduce((a, b) => a + b, 0) / n,
-    median: confidences[Math.floor(n / 2)],
+    median,
     q25: confidences[Math.floor(n * 0.25)],
     q75: confidences[Math.floor(n * 0.75)],
   };
@@ -103,14 +113,18 @@ async function main() {
       selectedArticles: topArticles.length
     });
 
-    // Prepare extraction requests
-    const extractionRequests: FactExtractionRequest[] = topArticles.map(article => ({
-      article_id: article.id,
-      title: article.title,
-      summary: article.summary,
-      url: article.url,
-      full_text: article.summary, // Use summary as full text for knowledge extraction
-    }));
+    const extractionRequests: FactExtractionRequest[] = topArticles.map(article => {
+      if (!article.summary) {
+        console.warn(`[MVP Validation] Article ${article.id} has no summary`);
+      }
+      return {
+        article_id: article.id,
+        title: article.title,
+        summary: article.summary,
+        url: article.url,
+        full_text: article.summary,
+      };
+    });
 
     // Extract facts with metrics collection
     console.log(`[MVP Validation] Extracting facts from ${topArticles.length} articles...\n`);
