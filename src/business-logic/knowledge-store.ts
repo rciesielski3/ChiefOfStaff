@@ -15,25 +15,24 @@ import { KnowledgeFact } from './knowledge-types';
  */
 export class FactStore {
   private filePath: string;
+  private lockFilePath: string;
+  private readonly LOCK_TIMEOUT_MS = 30000; // 30 second lock timeout
 
   constructor(filePath: string = 'data/knowledge_facts.ndjson') {
     this.filePath = filePath;
+    this.lockFilePath = `${filePath}.lock`;
   }
 
-  /**
-   * Append facts to store with deduplication
-   *
-   * - Checks for duplicates by normalized content hash
-   * - If duplicate exists with different source, creates new version
-   * - Returns count of facts actually stored
-   */
   async append(facts: KnowledgeFact[]): Promise<{ stored: number; deduplicated: number }> {
+    // Acquire lock to prevent concurrent writes
+    await this.acquireLock();
+
     try {
       // Ensure directory exists
       const dir = path.dirname(this.filePath);
       await fs.mkdir(dir, { recursive: true });
 
-      // Read existing facts to check for duplicates
+      // Read existing facts to check for duplicates (under lock)
       const existingHashes = await this.readHashes();
 
       let stored = 0;
@@ -63,12 +62,12 @@ export class FactStore {
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to append facts to store: ${msg}`);
+    } finally {
+      // Always release lock
+      await this.releaseLock();
     }
   }
 
-  /**
-   * Read all facts from store
-   */
   async readAll(): Promise<KnowledgeFact[]> {
     try {
       if (!fsSync.existsSync(this.filePath)) {
@@ -199,8 +198,12 @@ export class FactStore {
 
       return hashes;
     } catch (error) {
-      // If read fails, return empty set and let append handle it
-      return new Set();
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        // File doesn't exist yet, return empty set
+        return new Set();
+      }
+      // For any other error (permissions, etc), throw to prevent silent deduplication loss
+      throw error;
     }
   }
 
@@ -213,6 +216,61 @@ export class FactStore {
       .trim()
       .replace(/\s+/g, ' ');
     return createHash('md5').update(normalized).digest('hex');
+  }
+
+  private async acquireLock(): Promise<void> {
+    const startTime = Date.now();
+
+    while (true) {
+      try {
+        // Try to create lock file exclusively
+        const fd = fsSync.openSync(this.lockFilePath, fsSync.constants.O_CREAT | fsSync.constants.O_EXCL | fsSync.constants.O_WRONLY);
+        fsSync.closeSync(fd);
+        return; // Lock acquired
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'EEXIST') {
+          throw error;
+        }
+
+        // Check if lock file is stale (older than LOCK_TIMEOUT_MS)
+        try {
+          const stats = await fs.stat(this.lockFilePath);
+          const lockAge = Date.now() - stats.mtimeMs;
+
+          if (lockAge > this.LOCK_TIMEOUT_MS) {
+            // Lock is stale, remove it and retry
+            await fs.unlink(this.lockFilePath);
+            continue;
+          }
+        } catch {
+          // If we can't stat the lock file, just continue waiting
+        }
+
+        // Lock file exists and is not stale, wait a bit and retry
+        if (Date.now() - startTime > this.LOCK_TIMEOUT_MS) {
+          throw new Error(`Failed to acquire lock on ${this.filePath} after ${this.LOCK_TIMEOUT_MS}ms`);
+        }
+
+        await this.sleep(10); // Wait 10ms before retrying
+      }
+    }
+  }
+
+  private async releaseLock(): Promise<void> {
+    try {
+      await fs.unlink(this.lockFilePath);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        console.warn(`Failed to release lock: ${error}`);
+      }
+    }
+  }
+
+  /**
+   * Sleep helper
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
 

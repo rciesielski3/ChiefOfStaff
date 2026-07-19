@@ -87,14 +87,18 @@ async function main() {
       totalAvailable: allArticles.length
     });
 
-    // Prepare extraction requests
-    const extractionRequests: FactExtractionRequest[] = topArticles.map(article => ({
-      article_id: article.id,
-      title: article.title,
-      summary: article.summary,
-      url: article.url,
-      full_text: article.summary, // Use summary as full text for knowledge extraction
-    }));
+    const extractionRequests: FactExtractionRequest[] = topArticles.map(article => {
+      if (!article.summary) {
+        console.warn(`[Knowledge Extraction] Article ${article.id} has no summary`);
+      }
+      return {
+        article_id: article.id,
+        title: article.title,
+        summary: article.summary,
+        url: article.url,
+        full_text: article.summary,
+      };
+    });
 
     // Extract facts from articles
     const extractionService = new KnowledgeExtractionService(process.env.ANTHROPIC_API_KEY);
