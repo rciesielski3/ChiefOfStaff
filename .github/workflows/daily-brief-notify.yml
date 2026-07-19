@@ -37,6 +37,7 @@ jobs:
 
       - name: Alert on Workflow Failure
         if: steps.check.outputs.conclusion == 'failure'
+        continue-on-error: true
         run: |
           echo "⚠️ Daily Brief workflow failed!"
           echo "Status: ${{ steps.check.outputs.conclusion }}"
@@ -44,10 +45,19 @@ jobs:
 
           # Send Telegram notification if secrets are available
           if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
-            curl -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            RESPONSE=$(curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
               -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
               -d text="🚨 *Production Alert*: Daily Brief workflow failed%0AStatus: ${{ steps.check.outputs.conclusion }}%0ATime: ${{ steps.check.outputs.created }}" \
-              -d parse_mode="Markdown"
+              -d parse_mode="Markdown")
+
+            if echo "$RESPONSE" | jq -e '.ok == true' >/dev/null 2>&1; then
+              echo "✅ Telegram alert sent successfully"
+            else
+              ERROR_MSG=$(echo "$RESPONSE" | jq -r '.description // "Unknown error"')
+              echo "⚠️ Telegram alert failed: $ERROR_MSG" >&2
+            fi
+          else
+            echo "⏭️ Skipping Telegram notification (secrets not configured)"
           fi
 
           exit 1
