@@ -70,3 +70,8 @@ qa-news.zip
 /M1-*.md
 # Note: Do NOT ignore files in docs/ subdirectory — this pattern only applies to root
 .worktrees/
+
+# External repositories (managed separately)
+# qa-news is a separate repository checked out via GitHub Actions
+# It should not be committed to ChiefofStaff repo
+qa-news/
