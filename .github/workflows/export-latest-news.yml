@@ -132,7 +132,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.QA_NEWS_TOKEN }}
 
-      - name: Enable auto-merge
+      - name: Merge Pull Request
         id: auto_merge
         if: steps.commit.outputs.changed == 'true'
         continue-on-error: true
@@ -141,8 +141,17 @@ jobs:
           PR_NUMBER=$(gh pr list --repo rciesielski3/qa-news --head automation/latest-news --json number -q '.[0].number' 2>/dev/null || echo "")
 
           if [ -n "$PR_NUMBER" ]; then
-            gh pr merge --repo rciesielski3/qa-news --auto --squash "$PR_NUMBER"
+            # Merge the PR with squash strategy. This replaces the previous auto-merge approach
+            # which required the GitHub auto-merge feature to be enabled in qa-news repository settings.
+            # This direct merge is more reliable and doesn't depend on external repository settings.
+            gh pr merge --repo rciesielski3/qa-news --squash "$PR_NUMBER" || {
+              echo "Failed to merge PR $PR_NUMBER. This may indicate a conflict or permission issue."
+              exit 1
+            }
             echo "pr-number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "Successfully merged PR $PR_NUMBER"
+          else
+            echo "No PR found for automation/latest-news branch"
           fi
         env:
           GH_TOKEN: ${{ secrets.QA_NEWS_TOKEN }}
