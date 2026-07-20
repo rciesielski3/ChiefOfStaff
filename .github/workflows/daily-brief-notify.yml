@@ -44,20 +44,21 @@ jobs:
           echo "Last run: ${{ steps.check.outputs.created }}"
 
           # Send Telegram notification if secrets are available
-          if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
-            RESPONSE=$(curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-              -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-              -d text="🚨 *Production Alert*: Daily Brief workflow failed%0AStatus: ${{ steps.check.outputs.conclusion }}%0ATime: ${{ steps.check.outputs.created }}" \
-              -d parse_mode="Markdown")
-
-            if echo "$RESPONSE" | jq -e '.ok == true' >/dev/null 2>&1; then
-              echo "✅ Telegram alert sent successfully"
-            else
-              ERROR_MSG=$(echo "$RESPONSE" | jq -r '.description // "Unknown error"')
-              echo "⚠️ Telegram alert failed: $ERROR_MSG" >&2
-            fi
-          else
+          if [ -z "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] || [ -z "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
             echo "⏭️ Skipping Telegram notification (secrets not configured)"
+            exit 0
+          fi
+
+          RESPONSE=$(curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="🚨 *Production Alert*: Daily Brief workflow failed%0AStatus: ${{ steps.check.outputs.conclusion }}%0ATime: ${{ steps.check.outputs.created }}" \
+            -d parse_mode="Markdown")
+
+          if echo "$RESPONSE" | jq -e '.ok == true' >/dev/null 2>&1; then
+            echo "✅ Telegram alert sent successfully"
+          else
+            ERROR_MSG=$(echo "$RESPONSE" | jq -r '.description // "Unknown error"')
+            echo "⚠️ Telegram alert failed: $ERROR_MSG" >&2
           fi
 
       - name: Alert on Workflow Timeout
@@ -104,11 +105,22 @@ jobs:
 
       - name: Alert on Data Quality Issue
         if: failure()
+        continue-on-error: true
         run: |
           echo "🚨 Data quality issue detected"
-          if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
-            curl -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-              -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-              -d text="🚨 *Data Quality Alert*: canonical_articles.ndjson validation failed" \
-              -d parse_mode="Markdown"
+          if [ -z "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] || [ -z "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+            echo "⏭️ Skipping Telegram notification (secrets not configured)"
+            exit 0
+          fi
+
+          RESPONSE=$(curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="🚨 *Data Quality Alert*: canonical_articles.ndjson validation failed" \
+            -d parse_mode="Markdown")
+
+          if echo "$RESPONSE" | jq -e '.ok == true' >/dev/null 2>&1; then
+            echo "✅ Data quality alert sent via Telegram"
+          else
+            ERROR=$(echo "$RESPONSE" | jq -r '.description // "Unknown error"')
+            echo "⚠️ Telegram error: $ERROR" >&2
           fi

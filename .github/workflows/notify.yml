@@ -75,20 +75,44 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Validate Telegram Secrets
+        id: validate_telegram
+        run: |
+          if [ -z "${{ secrets.TELEGRAM_BOT_TOKEN }}" ]; then
+            echo "warning=TELEGRAM_BOT_TOKEN is not configured"
+            echo "should_notify=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          if [ -z "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+            echo "warning=TELEGRAM_CHAT_ID is not configured"
+            echo "should_notify=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "should_notify=true" >> $GITHUB_OUTPUT
+
       - name: Send Smart Success Notification (Daily Brief)
         if: |
           steps.context.outputs.workflow_name == 'Daily Brief' &&
           steps.context.outputs.status == 'success' &&
-          env.ENABLE_NOTIFICATIONS == 'true'
+          env.ENABLE_NOTIFICATIONS == 'true' &&
+          steps.validate_telegram.outputs.should_notify == 'true'
         continue-on-error: true
         run: |
           # Always alert if count is 0 (silent failure)
           if [ "$CURRENT_COUNT" -eq 0 ]; then
             MESSAGE="⚠️ Daily Brief: 0 articles fetched (check RSS feeds)"
-            curl -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            RESPONSE=$(curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
               -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
               -d text="$MESSAGE" \
-              -d parse_mode="HTML"
+              -d parse_mode="HTML")
+
+            # Check if Telegram request succeeded
+            if echo "$RESPONSE" | jq -e '.ok == true' >/dev/null 2>&1; then
+              echo "✅ Telegram notification sent"
+            else
+              ERROR=$(echo "$RESPONSE" | jq -r '.description // "Unknown error"' 2>/dev/null || echo "Failed to parse response")
+              echo "⚠️ Telegram error: $ERROR" >&2
+            fi
             exit 0
           fi
 
@@ -112,10 +136,18 @@ jobs:
 
           if [ "$SHOULD_NOTIFY" = true ]; then
             MESSAGE="✅ Daily Brief: $CURRENT_COUNT articles fetched (change: $CHANGE_PCT%)"
-            curl -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            RESPONSE=$(curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
               -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
               -d text="$MESSAGE" \
-              -d parse_mode="HTML"
+              -d parse_mode="HTML")
+
+            # Check if Telegram request succeeded
+            if echo "$RESPONSE" | jq -e '.ok == true' >/dev/null 2>&1; then
+              echo "✅ Telegram notification sent"
+            else
+              ERROR=$(echo "$RESPONSE" | jq -r '.description // "Unknown error"' 2>/dev/null || echo "Failed to parse response")
+              echo "⚠️ Telegram error: $ERROR" >&2
+            fi
           else
             echo "Article count stable ($CURRENT_COUNT, $CHANGE_PCT% change). Skipping notification."
           fi
@@ -153,7 +185,8 @@ jobs:
         if: |
           steps.context.outputs.workflow_name == 'Export Latest News' &&
           steps.context.outputs.status == 'success' &&
-          env.ENABLE_NOTIFICATIONS == 'true'
+          env.ENABLE_NOTIFICATIONS == 'true' &&
+          steps.validate_telegram.outputs.should_notify == 'true'
         continue-on-error: true
         run: |
           # Always alert on success for export (it runs less frequently)
@@ -163,10 +196,18 @@ jobs:
             MESSAGE="✅ Export: $EXPORT_COUNT articles exported to qa-news"
           fi
 
-          curl -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+          RESPONSE=$(curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
             -d text="$MESSAGE" \
-            -d parse_mode="HTML"
+            -d parse_mode="HTML")
+
+          # Check if Telegram request succeeded
+          if echo "$RESPONSE" | jq -e '.ok == true' >/dev/null 2>&1; then
+            echo "✅ Telegram notification sent"
+          else
+            ERROR=$(echo "$RESPONSE" | jq -r '.description // "Unknown error"' 2>/dev/null || echo "Failed to parse response")
+            echo "⚠️ Telegram error: $ERROR" >&2
+          fi
         env:
           # Same env-var pattern as the Daily Brief notification step above,
           # to avoid splicing a step output directly into the script.
@@ -203,10 +244,19 @@ jobs:
       - name: Send Failure Alert
         if: |
           steps.context.outputs.status == 'failure' &&
-          env.ENABLE_NOTIFICATIONS == 'true'
+          env.ENABLE_NOTIFICATIONS == 'true' &&
+          steps.validate_telegram.outputs.should_notify == 'true'
         continue-on-error: true
         run: |
-          curl -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+          RESPONSE=$(curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
             -d text="⚠️ Workflow failed: ${{ steps.context.outputs.workflow_name }}" \
-            -d parse_mode="HTML"
+            -d parse_mode="HTML")
+
+          # Check if Telegram request succeeded
+          if echo "$RESPONSE" | jq -e '.ok == true' >/dev/null 2>&1; then
+            echo "✅ Failure alert sent via Telegram"
+          else
+            ERROR=$(echo "$RESPONSE" | jq -r '.description // "Unknown error"' 2>/dev/null || echo "Failed to parse response")
+            echo "⚠️ Telegram error: $ERROR" >&2
+          fi
