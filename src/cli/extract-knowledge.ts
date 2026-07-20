@@ -41,15 +41,18 @@ async function main() {
     const extractCount = parseInt(process.env.EXTRACT_COUNT || '20', 10);
     const articlesPath = process.env.ARTICLES_PATH || 'data/canonical_articles.ndjson';
     const knowledgeFactsPath = process.env.KNOWLEDGE_FACTS_PATH || 'data/knowledge_facts.ndjson';
+    const cacheSnapshotPath = process.env.CLASSIFIER_CACHE_PATH || 'data/classifier-cache.json';
 
     console.log(`[Knowledge Extraction] Configuration:`);
     console.log(`  - Extract from top: ${extractCount} articles`);
     console.log(`  - Articles path: ${articlesPath}`);
     console.log(`  - Knowledge facts path: ${knowledgeFactsPath}`);
+    console.log(`  - Classifier cache path: ${cacheSnapshotPath}`);
     logStructured('CONFIG_LOADED', {
       extractCount,
       articlesPath,
-      knowledgeFactsPath
+      knowledgeFactsPath,
+      cacheSnapshotPath
     });
     console.log('');
 
@@ -57,6 +60,15 @@ async function main() {
     if (!process.env.ANTHROPIC_API_KEY) {
       throw new Error('ANTHROPIC_API_KEY environment variable is required');
     }
+
+    // Initialize extraction service and load classifier caches
+    console.log('[Knowledge Extraction] Initializing extraction service...');
+    const extractionService = new KnowledgeExtractionService(process.env.ANTHROPIC_API_KEY);
+
+    // Load cache snapshots if they exist
+    console.log('[Knowledge Extraction] Loading classifier caches...');
+    await extractionService.loadCacheSnapshots(cacheSnapshotPath);
+    console.log('');
 
     // Load articles from canonical store
     const readStartTime = Date.now();
@@ -101,7 +113,6 @@ async function main() {
     });
 
     // Extract facts from articles
-    const extractionService = new KnowledgeExtractionService(process.env.ANTHROPIC_API_KEY);
     const factStore = new FactStore(knowledgeFactsPath);
 
     let totalFactsExtracted = 0;
@@ -183,6 +194,11 @@ async function main() {
       failedExtractions,
       durationMs: extractionDuration
     });
+
+    // Save classifier caches for next run
+    console.log('[Knowledge Extraction] Saving classifier caches...');
+    await extractionService.saveCacheSnapshots(cacheSnapshotPath);
+    console.log('');
 
     // Get statistics
     const statsStartTime = Date.now();

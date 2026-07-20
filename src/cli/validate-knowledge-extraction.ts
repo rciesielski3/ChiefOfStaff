@@ -39,6 +39,13 @@ interface ValidationMetrics {
     q75: number;
   };
   factsByType: Record<string, number>;
+  factsByDomain: Record<string, number>;
+  domainConfidenceStats: {
+    min: number;
+    max: number;
+    mean: number;
+    median: number;
+  };
   failedExtractions: number;
   validationErrors: number;
 }
@@ -77,6 +84,32 @@ function calculateConfidenceStats(facts: KnowledgeFact[]): ValidationMetrics['co
     median,
     q25: confidences[Math.floor(n * 0.25)],
     q75: confidences[Math.floor(n * 0.75)],
+  };
+}
+
+function calculateDomainConfidenceStats(facts: KnowledgeFact[]): ValidationMetrics['domainConfidenceStats'] {
+  const factsWithDomain = facts.filter(f => f.domain_confidence !== undefined && f.domain_confidence !== null);
+  if (factsWithDomain.length === 0) {
+    return { min: 0, max: 0, mean: 0, median: 0 };
+  }
+
+  const confidences = factsWithDomain
+    .map(f => f.domain_confidence!)
+    .sort((a, b) => a - b);
+  const n = confidences.length;
+
+  let median: number;
+  if (n % 2 === 1) {
+    median = confidences[Math.floor(n / 2)];
+  } else {
+    median = (confidences[n / 2 - 1] + confidences[n / 2]) / 2;
+  }
+
+  return {
+    min: confidences[0],
+    max: confidences[n - 1],
+    mean: confidences.reduce((a, b) => a + b, 0) / n,
+    median,
   };
 }
 
@@ -217,12 +250,17 @@ async function main() {
 
     const avgFactsPerArticle = allExtractedFacts.length / Math.max(extractionMetrics.length, 1);
     const factsByType: Record<string, number> = {};
+    const factsByDomain: Record<string, number> = {};
 
     for (const fact of validatedFacts) {
       factsByType[fact.type] = (factsByType[fact.type] || 0) + 1;
+      if (fact.domain) {
+        factsByDomain[fact.domain] = (factsByDomain[fact.domain] || 0) + 1;
+      }
     }
 
     const confidenceStats = calculateConfidenceStats(validatedFacts);
+    const domainConfidenceStats = calculateDomainConfidenceStats(validatedFacts);
 
     const metrics: ValidationMetrics = {
       articlesProcessed: extractionMetrics.length,
@@ -230,6 +268,8 @@ async function main() {
       avgFactsPerArticle,
       confidenceStats,
       factsByType,
+      factsByDomain,
+      domainConfidenceStats,
       failedExtractions,
       validationErrors,
     };
@@ -256,12 +296,26 @@ async function main() {
       console.log(`  ${type}: ${count} (${percentage}%)`);
     }
 
+    console.log(`\nFacts by Domain:`);
+    for (const [domain, count] of Object.entries(metrics.factsByDomain).sort()) {
+      const percentage = ((count / validatedFacts.length) * 100).toFixed(1);
+      console.log(`  ${domain}: ${count} (${percentage}%)`);
+    }
+
+    console.log(`\nDomain Classification Confidence:`);
+    console.log(`  Min: ${metrics.domainConfidenceStats.min.toFixed(2)}`);
+    console.log(`  Median: ${metrics.domainConfidenceStats.median.toFixed(2)}`);
+    console.log(`  Mean: ${metrics.domainConfidenceStats.mean.toFixed(2)}`);
+    console.log(`  Max: ${metrics.domainConfidenceStats.max.toFixed(2)}`);
+
     logStructured('STATISTICS_COMPLETE', {
       articlesProcessed: metrics.articlesProcessed,
       factsExtracted: metrics.factsExtracted,
       avgFactsPerArticle: metrics.avgFactsPerArticle,
       confidenceStats: metrics.confidenceStats,
-      factsByType: metrics.factsByType
+      factsByType: metrics.factsByType,
+      factsByDomain: metrics.factsByDomain,
+      domainConfidenceStats: metrics.domainConfidenceStats
     });
 
     // Show sample facts for manual review
@@ -274,6 +328,9 @@ async function main() {
       const fact = sampleFacts[i];
       const article = topArticles.find(a => a.id === fact.article_id);
       console.log(`\n${i + 1}. [${fact.type}] Confidence: ${fact.confidence.toFixed(2)}`);
+      if (fact.domain) {
+        console.log(`   Domain: ${fact.domain} (confidence: ${fact.domain_confidence?.toFixed(2) || 'N/A'})`);
+      }
       console.log(`   Article: ${article?.title || 'Unknown'}`);
       console.log(`   Fact: ${fact.content}`);
       if (fact.source_text) {

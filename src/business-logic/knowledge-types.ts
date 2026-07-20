@@ -64,7 +64,8 @@ export interface KnowledgeFact {
   source_location?: SourceLocation;          // Location within article
 
   // Metadata (filled by M6.2+)
-  domain?: string;                           // Domain classification (e.g., "Technology/AI")
+  domain?: string;                           // Domain classification (e.g., "ai-ml", "infrastructure")
+  domain_confidence?: number;                // Domain classification confidence (0.0–1.0)
   keywords?: string[];                       // Key terms for searchability
 
   // Timestamps and versioning

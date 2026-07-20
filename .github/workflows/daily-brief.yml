@@ -64,6 +64,7 @@ jobs:
           EXTRACT_COUNT: 20
           ARTICLES_PATH: data/canonical_articles.ndjson
           KNOWLEDGE_FACTS_PATH: data/knowledge_facts.ndjson
+          CLASSIFIER_CACHE_PATH: data/classifier-cache.json
 
       - name: Commit changes
         run: |

@@ -64,6 +64,9 @@ secrets/
 qa-news-updates.zip
 qa-news.zip
 
+# Runtime caches (M6.2 classifier cache)
+data/classifier-cache.json
+
 # Generated documentation from other phases (root-level files only)
 /PAIOS*.md
 /PAIOS-*.md
