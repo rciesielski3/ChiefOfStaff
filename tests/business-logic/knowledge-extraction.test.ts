@@ -9,6 +9,9 @@ import {
   CONFIDENCE_THRESHOLDS,
   meetsConfidenceThreshold,
 } from '../../src/business-logic/knowledge-types';
+import { InMemoryClassificationCache } from '../../src/business-logic/domain-classification-fallback';
+import * as fs from 'fs';
+import * as path from 'path';
 
 describe('KnowledgeExtractionService', () => {
   const mockRequest: FactExtractionRequest = {
@@ -280,6 +283,209 @@ Common mistakes include not setting resource limits, using default namespaces in
 
     it('should allow lower confidence for PATTERN type', () => {
       expect(CONFIDENCE_THRESHOLDS['PATTERN']).toBe(0.75);
+    });
+  });
+
+  describe('M6.2 domain classification pipeline', () => {
+    it('should initialize domain classifiers on construction', () => {
+      const service = new KnowledgeExtractionService();
+      expect(service).toBeDefined();
+      // Classifiers should be initialized (no errors thrown)
+    });
+
+    it('should initialize with custom fallback cache', () => {
+      const cache = new InMemoryClassificationCache();
+      const service = new KnowledgeExtractionService('test-key', 'claude-haiku-4-5', undefined, cache);
+      expect(service).toBeDefined();
+    });
+
+    it('should classify facts with domain and domain_confidence fields', () => {
+      const service = new KnowledgeExtractionService();
+
+      // Create test fact with high-confidence domain keyword
+      const testFact: KnowledgeFact = {
+        id: 'fact_test_domain_001',
+        article_id: 'article_test_001',
+        content: 'Kubernetes automates container deployment and orchestration management',
+        type: 'DEFINITION',
+        confidence: 0.92,
+        extraction_method: 'claude',
+        extracted_at: new Date().toISOString(),
+        version: 1,
+        status: 'active',
+      };
+
+      // Classify using private method
+      const result = (service as any).domainClassifier.classifyFact(testFact);
+      expect(result).toBeDefined();
+      expect(result.domain).toBeDefined();
+      expect(result.confidence).toBeGreaterThan(0);
+      expect(result.confidence).toBeLessThanOrEqual(1);
+    });
+
+    it('should attach domain field to facts after extraction', async () => {
+      const service = new KnowledgeExtractionService();
+      const testFact: KnowledgeFact = {
+        id: 'fact_test_domain_002',
+        article_id: 'article_test_002',
+        content: 'React is a JavaScript library for building user interfaces with components',
+        type: 'DEFINITION',
+        confidence: 0.92,
+        extraction_method: 'claude',
+        extracted_at: new Date().toISOString(),
+        version: 1,
+        status: 'active',
+      };
+
+      // Manually call classifyFactsDomains
+      const classifiedFacts = await (service as any).classifyFactsDomains([testFact], {
+        title: 'Test Article',
+        summary: 'Test',
+        url: 'https://example.com',
+        article_id: 'article_test_002',
+        full_text: 'Test',
+      });
+
+      expect(classifiedFacts).toHaveLength(1);
+      expect(classifiedFacts[0].domain).toBeDefined();
+      expect(classifiedFacts[0].domain_confidence).toBeDefined();
+      expect(typeof classifiedFacts[0].domain_confidence).toBe('number');
+    });
+
+    it('should classify all 26+ domain types without error', () => {
+      const service = new KnowledgeExtractionService();
+      const allDomains = [
+        'ai-safety', 'ml-ops', 'nlp', 'computer-vision', 'reinforcement-learning', 'llm-applications',
+        'cloud-infra', 'devops', 'databases', 'networking', 'security',
+        'javascript', 'python', 'rust', 'go', 'other-languages',
+        'web-dev', 'frontend-frameworks', 'css-design', 'accessibility',
+        'cryptography', 'performance', 'testing', 'documentation', 'open-source', 'general',
+      ];
+
+      const classifier = (service as any).domainClassifier;
+      const availableDomains = classifier.getAllDomains();
+
+      expect(availableDomains.length).toBeGreaterThanOrEqual(26);
+      allDomains.forEach(domain => {
+        expect(availableDomains).toContain(domain);
+      });
+    });
+
+    it('should handle cache load/save round-trip', async () => {
+      const tempCachePath = '/tmp/test-classifier-cache.json';
+
+      try {
+        const service = new KnowledgeExtractionService();
+
+        // Save initial cache (should be empty)
+        await service.saveCacheSnapshots(tempCachePath);
+        expect(fs.existsSync(tempCachePath)).toBe(true);
+
+        // Load it back
+        const service2 = new KnowledgeExtractionService();
+        await service2.loadCacheSnapshots(tempCachePath);
+
+        // Cache should be loaded without error
+        const combined = service2.getCombinedCache();
+        expect(combined).toBeDefined();
+        expect(combined.fallback).toBeDefined();
+      } finally {
+        // Cleanup
+        if (fs.existsSync(tempCachePath)) {
+          fs.unlinkSync(tempCachePath);
+        }
+      }
+    });
+
+    it('should expose combined cache statistics', () => {
+      const service = new KnowledgeExtractionService();
+      const cache = service.getCombinedCache();
+
+      expect(cache).toBeDefined();
+      expect(cache.fallback).toBeDefined();
+      expect(cache.fallback.size).toBeGreaterThanOrEqual(0);
+      expect(Array.isArray(cache.fallback.entries)).toBe(true);
+    });
+
+    it('should handle missing cache file gracefully', async () => {
+      const service = new KnowledgeExtractionService();
+      const nonExistentPath = '/tmp/does-not-exist-cache.json';
+
+      // Should not throw, just log a warning
+      await service.loadCacheSnapshots(nonExistentPath);
+      expect(true).toBe(true); // If we get here, no error was thrown
+    });
+
+    it('should validate all classified facts meet schema requirements', async () => {
+      const service = new KnowledgeExtractionService();
+      const testFacts: KnowledgeFact[] = [
+        {
+          id: 'fact_domain_schema_001',
+          article_id: 'article_schema_001',
+          content: 'Docker is a containerization platform that uses images and containers',
+          type: 'DEFINITION',
+          confidence: 0.90,
+          extraction_method: 'claude',
+          extracted_at: new Date().toISOString(),
+          version: 1,
+          status: 'active',
+        },
+        {
+          id: 'fact_domain_schema_002',
+          article_id: 'article_schema_001',
+          content: 'Always use resource limits in production deployments',
+          type: 'TECHNIQUE',
+          confidence: 0.85,
+          extraction_method: 'claude',
+          extracted_at: new Date().toISOString(),
+          version: 1,
+          status: 'active',
+        },
+      ];
+
+      const classifiedFacts = await (service as any).classifyFactsDomains(testFacts, {
+        title: 'Test',
+        summary: 'Test',
+        url: 'https://example.com',
+        article_id: 'article_schema_001',
+        full_text: 'Test',
+      });
+
+      // All classified facts should be valid
+      classifiedFacts.forEach((fact: KnowledgeFact) => {
+        const errors = validateFact(fact);
+        expect(errors).toHaveLength(0);
+        expect(fact.domain).toBeDefined();
+        expect(fact.domain_confidence).toBeDefined();
+      });
+    });
+
+    it('should populate domain_confidence as a number between 0 and 1', async () => {
+      const service = new KnowledgeExtractionService();
+      const testFact: KnowledgeFact = {
+        id: 'fact_confidence_range_001',
+        article_id: 'article_conf_001',
+        content: 'React hooks allow state management in functional components',
+        type: 'TECHNIQUE',
+        confidence: 0.88,
+        extraction_method: 'claude',
+        extracted_at: new Date().toISOString(),
+        version: 1,
+        status: 'active',
+      };
+
+      const classifiedFacts = await (service as any).classifyFactsDomains([testFact], {
+        title: 'React Article',
+        summary: 'Guide',
+        url: 'https://example.com/react',
+        article_id: 'article_conf_001',
+        full_text: 'Test',
+      });
+
+      const fact = classifiedFacts[0];
+      expect(fact.domain_confidence).toBeGreaterThanOrEqual(0);
+      expect(fact.domain_confidence).toBeLessThanOrEqual(1);
+      expect(typeof fact.domain_confidence).toBe('number');
     });
   });
 });

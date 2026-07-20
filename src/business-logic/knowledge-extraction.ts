@@ -1,12 +1,14 @@
 /**
- * M6.1 Knowledge Extraction Service
+ * M6.1 Knowledge Extraction Service + M6.2 Domain Classification Pipeline
  *
  * Extracts structured knowledge facts from articles using Claude API.
- * Handles fact validation, confidence filtering, deduplication prep.
+ * Handles fact validation, confidence filtering, domain classification (heuristic + fallback).
  */
 
 import Anthropic from '@anthropic-ai/sdk';
 import { randomUUID } from 'crypto';
+import fs from 'fs';
+import path from 'path';
 import {
   KnowledgeFact,
   FactExtractionRequest,
@@ -15,9 +17,17 @@ import {
   CONFIDENCE_THRESHOLDS,
   validateFact,
 } from './knowledge-types';
+import { DomainClassifier, DomainClassificationResult } from './domain-classifier';
+import {
+  DomainClassificationFallback,
+  InMemoryClassificationCache,
+  ClassificationCacheStore,
+  ArticleContext,
+} from './domain-classification-fallback';
 
 /**
  * Service for extracting knowledge facts from articles using Claude
+ * Includes domain classification pipeline (heuristic + fallback)
  */
 export class KnowledgeExtractionService {
   private client: Anthropic;
@@ -34,7 +44,16 @@ export class KnowledgeExtractionService {
     'claude-3-5-sonnet-20241022',
   ];
 
-  constructor(apiKey?: string, model?: string) {
+  private domainClassifier: DomainClassifier;
+  private domainFallback: DomainClassificationFallback;
+  private readonly FALLBACK_CONFIDENCE_THRESHOLD = 0.60;
+
+  constructor(
+    apiKey?: string,
+    model?: string,
+    domainClassifierCache?: ClassificationCacheStore,
+    domainFallbackCache?: ClassificationCacheStore
+  ) {
     this.client = new Anthropic({
       apiKey: apiKey || process.env.ANTHROPIC_API_KEY,
     });
@@ -47,6 +66,12 @@ export class KnowledgeExtractionService {
       );
     }
     this.model = configuredModel;
+
+    // Initialize domain classifiers with optional caches
+    this.domainClassifier = new DomainClassifier();
+    this.domainFallback = new DomainClassificationFallback({
+      cache: domainFallbackCache ?? new InMemoryClassificationCache(),
+    });
   }
 
   async extractFacts(request: FactExtractionRequest): Promise<FactExtractionBatch> {
@@ -91,11 +116,14 @@ export class KnowledgeExtractionService {
         }
       }
 
+      // Classify domains for all facts (M6.2 pipeline)
+      const classifiedFacts = await this.classifyFactsDomains(fullyValidFacts, request);
+
       const elapsedMs = Date.now() - startTime;
 
       return {
         article_id: request.article_id,
-        facts: fullyValidFacts,
+        facts: classifiedFacts,
         extraction_time_ms: elapsedMs,
       };
     } catch (error) {
@@ -252,6 +280,143 @@ FACTS:`;
     }
 
     return chunks;
+  }
+
+  /**
+   * Classify facts into domains using heuristic + fallback pipeline
+   * Attaches domain and domain_confidence to each fact
+   */
+  private async classifyFactsDomains(
+    facts: KnowledgeFact[],
+    request: FactExtractionRequest
+  ): Promise<KnowledgeFact[]> {
+    const context: ArticleContext = {
+      title: request.title,
+      summary: request.summary,
+    };
+
+    const classifiedFacts: KnowledgeFact[] = [];
+
+    for (const fact of facts) {
+      // Step 1: Run heuristic classifier (fast, zero cost)
+      const heuristicResult = this.domainClassifier.classifyFact(fact);
+
+      // Step 2: Use fallback if heuristic confidence is low
+      let finalResult: DomainClassificationResult = heuristicResult;
+      if (heuristicResult.confidence < this.FALLBACK_CONFIDENCE_THRESHOLD) {
+        try {
+          finalResult = await this.domainFallback.classifyAsync(
+            fact,
+            heuristicResult,
+            context
+          );
+        } catch (error) {
+          // If fallback fails, stick with heuristic result
+          console.warn(
+            `Domain fallback classification failed for fact ${fact.id}, using heuristic:`,
+            error instanceof Error ? error.message : String(error)
+          );
+        }
+      }
+
+      // Step 3: Attach classification to fact
+      classifiedFacts.push({
+        ...fact,
+        domain: finalResult.domain,
+        domain_confidence: finalResult.confidence,
+      });
+    }
+
+    return classifiedFacts;
+  }
+
+  /**
+   * Load classifier caches from disk
+   * @param cachePath Path to cache file (JSON format)
+   */
+  async loadCacheSnapshots(cachePath: string): Promise<void> {
+    try {
+      if (!fs.existsSync(cachePath)) {
+        console.info(`Cache file not found: ${cachePath}, starting fresh`);
+        return;
+      }
+
+      const cacheData = fs.readFileSync(cachePath, 'utf-8');
+      const parsed = JSON.parse(cacheData);
+
+      // Restore fallback cache if present
+      if (parsed.fallback && Array.isArray(parsed.fallback.entries)) {
+        const fallbackCache = this.domainFallback.getCache() as any;
+        if (
+          fallbackCache &&
+          typeof fallbackCache.importEntries === 'function'
+        ) {
+          fallbackCache.importEntries(parsed.fallback.entries);
+          console.info(`Restored ${parsed.fallback.entries.length} fallback cache entries`);
+        }
+      }
+    } catch (error) {
+      console.warn(
+        `Failed to load cache snapshots from ${cachePath}:`,
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
+
+  /**
+   * Save classifier caches to disk
+   * @param cachePath Path to cache file (JSON format)
+   */
+  async saveCacheSnapshots(cachePath: string): Promise<void> {
+    try {
+      const dir = path.dirname(cachePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+
+      const fallbackCache = this.domainFallback.getCache() as any;
+      const cacheData: any = {};
+
+      // Export fallback cache
+      if (
+        fallbackCache &&
+        typeof fallbackCache.exportEntries === 'function'
+      ) {
+        const entries = fallbackCache.exportEntries();
+        cacheData.fallback = { entries };
+      }
+
+      fs.writeFileSync(cachePath, JSON.stringify(cacheData, null, 2));
+      console.info(`Saved cache snapshots to ${cachePath}`);
+    } catch (error) {
+      console.error(
+        `Failed to save cache snapshots to ${cachePath}:`,
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
+
+  /**
+   * Get combined cache statistics from both classifiers
+   */
+  getCombinedCache(): {
+    fallback: {
+      size: number;
+      entries: Array<{ fact_id: string; result: DomainClassificationResult }>;
+    };
+  } {
+    const fallbackCache = this.domainFallback.getCache() as any;
+    const fallbackEntries =
+      fallbackCache && typeof fallbackCache.exportEntries === 'function'
+        ? fallbackCache.exportEntries()
+        : [];
+
+    return {
+      fallback: {
+        size: fallbackEntries.length,
+        entries: fallbackEntries,
+      },
+    };
   }
 }
 
