@@ -57,14 +57,34 @@ jobs:
 
       - name: Extract Knowledge Facts
         if: always()
-        continue-on-error: true
-        run: npx ts-node src/cli/extract-knowledge.ts
+        id: extract
+        run: |
+          echo "Starting knowledge fact extraction..."
+          npx ts-node src/cli/extract-knowledge.ts
+          echo "✅ Knowledge extraction completed successfully"
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           EXTRACT_COUNT: 20
           ARTICLES_PATH: data/canonical_articles.ndjson
           KNOWLEDGE_FACTS_PATH: data/knowledge_facts.ndjson
           CLASSIFIER_CACHE_PATH: data/classifier-cache.json
+
+      - name: Verify Extraction Output
+        if: always()
+        run: |
+          if [ ! -f "data/knowledge_facts.ndjson" ]; then
+            echo "❌ CRITICAL: knowledge_facts.ndjson not found after extraction"
+            exit 1
+          fi
+
+          FACT_COUNT=$(wc -l < data/knowledge_facts.ndjson || echo 0)
+
+          if [ "$FACT_COUNT" -eq 0 ]; then
+            echo "❌ CRITICAL: Extraction produced 0 facts"
+            exit 1
+          fi
+
+          echo "✅ Extraction verification: $FACT_COUNT facts extracted"
 
       - name: Commit changes
         run: |
