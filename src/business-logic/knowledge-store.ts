@@ -8,6 +8,7 @@ import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import * as path from 'path';
 import { createHash } from 'crypto';
+import * as lockfile from 'proper-lockfile';
 import { KnowledgeFact } from './knowledge-types';
 
 /**
@@ -15,12 +16,11 @@ import { KnowledgeFact } from './knowledge-types';
  */
 export class FactStore {
   private filePath: string;
-  private lockFilePath: string;
   private readonly LOCK_TIMEOUT_MS = 30000; // 30 second lock timeout
+  private lockRelease: (() => Promise<void>) | null = null;
 
   constructor(filePath: string = 'data/knowledge_facts.ndjson') {
     this.filePath = filePath;
-    this.lockFilePath = `${filePath}.lock`;
   }
 
   async append(facts: KnowledgeFact[]): Promise<{ stored: number; deduplicated: number }> {
@@ -218,59 +218,48 @@ export class FactStore {
     return createHash('md5').update(normalized).digest('hex');
   }
 
+  /**
+   * Acquire file lock using proper-lockfile with timeout
+   */
   private async acquireLock(): Promise<void> {
-    const startTime = Date.now();
-
-    while (true) {
-      try {
-        // Try to create lock file exclusively
-        const fd = fsSync.openSync(this.lockFilePath, fsSync.constants.O_CREAT | fsSync.constants.O_EXCL | fsSync.constants.O_WRONLY);
-        fsSync.closeSync(fd);
-        return; // Lock acquired
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== 'EEXIST') {
-          throw error;
-        }
-
-        // Check if lock file is stale (older than LOCK_TIMEOUT_MS)
-        try {
-          const stats = await fs.stat(this.lockFilePath);
-          const lockAge = Date.now() - stats.mtimeMs;
-
-          if (lockAge > this.LOCK_TIMEOUT_MS) {
-            // Lock is stale, remove it and retry
-            await fs.unlink(this.lockFilePath);
-            continue;
-          }
-        } catch {
-          // If we can't stat the lock file, just continue waiting
-        }
-
-        // Lock file exists and is not stale, wait a bit and retry
-        if (Date.now() - startTime > this.LOCK_TIMEOUT_MS) {
-          throw new Error(`Failed to acquire lock on ${this.filePath} after ${this.LOCK_TIMEOUT_MS}ms`);
-        }
-
-        await this.sleep(10); // Wait 10ms before retrying
-      }
-    }
-  }
-
-  private async releaseLock(): Promise<void> {
     try {
-      await fs.unlink(this.lockFilePath);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-        console.warn(`Failed to release lock: ${error}`);
+      // Ensure directory exists before locking
+      const dir = path.dirname(this.filePath);
+      await fs.mkdir(dir, { recursive: true });
+
+      // Ensure file exists or can be created
+      try {
+        await fs.access(this.filePath);
+      } catch {
+        // File doesn't exist, create an empty file so lockfile can lock it
+        await fs.writeFile(this.filePath, '', 'utf-8');
       }
+
+      this.lockRelease = await lockfile.lock(this.filePath, {
+        stale: this.LOCK_TIMEOUT_MS,
+        retries: {
+          minTimeout: 10,
+          maxTimeout: 100,
+          retries: Math.floor(this.LOCK_TIMEOUT_MS / 50),
+        },
+      });
+    } catch (error) {
+      throw new Error(`Failed to acquire lock on ${this.filePath}: ${error}`);
     }
   }
 
   /**
-   * Sleep helper
+   * Release file lock
    */
-  private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  private async releaseLock(): Promise<void> {
+    if (this.lockRelease) {
+      try {
+        await this.lockRelease();
+        this.lockRelease = null;
+      } catch (error) {
+        console.warn(`Failed to release lock: ${error}`);
+      }
+    }
   }
 }
 
