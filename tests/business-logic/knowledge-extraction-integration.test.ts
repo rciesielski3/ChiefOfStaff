@@ -19,8 +19,11 @@ import { Article } from '../../src/business-logic/normalize-article';
  *
  * NOTE: These are business-logic unit tests, not CLI integration tests.
  * They validate the core extraction service and storage components work correctly.
- * CLI orchestration (e.g., entry point invocation, process exit codes) is tested
- * separately in E2E tests.
+ *
+ * CLI orchestration (entry point invocation, process exit codes, environment variables)
+ * is NOT YET TESTED. The extract-knowledge.ts CLI is invoked in GitHub Actions workflows
+ * (daily-brief.yml) but without automated assertions.
+ * For full CLI testing, see extract-knowledge.ts entry point validation (not yet automated).
  */
 describe('knowledge extraction service integration', () => {
   const testDir = `/tmp/extract-knowledge-tests-${Date.now()}`;

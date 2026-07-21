@@ -18,8 +18,11 @@ import { Article } from '../../src/business-logic/normalize-article';
  *
  * NOTE: These are business-logic unit tests, not CLI integration tests.
  * They validate the fact validation service and metrics calculation components work correctly.
- * CLI orchestration (e.g., entry point invocation, process exit codes) is tested
- * separately in E2E tests.
+ *
+ * CLI orchestration (entry point invocation, process exit codes, environment variables)
+ * is NOT YET TESTED. The validate-knowledge-extraction.ts CLI is aspirational code not yet
+ * integrated into workflows or tested with automated assertions.
+ * For full CLI testing, see validate-knowledge-extraction.ts entry point validation (not yet automated).
  */
 describe('fact validation and metrics calculation integration', () => {
   const testDir = `/tmp/validate-knowledge-tests-${Date.now()}`;

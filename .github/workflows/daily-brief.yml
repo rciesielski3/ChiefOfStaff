@@ -33,6 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ENABLE_NOTIFICATIONS: true
+    outputs:
+      extraction_failed: ${{ steps.verify-extraction.outcome != 'success' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -98,10 +100,24 @@ jobs:
           echo "count=$ARTICLE_COUNT" >> $GITHUB_OUTPUT
           echo "Articles fetched: $ARTICLE_COUNT"
 
+      - name: Create Extraction Status File
+        if: always()
+        run: |
+          echo "${{ steps.verify-extraction.outcome }}" > /tmp/extraction_status.txt
+          echo "Extraction status: ${{ steps.verify-extraction.outcome }}"
+
       - name: Upload Article Count Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: article-count-data
           path: data/canonical_articles.ndjson
+          retention-days: 1
+
+      - name: Upload Extraction Status Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extraction-status
+          path: /tmp/extraction_status.txt
           retention-days: 1

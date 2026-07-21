@@ -241,11 +241,69 @@ jobs:
           CURRENT_COUNT: ${{ steps.brief_count.outputs.current_count }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get Extraction Status
+        id: extraction_status
+        if: |
+          steps.context.outputs.workflow_name == 'Daily Brief' &&
+          steps.context.outputs.status == 'failure'
+        continue-on-error: true
+        run: |
+          # Download extraction status artifact from the completed daily-brief workflow.
+          # This artifact is created by daily-brief.yml and contains the outcome
+          # of the "Verify Extraction Output" step (success, failure, etc).
+          gh run download ${{ steps.context.outputs.run_id }} \
+            --repo ${{ github.repository }} \
+            --name extraction-status \
+            --dir /tmp/extraction || true
+
+          # Read the extraction status and determine if extraction failed
+          if [ -f "/tmp/extraction/extraction_status.txt" ]; then
+            STATUS=$(cat /tmp/extraction/extraction_status.txt | tr -d '\n' | tr -d ' ')
+            if [ "$STATUS" = "failure" ]; then
+              echo "extraction_failed=true" >> $GITHUB_OUTPUT
+              echo "✅ Extraction failure detected from status artifact"
+            else
+              echo "extraction_failed=false" >> $GITHUB_OUTPUT
+              echo "Extraction status: $STATUS (not a failure)"
+            fi
+          else
+            echo "extraction_failed=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Extraction status artifact not found; assuming non-extraction failure"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Send Extraction Failure Alert
+        if: |
+          steps.context.outputs.workflow_name == 'Daily Brief' &&
+          steps.context.outputs.status == 'failure' &&
+          env.ENABLE_NOTIFICATIONS == 'true' &&
+          steps.validate_telegram.outputs.should_notify == 'true' &&
+          steps.extraction_status.outputs.extraction_failed == 'true'
+        continue-on-error: true
+        run: |
+          MESSAGE="🚨 CRITICAL: Daily Brief extraction failed - stale data NOT published. Check workflow: https://github.com/${{ github.repository }}/actions/runs/${{ steps.context.outputs.run_id }}"
+
+          RESPONSE=$(curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="$MESSAGE" \
+            -d parse_mode="HTML")
+
+          # Check if Telegram request succeeded
+          if echo "$RESPONSE" | jq -e '.ok == true' >/dev/null 2>&1; then
+            echo "✅ Extraction failure alert sent via Telegram"
+          else
+            ERROR=$(echo "$RESPONSE" | jq -r '.description // "Unknown error"' 2>/dev/null || echo "Failed to parse response")
+            echo "⚠️ Telegram error: $ERROR" >&2
+          fi
+
       - name: Send Failure Alert
         if: |
           steps.context.outputs.status == 'failure' &&
           env.ENABLE_NOTIFICATIONS == 'true' &&
-          steps.validate_telegram.outputs.should_notify == 'true'
+          steps.validate_telegram.outputs.should_notify == 'true' &&
+          (steps.context.outputs.workflow_name != 'Daily Brief' ||
+           steps.extraction_status.outputs.extraction_failed != 'true')
         continue-on-error: true
         run: |
           RESPONSE=$(curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
