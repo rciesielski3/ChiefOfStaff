@@ -41,7 +41,7 @@ class MockArticleStore implements ArticleStore {
   }
 }
 
-describe('Daily Brief CLI Integration', () => {
+describe('Daily Brief Article Persistence', () => {
   /**
    * Helper to create a test article
    */
