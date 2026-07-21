@@ -241,27 +241,34 @@ jobs:
           CURRENT_COUNT: ${{ steps.brief_count.outputs.current_count }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check Extraction Failure Details
-        id: extraction_check
+      - name: Get Extraction Status
+        id: extraction_status
         if: |
           steps.context.outputs.workflow_name == 'Daily Brief' &&
           steps.context.outputs.status == 'failure'
         continue-on-error: true
         run: |
-          # Try to download the workflow run logs to check if extraction failed
-          # This helps us send a more specific alert
-          gh run view ${{ steps.context.outputs.run_id }} \
+          # Download extraction status artifact from the completed daily-brief workflow.
+          # This artifact is created by daily-brief.yml and contains the outcome
+          # of the "Verify Extraction Output" step (success, failure, etc).
+          gh run download ${{ steps.context.outputs.run_id }} \
             --repo ${{ github.repository }} \
-            --log > /tmp/workflow_log.txt 2>&1 || true
+            --name extraction-status \
+            --dir /tmp/extraction || true
 
-          # Check if extraction verification step failed
-          # Look for the "Verify Extraction Output" step and critical error patterns
-          if grep -q "Verify Extraction Output" /tmp/workflow_log.txt && \
-             grep -qE "(CRITICAL.*extraction|knowledge_facts\.ndjson|Extraction produced 0)" /tmp/workflow_log.txt; then
-            echo "extraction_failed=true" >> $GITHUB_OUTPUT
-            echo "Extraction failure detected in workflow logs"
+          # Read the extraction status and determine if extraction failed
+          if [ -f "/tmp/extraction/extraction_status.txt" ]; then
+            STATUS=$(cat /tmp/extraction/extraction_status.txt | tr -d '\n' | tr -d ' ')
+            if [ "$STATUS" = "failure" ]; then
+              echo "extraction_failed=true" >> $GITHUB_OUTPUT
+              echo "✅ Extraction failure detected from status artifact"
+            else
+              echo "extraction_failed=false" >> $GITHUB_OUTPUT
+              echo "Extraction status: $STATUS (not a failure)"
+            fi
           else
             echo "extraction_failed=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Extraction status artifact not found; assuming non-extraction failure"
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -272,11 +279,10 @@ jobs:
           steps.context.outputs.status == 'failure' &&
           env.ENABLE_NOTIFICATIONS == 'true' &&
           steps.validate_telegram.outputs.should_notify == 'true' &&
-          (steps.extraction_check.outputs.extraction_failed == 'true' ||
-           steps.context.outputs.status == 'failure')
+          steps.extraction_status.outputs.extraction_failed == 'true'
         continue-on-error: true
         run: |
-          MESSAGE="🚨 CRITICAL: Daily Brief extraction failed - stale data NOT published. Check workflow logs at https://github.com/${{ github.repository }}/actions/runs/${{ steps.context.outputs.run_id }}"
+          MESSAGE="🚨 CRITICAL: Daily Brief extraction failed - stale data NOT published. Check workflow: https://github.com/${{ github.repository }}/actions/runs/${{ steps.context.outputs.run_id }}"
 
           RESPONSE=$(curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
@@ -295,12 +301,14 @@ jobs:
         if: |
           steps.context.outputs.status == 'failure' &&
           env.ENABLE_NOTIFICATIONS == 'true' &&
-          steps.validate_telegram.outputs.should_notify == 'true'
+          steps.validate_telegram.outputs.should_notify == 'true' &&
+          (steps.context.outputs.workflow_name != 'Daily Brief' ||
+           steps.extraction_status.outputs.extraction_failed != 'true')
         continue-on-error: true
         run: |
           RESPONSE=$(curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-            -d text="⚠️ Workflow failed: ${{ steps.context.outputs.workflow_name }} (Check extraction alert above)" \
+            -d text="⚠️ Workflow failed: ${{ steps.context.outputs.workflow_name }}" \
             -d parse_mode="HTML")
 
           # Check if Telegram request succeeded
