@@ -1,8 +1,9 @@
 #!/usr/bin/env ts-node
 
 import * as path from 'path';
-import { exportMonthlyRecap } from '../business-logic/export-monthly-recap';
+import { exportMonthlyRecap, exportMonthlyRecapWithSummaries } from '../business-logic/export-monthly-recap';
 import { NdJsonArticleStore } from '../business-logic/article-store';
+import { SummaryGenerator } from '../business-logic/summary-generator';
 
 /**
  * CLI: Export monthly recaps to QA News public API
@@ -60,7 +61,19 @@ async function main(): Promise<void> {
     const curateLimit = 25;
     const exportStartTime = Date.now();
     logStructured('EXPORT_START', { exportType: 'monthly', curateLimit });
-    const monthlyExport = exportMonthlyRecap(articles, curateLimit);
+    let monthlyExport;
+
+    // Check if ANTHROPIC_API_KEY is available for summary generation
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (apiKey) {
+      logStructured('SUMMARIES_ENABLED', { });
+      const summaryGenerator = new SummaryGenerator(apiKey);
+      monthlyExport = await exportMonthlyRecapWithSummaries(articles, curateLimit, summaryGenerator);
+    } else {
+      logStructured('SUMMARIES_SKIPPED', { reason: 'ANTHROPIC_API_KEY not set' });
+      monthlyExport = exportMonthlyRecap(articles, curateLimit);
+    }
+
     const exportDuration = Date.now() - exportStartTime;
     logStructured('EXPORT_COMPLETE', {
       monthCount: monthlyExport.months.length,

@@ -1,8 +1,9 @@
 #!/usr/bin/env ts-node
 
 import * as path from 'path';
-import { exportWeeklyHighlights } from '../business-logic/export-weekly-highlights';
+import { exportWeeklyHighlights, exportWeeklyHighlightsWithSummaries } from '../business-logic/export-weekly-highlights';
 import { NdJsonArticleStore } from '../business-logic/article-store';
+import { SummaryGenerator } from '../business-logic/summary-generator';
 
 /**
  * CLI: Export weekly highlights to QA News public API
@@ -59,7 +60,19 @@ async function main(): Promise<void> {
     // Export weekly highlights
     const exportStartTime = Date.now();
     logStructured('EXPORT_START', { exportType: 'weekly' });
-    const weeklyExport = exportWeeklyHighlights(articles);
+    let weeklyExport;
+
+    // Check if ANTHROPIC_API_KEY is available for summary generation
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (apiKey) {
+      logStructured('SUMMARIES_ENABLED', { });
+      const summaryGenerator = new SummaryGenerator(apiKey);
+      weeklyExport = await exportWeeklyHighlightsWithSummaries(articles, summaryGenerator);
+    } else {
+      logStructured('SUMMARIES_SKIPPED', { reason: 'ANTHROPIC_API_KEY not set' });
+      weeklyExport = exportWeeklyHighlights(articles);
+    }
+
     const exportDuration = Date.now() - exportStartTime;
     logStructured('EXPORT_COMPLETE', {
       weekCount: weeklyExport.weeks.length,

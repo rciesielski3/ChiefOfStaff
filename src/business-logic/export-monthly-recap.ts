@@ -1,4 +1,5 @@
 import { Article } from './normalize-article';
+import { SummaryGenerator } from './summary-generator';
 
 /**
  * A single month's curated collection with summary and articles
@@ -100,4 +101,39 @@ export function exportMonthlyRecap(
   return {
     months
   };
+}
+
+/**
+ * Export articles grouped by month and generate summaries for each month
+ *
+ * Algorithm:
+ * 1. Call exportMonthlyRecap(articles, curateLimit) to get grouped months
+ * 2. For each month, call summaryGenerator.generateSummary(month.items)
+ * 3. Catch errors and use fallback summary text
+ * 4. Return export with summaries populated
+ *
+ * @param articles - Array of normalized articles to group and summarize
+ * @param curateLimit - Maximum articles per month (default 25)
+ * @param summaryGenerator - SummaryGenerator instance for generating summaries
+ * @returns Export object with months and summaries
+ */
+export async function exportMonthlyRecapWithSummaries(
+  articles: Article[],
+  curateLimit: number = 25,
+  summaryGenerator: SummaryGenerator
+): Promise<MonthlyRecapExport> {
+  // Call existing exportMonthlyRecap(articles, curateLimit)
+  const export_ = exportMonthlyRecap(articles, curateLimit);
+
+  // For each month, generate summary
+  for (const month of export_.months) {
+    try {
+      month.summary = await summaryGenerator.generateSummary(month.items);
+    } catch (error) {
+      console.warn(`Failed to generate summary for month ${month.monthOf}: ${error}`);
+      month.summary = `Month of ${month.monthOf}: ${month.items.length} articles`;
+    }
+  }
+
+  return export_;
 }

@@ -1,5 +1,6 @@
-import { exportMonthlyRecap, MonthlyRecap, MonthlyRecapExport } from '../../src/business-logic/export-monthly-recap';
+import { exportMonthlyRecap, exportMonthlyRecapWithSummaries, MonthlyRecap, MonthlyRecapExport } from '../../src/business-logic/export-monthly-recap';
 import { Article } from '../../src/business-logic/normalize-article';
+import { SummaryGenerator } from '../../src/business-logic/summary-generator';
 
 describe('exportMonthlyRecap', () => {
   /**
@@ -205,5 +206,118 @@ describe('exportMonthlyRecap', () => {
     // Should be the 20 most recent articles (july-30 to july-11)
     expect(month.items[0].id).toBe('july-30'); // Most recent
     expect(month.items[19].id).toBe('july-11'); // Oldest in curated set
+  });
+});
+
+describe('exportMonthlyRecapWithSummaries', () => {
+  /**
+   * Test 1: Generates summaries when SummaryGenerator provided
+   *
+   * Creates 2 articles from different months
+   * Mocks SummaryGenerator.generateSummary()
+   * Verifies summary field is populated with generated text
+   */
+  it('should generate summaries when SummaryGenerator provided', async () => {
+    const articles: Article[] = [
+      {
+        id: 'test-1',
+        title: 'Article 1',
+        summary: 'Summary 1',
+        url: 'https://example.com/1',
+        source: 'Test Source',
+        category: 'news',
+        publishedAt: '2026-06-15T10:00:00Z',
+        tags: []
+      },
+      {
+        id: 'test-2',
+        title: 'Article 2',
+        summary: 'Summary 2',
+        url: 'https://example.com/2',
+        source: 'Test Source',
+        category: 'news',
+        publishedAt: '2026-07-15T10:00:00Z',
+        tags: []
+      }
+    ];
+
+    // Mock SummaryGenerator
+    const mockSummaryGenerator = {
+      generateSummary: jest.fn(async (items: Article[]) => {
+        return `Generated summary for ${items.length} articles`;
+      })
+    } as unknown as SummaryGenerator;
+
+    const result = await exportMonthlyRecapWithSummaries(articles, 25, mockSummaryGenerator);
+
+    // Should have 2 months
+    expect(result.months).toHaveLength(2);
+
+    // Each month should have a populated summary
+    result.months.forEach(month => {
+      expect(typeof month.summary).toBe('string');
+      expect(month.summary.length).toBeGreaterThan(0);
+      expect(month.summary).toMatch(/Generated summary for/);
+    });
+
+    // Verify generateSummary was called for each month
+    expect(mockSummaryGenerator.generateSummary).toHaveBeenCalledTimes(2);
+  });
+
+  /**
+   * Test 2: Uses fallback summary on error
+   *
+   * Creates 1 article
+   * Mocks SummaryGenerator.generateSummary() to throw error
+   * Verifies fallback summary text is used
+   */
+  it('should use fallback summary when generation fails', async () => {
+    const articles: Article[] = [
+      {
+        id: 'test-1',
+        title: 'Article 1',
+        summary: 'Summary 1',
+        url: 'https://example.com/1',
+        source: 'Test Source',
+        category: 'news',
+        publishedAt: '2026-07-15T10:00:00Z',
+        tags: []
+      }
+    ];
+
+    // Mock SummaryGenerator to throw error
+    const mockSummaryGenerator = {
+      generateSummary: jest.fn(async () => {
+        throw new Error('API error');
+      })
+    } as unknown as SummaryGenerator;
+
+    const result = await exportMonthlyRecapWithSummaries(articles, 25, mockSummaryGenerator);
+
+    // Should have 1 month
+    expect(result.months).toHaveLength(1);
+
+    // Month should have fallback summary
+    const month = result.months[0];
+    expect(typeof month.summary).toBe('string');
+    expect(month.summary).toMatch(/Month of 2026-07-01: 1 articles/);
+  });
+
+  /**
+   * Test 3: Empty articles returns empty months
+   *
+   * Creates empty articles array
+   * Should return { months: [] }
+   */
+  it('should return empty months array for empty articles', async () => {
+    const articles: Article[] = [];
+
+    const mockSummaryGenerator = {
+      generateSummary: jest.fn(async () => 'summary')
+    } as unknown as SummaryGenerator;
+
+    const result = await exportMonthlyRecapWithSummaries(articles, 25, mockSummaryGenerator);
+
+    expect(result.months).toHaveLength(0);
   });
 });

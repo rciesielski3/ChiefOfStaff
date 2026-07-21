@@ -1,5 +1,6 @@
-import { exportWeeklyHighlights, WeeklyHighlight, WeeklyHighlightsExport } from '../../src/business-logic/export-weekly-highlights';
+import { exportWeeklyHighlights, exportWeeklyHighlightsWithSummaries, WeeklyHighlight, WeeklyHighlightsExport } from '../../src/business-logic/export-weekly-highlights';
 import { Article } from '../../src/business-logic/normalize-article';
+import { SummaryGenerator } from '../../src/business-logic/summary-generator';
 
 describe('exportWeeklyHighlights', () => {
   /**
@@ -218,5 +219,118 @@ describe('exportWeeklyHighlights', () => {
     expect(week.items[0].id).toBe('test-2'); // 2026-07-15
     expect(week.items[1].id).toBe('test-3'); // 2026-07-14
     expect(week.items[2].id).toBe('test-1'); // 2026-07-13
+  });
+});
+
+describe('exportWeeklyHighlightsWithSummaries', () => {
+  /**
+   * Test 1: Generates summaries when SummaryGenerator provided
+   *
+   * Creates 2 articles from different weeks
+   * Mocks SummaryGenerator.generateSummary()
+   * Verifies summary field is populated with generated text
+   */
+  it('should generate summaries when SummaryGenerator provided', async () => {
+    const articles: Article[] = [
+      {
+        id: 'test-1',
+        title: 'Article 1',
+        summary: 'Summary 1',
+        url: 'https://example.com/1',
+        source: 'Test Source',
+        category: 'news',
+        publishedAt: '2026-07-13T10:00:00Z',
+        tags: []
+      },
+      {
+        id: 'test-2',
+        title: 'Article 2',
+        summary: 'Summary 2',
+        url: 'https://example.com/2',
+        source: 'Test Source',
+        category: 'news',
+        publishedAt: '2026-07-20T10:00:00Z',
+        tags: []
+      }
+    ];
+
+    // Mock SummaryGenerator
+    const mockSummaryGenerator = {
+      generateSummary: jest.fn(async (items: Article[]) => {
+        return `Generated summary for ${items.length} articles`;
+      })
+    } as unknown as SummaryGenerator;
+
+    const result = await exportWeeklyHighlightsWithSummaries(articles, mockSummaryGenerator);
+
+    // Should have 2 weeks
+    expect(result.weeks).toHaveLength(2);
+
+    // Each week should have a populated summary
+    result.weeks.forEach(week => {
+      expect(typeof week.summary).toBe('string');
+      expect(week.summary.length).toBeGreaterThan(0);
+      expect(week.summary).toMatch(/Generated summary for/);
+    });
+
+    // Verify generateSummary was called for each week
+    expect(mockSummaryGenerator.generateSummary).toHaveBeenCalledTimes(2);
+  });
+
+  /**
+   * Test 2: Uses fallback summary on error
+   *
+   * Creates 1 article
+   * Mocks SummaryGenerator.generateSummary() to throw error
+   * Verifies fallback summary text is used
+   */
+  it('should use fallback summary when generation fails', async () => {
+    const articles: Article[] = [
+      {
+        id: 'test-1',
+        title: 'Article 1',
+        summary: 'Summary 1',
+        url: 'https://example.com/1',
+        source: 'Test Source',
+        category: 'news',
+        publishedAt: '2026-07-13T10:00:00Z',
+        tags: []
+      }
+    ];
+
+    // Mock SummaryGenerator to throw error
+    const mockSummaryGenerator = {
+      generateSummary: jest.fn(async () => {
+        throw new Error('API error');
+      })
+    } as unknown as SummaryGenerator;
+
+    const result = await exportWeeklyHighlightsWithSummaries(articles, mockSummaryGenerator);
+
+    // Should have 1 week
+    expect(result.weeks).toHaveLength(1);
+
+    // Week should have fallback summary
+    const week = result.weeks[0];
+    expect(typeof week.summary).toBe('string');
+    expect(week.summary).toMatch(/Week of 2026-07-13: 1 articles/);
+  });
+
+  /**
+   * Test 3: Empty articles returns empty weeks
+   *
+   * Creates empty articles array
+   * Should return { weeks: [] }
+   */
+  it('should return empty weeks array for empty articles', async () => {
+    const articles: Article[] = [];
+
+    const mockSummaryGenerator = {
+      generateSummary: jest.fn(async () => 'summary')
+    } as unknown as SummaryGenerator;
+
+    const result = await exportWeeklyHighlightsWithSummaries(articles, mockSummaryGenerator);
+
+    expect(result.weeks).toHaveLength(0);
   });
 });
