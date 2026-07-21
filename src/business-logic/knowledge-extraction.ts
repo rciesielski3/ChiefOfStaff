@@ -24,6 +24,9 @@ import {
   ClassificationCacheStore,
   ArticleContext,
 } from './domain-classification-fallback';
+import { EmbeddingsService } from '../services/embeddings';
+import { EvolutionEngine, Fact as EvolutionFact, EvolutionResult } from '../services/evolution-engine';
+import { SensitivityAssessor } from '../services/sensitivity-assessor';
 
 /**
  * Service for extracting knowledge facts from articles using Claude
@@ -445,4 +448,78 @@ export async function extractFactsBatch(
   }
 
   return results;
+}
+
+/**
+ * M6.3 Knowledge Evolution Pipeline
+ *
+ * Applies evolution logic (embeddings, deduplication, versioning, sensitivity assessment)
+ * to extracted facts.
+ *
+ * @param facts Extracted facts to evolve
+ * @param embeddingsCachePath Optional path to embeddings cache
+ * @returns Array of evolution results with evolved facts
+ */
+export async function extractAndEvolveKnowledge(
+  facts: KnowledgeFact[],
+  embeddingsCachePath?: string
+): Promise<EvolutionResult[]> {
+  const embeddingsService = new EmbeddingsService();
+  await embeddingsService.loadModel();
+
+  const evolutionEngine = new EvolutionEngine(embeddingsService);
+  const sensitivityAssessor = new SensitivityAssessor();
+
+  // Load embeddings cache if it exists
+  const cacheDir = embeddingsCachePath || 'data/fact_embeddings.ndjson';
+  if (fs.existsSync(cacheDir)) {
+    embeddingsService.loadCacheFromNDJSON(cacheDir);
+  }
+
+  const allResults: EvolutionResult[] = [];
+
+  // Process each fact through the evolution pipeline
+  for (const fact of facts) {
+    // Skip INSIGHT type facts (not supported by evolution engine)
+    if (fact.type === 'INSIGHT') {
+      allResults.push({
+        action: 'new',
+        fact: fact as any, // Cast is safe for skipped types
+      });
+      continue;
+    }
+
+    // Convert KnowledgeFact to EvolutionFact for the evolution engine
+    const evolutionFact: EvolutionFact = {
+      id: fact.id,
+      article_id: fact.article_id,
+      content: fact.content,
+      type: fact.type as any, // Safe cast after INSIGHT filter
+      confidence: fact.confidence,
+      extracted_at: fact.extracted_at,
+      sensitivity: 'PUBLIC', // Will be updated by sensitivity assessor
+      version: fact.version,
+    };
+
+    // Process through evolution engine
+    const evolutionResult = evolutionEngine.processNewFact(evolutionFact);
+
+    // Apply sensitivity assessment if fact was not filtered out
+    if (evolutionResult.fact) {
+      const sensitivityResult = await sensitivityAssessor.assessFact({
+        id: evolutionResult.fact.id,
+        content: evolutionResult.fact.content,
+        type: evolutionResult.fact.type,
+      });
+
+      evolutionResult.fact.sensitivity = sensitivityResult.sensitivity;
+    }
+
+    allResults.push(evolutionResult);
+  }
+
+  // Save embeddings cache for next run
+  embeddingsService.saveCacheToNDJSON(cacheDir);
+
+  return allResults;
 }

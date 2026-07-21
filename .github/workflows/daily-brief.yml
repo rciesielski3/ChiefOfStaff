@@ -89,6 +89,16 @@ jobs:
 
           echo "✅ Extraction verification: $FACT_COUNT facts extracted"
 
+      - name: Run knowledge evolution
+        if: always()
+        run: |
+          npx ts-node src/scripts/evolve-knowledge.ts
+        env:
+          INPUT_FACTS: data/knowledge_facts.ndjson
+          OUTPUT_FACTS: data/knowledge_facts.ndjson
+          EMBEDDINGS_CACHE: data/fact_embeddings.ndjson
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
       - name: Commit changes
         run: |
            git config user.name "PAIOS Bot"
