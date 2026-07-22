@@ -38,7 +38,7 @@ const RSS_SOURCES = [
     url: 'https://github.com/microsoft/playwright/releases.atom',
     name: 'Playwright'
   },
-  // Context & Updates (3 sources - lower priority)
+  // Context & Updates (2 sources - lower priority)
   {
     url: 'https://openai.com/news/rss.xml',
     name: 'OpenAI'
@@ -46,10 +46,6 @@ const RSS_SOURCES = [
   {
     url: 'https://blog.cloudflare.com/rss/',
     name: 'Cloudflare'
-  },
-  {
-    url: 'https://lobste.rs/rss',
-    name: 'Lobsters'
   }
 ];
 
