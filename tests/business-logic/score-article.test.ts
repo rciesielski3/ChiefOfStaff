@@ -1,4 +1,4 @@
-import { scoreArticle, scoreArticles, DEFAULT_CONFIG } from '../../src/business-logic/score-article';
+import { scoreArticle, scoreArticles, DEFAULT_CONFIG, hasNegativeKeywords } from '../../src/business-logic/score-article';
 import { Article } from '../../src/business-logic/normalize-article';
 
 describe('scoreArticle', () => {
@@ -160,6 +160,115 @@ describe('scoreArticle', () => {
   });
 });
 
+describe('hasNegativeKeywords', () => {
+  it('should filter out pure ECC memory articles', () => {
+    const article: Article = {
+      id: 'test-ecc',
+      title: 'ECC and DDR5 Memory Performance Comparison',
+      summary: 'Exploring ECC memory vs DDR5 performance metrics...',
+      url: 'https://example.com/ecc',
+      source: 'Tech News',
+      category: 'article',
+      publishedAt: new Date().toISOString(),
+      tags: []
+    };
+
+    expect(hasNegativeKeywords(article)).toBe(true);
+  });
+
+  it('should filter out residential proxies articles', () => {
+    const article: Article = {
+      id: 'test-proxies',
+      title: 'LG to Ban Residential Proxies from Smart TV Apps',
+      summary: 'Smart TV manufacturers are cracking down on residential proxies...',
+      url: 'https://example.com/proxies',
+      source: 'Tech News',
+      category: 'article',
+      publishedAt: new Date().toISOString(),
+      tags: []
+    };
+
+    expect(hasNegativeKeywords(article)).toBe(true);
+  });
+
+  it('should filter out proxies articles even with non-QA "test" mention', () => {
+    const article: Article = {
+      id: 'test-proxies-with-test',
+      title: 'LG to Ban Residential Proxies: test results show effectiveness',
+      summary: 'Testing effects of residential proxy bans on networks...',
+      url: 'https://example.com/proxies-test',
+      source: 'Tech News',
+      category: 'article',
+      publishedAt: new Date().toISOString(),
+      tags: []
+    };
+
+    // Should be filtered because 'test' appears but without QA keywords like 'qa engineering'
+    expect(hasNegativeKeywords(article)).toBe(true);
+  });
+
+  it('should allow GPU testing articles with QA keywords', () => {
+    const article: Article = {
+      id: 'test-gpu-qa',
+      title: 'Testing GPU Performance with Playwright Stress Tests',
+      summary: 'How to test GPU hardware using automated testing frameworks and QA methodology...',
+      url: 'https://example.com/gpu-test',
+      source: 'Tech Blog',
+      category: 'article',
+      publishedAt: new Date().toISOString(),
+      tags: []
+    };
+
+    // Should NOT be filtered because it has QA keyword 'playwright'
+    expect(hasNegativeKeywords(article)).toBe(false);
+  });
+
+  it('should allow QA best practices articles', () => {
+    const article: Article = {
+      id: 'test-qa',
+      title: 'QA Best Practices for Test Automation',
+      summary: 'Test automation strategies for quality assurance teams...',
+      url: 'https://example.com/qa',
+      source: 'QA Blog',
+      category: 'article',
+      publishedAt: new Date().toISOString(),
+      tags: []
+    };
+
+    expect(hasNegativeKeywords(article)).toBe(false);
+  });
+
+  it('should filter out pure GPU articles without QA context', () => {
+    const article: Article = {
+      id: 'test-gpu-pure',
+      title: 'GPU Performance Analysis and Benchmarking',
+      summary: 'Comparing GPU performance across different hardware...',
+      url: 'https://example.com/gpu-perf',
+      source: 'Hardware News',
+      category: 'article',
+      publishedAt: new Date().toISOString(),
+      tags: []
+    };
+
+    expect(hasNegativeKeywords(article)).toBe(true);
+  });
+
+  it('should allow articles with Cypress testing framework', () => {
+    const article: Article = {
+      id: 'test-cypress',
+      title: 'Cypress E2E Testing Guide',
+      summary: 'Complete guide to end-to-end testing with Cypress...',
+      url: 'https://example.com/cypress',
+      source: 'Tech Blog',
+      category: 'article',
+      publishedAt: new Date().toISOString(),
+      tags: []
+    };
+
+    expect(hasNegativeKeywords(article)).toBe(false);
+  });
+});
+
 describe('scoreArticles', () => {
   const mockArticles: Article[] = [
     {
@@ -228,5 +337,46 @@ describe('scoreArticles', () => {
     const results = scoreArticles([]);
 
     expect(results).toEqual([]);
+  });
+
+  it('should filter out articles with negative keywords', () => {
+    const articlesWithNegative: Article[] = [
+      {
+        id: 'test-valid',
+        title: 'Playwright Testing Framework Update',
+        summary: 'New features for automated testing',
+        url: 'https://example.com/valid',
+        source: 'Blog',
+        category: 'article',
+        publishedAt: new Date().toISOString(),
+        tags: []
+      },
+      {
+        id: 'test-ecc',
+        title: 'ECC and DDR5 Memory Performance',
+        summary: 'Comparing ECC memory with DDR5 performance...',
+        url: 'https://example.com/ecc',
+        source: 'Tech News',
+        category: 'article',
+        publishedAt: new Date().toISOString(),
+        tags: []
+      },
+      {
+        id: 'test-proxies',
+        title: 'LG to Ban Residential Proxies',
+        summary: 'Smart TV ban on residential proxies...',
+        url: 'https://example.com/proxies',
+        source: 'Tech News',
+        category: 'article',
+        publishedAt: new Date().toISOString(),
+        tags: []
+      }
+    ];
+
+    const results = scoreArticles(articlesWithNegative);
+
+    // Should only have 1 article (the valid one)
+    expect(results.length).toBe(1);
+    expect(results[0].id).toBe('test-valid');
   });
 });

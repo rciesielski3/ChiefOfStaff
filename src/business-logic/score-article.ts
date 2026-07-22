@@ -172,6 +172,18 @@ export function scoreArticle(article: Article, config: ScoringConfig = DEFAULT_C
 
 /**
  * Filter out non-QA articles using negative keywords
+ *
+ * Filters out articles about hardware/networking topics UNLESS they're explicitly
+ * about QA/testing methodologies. Uses a QA keyword whitelist to determine context:
+ * - If article mentions negative keywords (ecc, memory, gpu, etc) but has QA keywords
+ *   (playwright, testing, automation, etc), it's kept (testing context)
+ * - If article mentions negative keywords without QA keywords, it's filtered out
+ *
+ * Examples:
+ * - "ECC Memory Performance" -> filtered (hardware topic)
+ * - "Testing GPU for Performance QA" -> kept (QA context)
+ * - "Residential Proxies Ban" -> filtered (networking topic)
+ * - "Playwright stress testing" -> kept (has QA framework keyword)
  */
 export function hasNegativeKeywords(article: Article): boolean {
   const text = `${article.title} ${article.summary}`.toLowerCase();
@@ -182,13 +194,28 @@ export function hasNegativeKeywords(article: Article): boolean {
     'ipv6', 'networking', 'router', 'firewall'
   ];
 
+  // QA/Testing keywords that override negative keyword filtering
+  // If article has both a negative keyword AND one of these QA keywords,
+  // it's in a testing context and should NOT be filtered
+  const qaKeywords = [
+    'test automation', 'qa engineering', 'testing strategy', 'e2e testing',
+    'unit testing', 'integration testing', 'test framework', 'automated testing',
+    'testing best practices', 'continuous testing', 'testing tools', 'test coverage',
+    'performance testing', 'load testing', 'security testing', 'penetration testing',
+    'playwright', 'cypress', 'jest', 'vitest', 'qa', 'automation'
+  ];
+
   for (const keyword of negativeKeywords) {
-    if (text.includes(keyword) && !text.includes('test') && !text.includes('qa')) {
-      return true; // Has negative keyword (not testing-related)
+    if (text.includes(keyword)) {
+      // Check if this is in a QA/testing context
+      const hasQaKeyword = qaKeywords.some(qa => text.includes(qa));
+      if (!hasQaKeyword) {
+        return true; // Has negative keyword with no QA context -> filter out
+      }
     }
   }
 
-  return false; // No negative keywords found
+  return false; // No negative keywords found, or has QA context
 }
 
 /**
