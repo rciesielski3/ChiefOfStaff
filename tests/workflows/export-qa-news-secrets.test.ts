@@ -30,6 +30,9 @@ describe('Workflow Integration — Secret Passing (Finding 1)', () => {
       } catch (e: any) {
         weeklyOutput = e.stdout || '';
       }
+      if (!weeklyOutput) {
+        throw new Error('CLI produced no output');
+      }
       const weeklyJson = JSON.parse(weeklyOutput);
 
       // Key validation: when API key is set, CLI ATTEMPTS to generate summaries
