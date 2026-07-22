@@ -23,6 +23,30 @@ export const DEFAULT_CONFIG: ScoringConfig = {
   weights: {
     base: 50,
     keywords: {
+      // QA/Testing (HIGH WEIGHT - Primary mission)
+      'test automation': 50,
+      'qa engineering': 45,
+      'testing strategy': 40,
+      'e2e testing': 35,
+      'unit testing': 30,
+      'integration testing': 30,
+      'test framework': 30,
+      'automated testing': 35,
+      'testing best practices': 35,
+      'continuous testing': 30,
+      'testing tools': 25,
+      'test coverage': 25,
+      'testing': 25,
+      'automation': 25,
+      'qa': 20,
+
+      // Performance/Security Testing
+      'performance testing': 30,
+      'load testing': 28,
+      'security testing': 32,
+      'penetration testing': 30,
+
+      // Existing (keep)
       'breaking': 35,
       'security': 40,
       'migration': 25,
@@ -30,25 +54,29 @@ export const DEFAULT_CONFIG: ScoringConfig = {
       'typescript': 15,
       'mcp': 25,
       'agent': 20,
-      'testing': 15,
-      'automation': 15,
-      'qa': 10,
       'ci/cd': 15,
-      'performance': 15,
       'release': 20
     },
     sources: {
+      // QA/Testing sources (HIGH WEIGHT)
+      'Ministry of Testing': 50,
+      'Google Testing': 45,
+      'Martin Fowler': 40,
+      'InfoQ': 30,
+      'Cypress': 40,
+      'Playwright': 45,
+
+      // Existing (adjusted)
       'github-release': 35,
       'github-trending': 25,
-      'hacker-news': 20,
-      'ai-radar': 30,
+      'hacker-news': 15,
+      'ai-radar': 20,
       'devto': 15,
-      'openai': 25,
-      'google': 20,
-      'cloudflare': 15,
+      'openai': 15,
+      'google': 15,
+      'cloudflare': 10,
       'github': 15,
-      'playwright': 20,
-      'lobsters': 18
+      'lobsters': 8
     }
   },
   priority: {
@@ -143,6 +171,27 @@ export function scoreArticle(article: Article, config: ScoringConfig = DEFAULT_C
 }
 
 /**
+ * Filter out non-QA articles using negative keywords
+ */
+export function hasNegativeKeywords(article: Article): boolean {
+  const text = `${article.title} ${article.summary}`.toLowerCase();
+
+  const negativeKeywords = [
+    'ecc', 'ddr5', 'memory', 'gpu', 'cpu', 'processor',
+    'hardware', 'smart tv', 'iot device', 'proxies',
+    'ipv6', 'networking', 'router', 'firewall'
+  ];
+
+  for (const keyword of negativeKeywords) {
+    if (text.includes(keyword) && !text.includes('test') && !text.includes('qa')) {
+      return true; // Has negative keyword (not testing-related)
+    }
+  }
+
+  return false; // No negative keywords found
+}
+
+/**
  * Score multiple articles and sort by score (descending)
  *
  * @param articles - Articles to score
@@ -153,7 +202,12 @@ export function scoreArticles(
   articles: Article[],
   config: ScoringConfig = DEFAULT_CONFIG
 ): ScoredArticle[] {
-  return articles
-    .map(article => scoreArticle(article, config))
-    .sort((a, b) => b.score - a.score);
+  // Score all articles
+  const scoredArticles = articles.map(article => scoreArticle(article, config));
+
+  // Filter out negative keyword articles (unless they have QA keywords too)
+  const filtered = scoredArticles.filter(article => !hasNegativeKeywords(article));
+
+  // Sort by score descending
+  return filtered.sort((a, b) => b.score - a.score);
 }
