@@ -108,19 +108,19 @@ export function exportMonthlyRecap(
  *
  * Algorithm:
  * 1. Call exportMonthlyRecap(articles, curateLimit) to get grouped months
- * 2. For each month, call summaryGenerator.generateSummary(month.items)
- * 3. Catch errors and use fallback summary text
+ * 2. For each month, call summaryGenerator.generateSummary(month.items) if available
+ * 3. If summaryGenerator not provided or generation fails, use fallback summary text
  * 4. Return export with summaries populated
  *
  * @param articles - Array of normalized articles to group and summarize
  * @param curateLimit - Maximum articles per month (default 25)
- * @param summaryGenerator - SummaryGenerator instance for generating summaries
+ * @param summaryGenerator - SummaryGenerator instance for generating summaries (optional)
  * @returns Export object with months and summaries
  */
 export async function exportMonthlyRecapWithSummaries(
   articles: Article[],
   curateLimit: number = 25,
-  summaryGenerator: SummaryGenerator
+  summaryGenerator?: SummaryGenerator
 ): Promise<MonthlyRecapExport> {
   // Call existing exportMonthlyRecap(articles, curateLimit)
   const export_ = exportMonthlyRecap(articles, curateLimit);
@@ -128,7 +128,11 @@ export async function exportMonthlyRecapWithSummaries(
   // For each month, generate summary
   for (const month of export_.months) {
     try {
-      month.summary = await summaryGenerator.generateSummary(month.items);
+      if (summaryGenerator) {
+        month.summary = await summaryGenerator.generateSummary(month.items);
+      } else {
+        month.summary = `Month of ${month.monthOf}: ${month.items.length} articles`;
+      }
     } catch (error) {
       console.warn(`Failed to generate summary for month ${month.monthOf}: ${error}`);
       month.summary = `Month of ${month.monthOf}: ${month.items.length} articles`;
