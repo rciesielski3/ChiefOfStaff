@@ -48,7 +48,7 @@ describe('export-qa-news CLI — Exit Codes', () => {
       } catch (error: any) {
         // We expect an error with status code 1
         expect(error.status).toBe(1);
-        expect(error.message).toContain('');
+        expect(error).toBeDefined();
       }
     } finally {
       // Restore data
