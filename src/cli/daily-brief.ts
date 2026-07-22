@@ -13,21 +13,39 @@ import path from 'path';
  * Maps to Config Tech workflow configuration
  */
 const RSS_SOURCES = [
+  // Tier 1: QA & Test Automation (PRIMARY FOCUS)
+  {
+    url: 'https://ministryoftesting.com/feed.xml',
+    name: 'Ministry of Testing'
+  },
+  {
+    url: 'https://saucelabs.com/blog/rss',
+    name: 'Sauce Labs'
+  },
+  {
+    url: 'https://testproject.io/blog/rss',
+    name: 'TestProject'
+  },
+  {
+    url: 'https://smartbear.com/blog/rss',
+    name: 'SmartBear'
+  },
+  {
+    url: 'https://cypress.io/blog/rss',
+    name: 'Cypress'
+  },
+  {
+    url: 'https://github.com/microsoft/playwright/releases.atom',
+    name: 'Playwright'
+  },
+  // Context & Updates (AI/Infrastructure - lower priority)
   {
     url: 'https://openai.com/news/rss.xml',
     name: 'OpenAI'
   },
   {
-    url: 'https://blog.google/technology/ai/rss/',
-    name: 'Google AI'
-  },
-  {
     url: 'https://blog.cloudflare.com/rss/',
     name: 'Cloudflare'
-  },
-  {
-    url: 'https://devblogs.microsoft.com/feed/',
-    name: 'Microsoft DevBlogs'
   },
   {
     url: 'https://lobste.rs/rss',
