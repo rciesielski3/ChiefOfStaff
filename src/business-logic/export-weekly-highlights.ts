@@ -130,17 +130,17 @@ export function exportWeeklyHighlights(articles: Article[]): WeeklyHighlightsExp
  *
  * Algorithm:
  * 1. Call exportWeeklyHighlights(articles) to get grouped weeks
- * 2. For each week, call summaryGenerator.generateSummary(week.items)
- * 3. Catch errors and use fallback summary text
+ * 2. For each week, call summaryGenerator.generateSummary(week.items) if available
+ * 3. If summaryGenerator not provided or generation fails, use fallback summary text
  * 4. Return export with summaries populated
  *
  * @param articles - Array of normalized articles to group and summarize
- * @param summaryGenerator - SummaryGenerator instance for generating summaries
+ * @param summaryGenerator - SummaryGenerator instance for generating summaries (optional)
  * @returns Export object with weeks and summaries
  */
 export async function exportWeeklyHighlightsWithSummaries(
   articles: Article[],
-  summaryGenerator: SummaryGenerator
+  summaryGenerator?: SummaryGenerator
 ): Promise<WeeklyHighlightsExport> {
   // Call existing exportWeeklyHighlights(articles)
   const export_ = exportWeeklyHighlights(articles);
@@ -148,7 +148,11 @@ export async function exportWeeklyHighlightsWithSummaries(
   // For each week, generate summary
   for (const week of export_.weeks) {
     try {
-      week.summary = await summaryGenerator.generateSummary(week.items);
+      if (summaryGenerator) {
+        week.summary = await summaryGenerator.generateSummary(week.items);
+      } else {
+        week.summary = `Week of ${week.weekOf}: ${week.items.length} articles`;
+      }
     } catch (error) {
       console.warn(`Failed to generate summary for week ${week.weekOf}: ${error}`);
       week.summary = `Week of ${week.weekOf}: ${week.items.length} articles`;
