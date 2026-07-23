@@ -99,6 +99,29 @@ jobs:
           EMBEDDINGS_CACHE: data/fact_embeddings.ndjson
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
+      - name: Generate insights
+        if: always()
+        id: generate-insights
+        run: |
+          echo "Starting insight generation pipeline..."
+          npx ts-node src/cli/generate-insights.ts
+          echo "✅ Insight generation completed successfully"
+        env:
+          KNOWLEDGE_FACTS_PATH: data/knowledge_facts.ndjson
+          INSIGHTS_PATH: data/insights.ndjson
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Check insights generated
+        if: always()
+        run: |
+          if [ ! -f "data/insights.ndjson" ]; then
+            echo "⚠️  Insights file not found (pipeline may have skipped due to no facts)"
+            exit 0
+          fi
+
+          INSIGHT_COUNT=$(wc -l < data/insights.ndjson || echo 0)
+          echo "✅ Insights generated: $INSIGHT_COUNT insights"
+
       - name: Commit changes
         run: |
            git config user.name "PAIOS Bot"
