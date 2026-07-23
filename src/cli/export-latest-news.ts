@@ -13,7 +13,7 @@ import { NdJsonArticleStore } from '../business-logic/article-store';
  * Flow:
  * 1. Load ArticleStore from data/canonical_articles.ndjson
  * 2. Call exportLatestNews(store, 50) to get top 50 articles
- * 3. Write JSON output to qa-news/public/latest.json
+ * 3. Write JSON output to both qa-news/public/latest.json and qa-news/data/latest.json
  * 4. Log status and exit
  */
 
@@ -26,6 +26,29 @@ function logStructured(stage: string, data: Record<string, any>): void {
   console.log(`[${timestamp}] [${stage}] ${fields}`);
 }
 
+/**
+ * Write export data to both public and data directories
+ * Ensures the latest.json file exists in both locations for redundancy
+ */
+async function writeToDataDirs(
+  projectRoot: string,
+  data: any
+): Promise<{ publicPath: string; dataPath: string }> {
+  const publicPath = path.join(projectRoot, 'qa-news/public/latest.json');
+  const dataPath = path.join(projectRoot, 'qa-news/data/latest.json');
+  const jsonContent = JSON.stringify(data, null, 2);
+
+  // Create both directories
+  await fs.mkdir(path.dirname(publicPath), { recursive: true });
+  await fs.mkdir(path.dirname(dataPath), { recursive: true });
+
+  // Write to both locations
+  await fs.writeFile(publicPath, jsonContent);
+  await fs.writeFile(dataPath, jsonContent);
+
+  return { publicPath, dataPath };
+}
+
 async function main(): Promise<void> {
   const workflowStartTime = Date.now();
   try {
@@ -35,11 +58,10 @@ async function main(): Promise<void> {
     // Resolve paths relative to project root
     const projectRoot = path.resolve(__dirname, '../..');
     const storeFilePath = path.join(projectRoot, 'data/canonical_articles.ndjson');
-    const outputPath = path.join(projectRoot, 'qa-news/public/latest.json');
     logStructured('PATHS_RESOLVED', {
       projectRoot,
       storeFilePath,
-      outputPath
+      outputDirs: 'qa-news/public and qa-news/data'
     });
 
     // Create article store
@@ -74,26 +96,23 @@ async function main(): Promise<void> {
       process.exit(1);  // Fail workflow so operators notice
     }
 
-    // Ensure output directory exists
-    const mkdirStartTime = Date.now();
-    const outputDir = path.dirname(outputPath);
-    logStructured('MKDIR_START', { outputDir });
-    await fs.mkdir(outputDir, { recursive: true });
-    const mkdirDuration = Date.now() - mkdirStartTime;
-    logStructured('MKDIR_COMPLETE', { durationMs: mkdirDuration });
-
-    // Write JSON export
+    // Write JSON export to both public and data directories
     const writeStartTime = Date.now();
     logStructured('WRITE_START', {
-      outputPath,
       articleCount: latest.items.length
     });
-    await fs.writeFile(outputPath, JSON.stringify(latest, null, 2));
+    const { publicPath, dataPath } = await writeToDataDirs(projectRoot, latest);
     const writeDuration = Date.now() - writeStartTime;
-    logStructured('WRITE_COMPLETE', { durationMs: writeDuration });
+    logStructured('WRITE_COMPLETE', {
+      durationMs: writeDuration,
+      publicPath,
+      dataPath
+    });
 
     // Log status
-    console.log(`✓ Exported ${latest.items.length} articles to ${outputPath}`);
+    console.log(`✓ Exported ${latest.items.length} articles to:`);
+    console.log(`  Public: ${publicPath}`);
+    console.log(`  Data: ${dataPath}`);
     console.log(`  Date: ${latest.date}`);
     console.log(`  Updated: ${latest.updatedAt}`);
 
@@ -101,7 +120,8 @@ async function main(): Promise<void> {
     logStructured('WORKFLOW_COMPLETE', {
       totalDurationMs: totalDuration,
       articleCount: latest.items.length,
-      outputPath
+      publicPath,
+      dataPath
     });
   } catch (error) {
     const totalDuration = Date.now() - workflowStartTime;
