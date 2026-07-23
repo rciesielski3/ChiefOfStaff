@@ -1,4 +1,4 @@
-import { fetchRSS, fetchWithRetry, RawArticle } from '../../src/business-logic/rss-fetch';
+import { fetchRSS, fetchAllSources, fetchWithRetry, RawArticle } from '../../src/business-logic/rss-fetch';
 import Parser from 'rss-parser';
 
 // Mock the rss-parser module
@@ -392,6 +392,135 @@ describe('fetchRSS', () => {
       'Persistent network failure'
     );
     expect(mockParseURL).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('fetchAllSources', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  /**
+   * Configures the mocked Parser so that parseURL's behavior depends on
+   * which feed URL is being fetched, simulating independent per-source
+   * outcomes within a single fetchAllSources() call.
+   */
+  function mockParseURLPerSource(behavior: Record<string, () => Promise<unknown>>) {
+    const mockParseURL = jest.fn((url: string) => {
+      const handler = behavior[url];
+      if (!handler) {
+        throw new Error(`No mock behavior configured for URL: ${url}`);
+      }
+      return handler();
+    });
+
+    const mockParserInstance = { parseURL: mockParseURL };
+
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
+      () => mockParserInstance as any
+    );
+
+    return mockParseURL;
+  }
+
+  it('isolates a failing source and continues fetching the remaining sources', async () => {
+    mockParseURLPerSource({
+      'https://good.example.com/feed.xml': () =>
+        Promise.resolve({
+          items: [
+            {
+              link: 'https://good.example.com/article-1',
+              title: 'Good Article',
+              pubDate: '2026-07-14T10:00:00Z',
+              contentSnippet: 'Content'
+            }
+          ]
+        }),
+      'https://bad.example.com/feed.xml': () => Promise.reject(new Error('Status code 406'))
+    });
+
+    const result = await fetchAllSources([
+      { url: 'https://good.example.com/feed.xml', name: 'Good Source' },
+      { url: 'https://bad.example.com/feed.xml', name: 'Bad Source' }
+    ]);
+
+    // The bad source is skipped, not fatal — the good source's articles
+    // still come through.
+    expect(result.articles).toHaveLength(1);
+    expect(result.articles[0].title).toBe('Good Article');
+
+    expect(result.successCount).toBe(1);
+    expect(result.failureCount).toBe(1);
+
+    const goodResult = result.results.find(r => r.source === 'Good Source');
+    const badResult = result.results.find(r => r.source === 'Bad Source');
+
+    expect(goodResult).toEqual({ source: 'Good Source', success: true, count: 1 });
+    expect(badResult?.success).toBe(false);
+    expect(badResult?.count).toBe(0);
+    // Error messages must include the HTTP status code so failures are
+    // diagnosable from logs alone.
+    expect(badResult?.error).toContain('Status code 406');
+  }, 10000);
+
+  it('reports accurate success/failure counts when multiple sources fail for different reasons', async () => {
+    mockParseURLPerSource({
+      'https://ok.example.com/feed.xml': () =>
+        Promise.resolve({
+          items: [
+            {
+              link: 'https://ok.example.com/article-1',
+              title: 'OK Article',
+              pubDate: '2026-07-14T10:00:00Z',
+              contentSnippet: 'Content'
+            }
+          ]
+        }),
+      'https://forbidden.example.com/feed.xml': () => Promise.reject(new Error('Status code 406')),
+      'https://timeout.example.com/feed.xml': () => Promise.reject(new Error('Network timeout'))
+    });
+
+    const result = await fetchAllSources([
+      { url: 'https://ok.example.com/feed.xml', name: 'OK Source' },
+      { url: 'https://forbidden.example.com/feed.xml', name: 'Forbidden Source' },
+      { url: 'https://timeout.example.com/feed.xml', name: 'Timeout Source' }
+    ]);
+
+    expect(result.successCount).toBe(1);
+    expect(result.failureCount).toBe(2);
+    expect(result.articles).toHaveLength(1);
+    expect(result.results).toHaveLength(3);
+
+    const forbidden = result.results.find(r => r.source === 'Forbidden Source');
+    const timeout = result.results.find(r => r.source === 'Timeout Source');
+    expect(forbidden?.error).toContain('Status code 406');
+    expect(timeout?.error).toContain('Network timeout');
+  }, 15000);
+
+  it('returns an empty article list without throwing when every source fails', async () => {
+    mockParseURLPerSource({
+      'https://down-1.example.com/feed.xml': () => Promise.reject(new Error('Status code 500')),
+      'https://down-2.example.com/feed.xml': () => Promise.reject(new Error('ECONNRESET'))
+    });
+
+    const result = await fetchAllSources([
+      { url: 'https://down-1.example.com/feed.xml', name: 'Down Source 1' },
+      { url: 'https://down-2.example.com/feed.xml', name: 'Down Source 2' }
+    ]);
+
+    expect(result.articles).toEqual([]);
+    expect(result.successCount).toBe(0);
+    expect(result.failureCount).toBe(2);
+    expect(result.results.every(r => !r.success)).toBe(true);
+  }, 15000);
+
+  it('returns an empty results array when given no sources', async () => {
+    const result = await fetchAllSources([]);
+
+    expect(result.articles).toEqual([]);
+    expect(result.results).toEqual([]);
+    expect(result.successCount).toBe(0);
+    expect(result.failureCount).toBe(0);
   });
 });
 
