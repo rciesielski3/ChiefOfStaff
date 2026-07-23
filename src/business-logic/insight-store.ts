@@ -1,6 +1,8 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { Insight } from './insight';
+import { AtomicFileWriter } from './atomic-file-writer';
+import { JsonValidator } from './json-validator';
 
 /**
  * M6.4 Insight Storage & Persistence
@@ -9,9 +11,16 @@ import { Insight } from './insight';
  * - Persists insights to `/data/insights.ndjson` (one JSON object per line)
  * - Supports: add, findById, findByDomain, findByType, findHighConfidence, update, delete
  * - Timestamps: generated_at (immutable) + updated_at (on modifications)
+ * - Durability: Uses AtomicFileWriter for safe, atomic writes with validation
  */
 export class InsightStore {
-  constructor(private filePath: string) {}
+  private writer: AtomicFileWriter;
+  private validator: JsonValidator;
+
+  constructor(private filePath: string) {
+    this.writer = new AtomicFileWriter();
+    this.validator = new JsonValidator();
+  }
 
   /**
    * Add an insight to storage
@@ -137,6 +146,7 @@ export class InsightStore {
 
   /**
    * Write all insights to NDJSON file (private)
+   * Uses AtomicFileWriter for durability and atomicity
    */
   private async writeAll(insights: Insight[]): Promise<void> {
     // Ensure directory exists
@@ -147,6 +157,29 @@ export class InsightStore {
       .map(insight => JSON.stringify(insight))
       .join('\n');
 
-    await fs.writeFile(this.filePath, content + (insights.length > 0 ? '\n' : ''), 'utf-8');
+    // Write atomically using AtomicFileWriter
+    await this.writer.writeFile(this.filePath, content + (insights.length > 0 ? '\n' : ''));
+
+    // Validate written file for integrity
+    try {
+      const readContent = await fs.readFile(this.filePath, 'utf-8');
+      if (!readContent.trim() && insights.length > 0) {
+        throw new Error('Validation failed: written file is empty but insights were provided');
+      }
+
+      // Verify each line can be parsed as JSON
+      const lines = readContent.split('\n');
+      for (const line of lines) {
+        if (line.trim()) {
+          try {
+            JSON.parse(line);
+          } catch (e) {
+            throw new Error(`Validation failed: invalid JSON in written file: ${line}`);
+          }
+        }
+      }
+    } catch (error) {
+      throw new Error(`File validation after write failed: ${(error as Error).message}`);
+    }
   }
 }

@@ -1,5 +1,35 @@
 import * as fs from 'fs';
 
+/**
+ * EmbeddingsService: Mock word-hash vector implementation for testing
+ *
+ * LIMITATION: This service uses word-based hashing to generate pseudo-vectors,
+ * NOT real semantic embeddings. The current implementation:
+ * - Generates 384-dimensional vectors based on word hash distributions
+ * - Enables testing of similarity search logic and pattern detection
+ * - Computes cosine similarity correctly for mock vectors
+ *
+ * PRODUCTION LIMITATION:
+ * Real semantic embeddings (OpenAI, Anthropic Models, etc.) are required for
+ * production use. The word-hash approach cannot capture semantic meaning and
+ * will produce poor clustering for nuanced domain-specific documents.
+ *
+ * TODO (M6.5+): Replace generateMockVector() with real embedding model calls:
+ * - OpenAI Embeddings API (text-embedding-3-small)
+ * - Anthropic Embeddings (when available)
+ * - Local embedding model (sentence-transformers)
+ *
+ * Current mock enables:
+ * - Unit test validation of pattern detection logic
+ * - Integration testing of the full pipeline
+ * - Validation of insight synthesis and storage
+ *
+ * NOT validated for production:
+ * - Semantic similarity accuracy
+ * - Domain-specific pattern detection
+ * - Real knowledge discovery
+ */
+
 interface EmbeddingCache {
   [factId: string]: {
     vector: number[];

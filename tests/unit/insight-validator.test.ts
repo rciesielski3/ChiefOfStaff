@@ -250,5 +250,26 @@ describe('InsightValidator', () => {
       expect(result.passed).toBe(false);
       expect(result.failures.length).toBeGreaterThanOrEqual(2);
     });
+
+    test('fails validation when no insights generated despite having facts', () => {
+      const facts: KnowledgeFact[] = [
+        {
+          id: 'fact-1',
+          article_id: 'article-1',
+          content: 'Test content for zero-output detection',
+          type: 'TECHNIQUE',
+          confidence: 0.90,
+          extraction_method: 'claude',
+          extracted_at: '2026-07-23T10:00:00Z',
+          version: 1,
+          status: 'active',
+        },
+      ];
+
+      const result = validator.validateInsights([], facts);
+
+      expect(result.passed).toBe(false);
+      expect(result.failures.some((f) => f.includes('No insights generated'))).toBe(true);
+    });
   });
 });

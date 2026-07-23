@@ -100,6 +100,8 @@ All stages validated to work correctly in isolation and integrated flow.
 | No unexpected insight types | ✅ | Only valid types generated |
 | Facts correctly linked in insights | ✅ | relatedFactIds verified non-empty |
 
+**Note on Production Validation:** Pipeline logic is fully validated. However, EmbeddingsService uses mock word-hash vectors, not semantic embeddings. Semantic accuracy and real knowledge discovery NOT production-validated. Real embedding model required for M6.5+ production deployment.
+
 ---
 
 ## Components Validated
@@ -132,7 +134,9 @@ All stages validated to work correctly in isolation and integrated flow.
 - **File:** `src/services/embeddings.ts`
 - **Function:** Generates embeddings for facts to enable pattern clustering
 - **Validation:** Embeddings computed successfully for mock facts
-- **Status:** ✅ Working
+- **Status:** ⚠️ Mock implementation (word-hash, not semantic)
+- **Limitation:** Current implementation uses word-based hashing to generate pseudo-vectors, NOT real semantic embeddings. This enables logic testing only and cannot capture semantic meaning needed for production.
+- **Production Requirement:** Real embedding model (OpenAI, Anthropic, or local) required for M6.5+ deployment. Documentation added to source code with TODO marker.
 
 ---
 
