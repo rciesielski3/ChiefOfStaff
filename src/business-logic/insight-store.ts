@@ -1,6 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { Insight } from './knowledge-types';
+import { Insight } from './insight';
 
 /**
  * M6.4 Insight Storage & Persistence
@@ -36,7 +36,7 @@ export class InsightStore {
    */
   async findByDomain(domain: string): Promise<Insight[]> {
     const allInsights = await this.readAll();
-    return allInsights.filter(i => i.domain === domain);
+    return allInsights.filter(i => i.domains.includes(domain));
   }
 
   /**
@@ -56,7 +56,7 @@ export class InsightStore {
   }
 
   /**
-   * Update insight fields and refresh updated_at timestamp
+   * Update insight fields and refresh updatedAt timestamp
    */
   async update(id: string, partial: Partial<Insight>): Promise<Insight | null> {
     const allInsights = await this.readAll();
@@ -69,7 +69,7 @@ export class InsightStore {
     const updated: Insight = {
       ...allInsights[index],
       ...partial,
-      updated_at: new Date().toISOString(),
+      updatedAt: new Date(),
     };
 
     allInsights[index] = updated;
@@ -91,6 +91,13 @@ export class InsightStore {
     allInsights.splice(index, 1);
     await this.writeAll(allInsights);
     return true;
+  }
+
+  /**
+   * Get all insights from storage
+   */
+  async getAllInsights(): Promise<Insight[]> {
+    return this.readAll();
   }
 
   /**
