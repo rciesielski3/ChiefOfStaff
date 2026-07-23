@@ -51,6 +51,11 @@ export class InsightValidator {
     const failures: string[] = [];
     const metrics = this.getMetrics(insights, facts);
 
+    // Check for zero-output failure: no insights generated despite having facts
+    if (facts.length > 0 && insights.length === 0) {
+      failures.push('No insights generated from available facts');
+    }
+
     // Validate insight types
     const validTypes = Object.values(InsightType);
     if (!metrics.all_valid_types) {
@@ -102,8 +107,8 @@ export class InsightValidator {
   getMetrics(insights: Insight[], facts: KnowledgeFact[] = []): InsightMetrics {
     const by_type: Record<string, number> = {};
     let confidence_sum = 0;
-    let confidence_min = 1;
-    let confidence_max = 0;
+    let confidence_min = insights.length > 0 ? Number.POSITIVE_INFINITY : 0;
+    let confidence_max = insights.length > 0 ? Number.NEGATIVE_INFINITY : 0;
     let facts_count_sum = 0;
 
     for (const insight of insights) {
@@ -140,7 +145,7 @@ export class InsightValidator {
       by_type,
       confidence_mean,
       confidence_min: insights.length > 0 ? confidence_min : 0,
-      confidence_max,
+      confidence_max: insights.length > 0 ? confidence_max : 0,
       facts_per_insight_mean,
       no_hallucinations,
       all_valid_types,
