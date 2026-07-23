@@ -1,5 +1,6 @@
 #!/usr/bin/env ts-node
 
+import * as fs from 'fs/promises';
 import * as path from 'path';
 import { exportMonthlyRecap, exportMonthlyRecapWithSummaries } from '../business-logic/export-monthly-recap';
 import { NdJsonArticleStore } from '../business-logic/article-store';
@@ -13,7 +14,7 @@ import { SummaryGenerator } from '../business-logic/summary-generator';
  * Flow:
  * 1. Load ArticleStore from data/canonical_articles.ndjson
  * 2. Call exportMonthlyRecap(articles, 25) to group articles by month and curate to top 25
- * 3. Output JSON to stdout
+ * 3. Write to both qa-news/public/monthly.json and qa-news/data/monthly-recap.json
  * 4. Log status and exit
  */
 
@@ -24,6 +25,25 @@ function logStructured(stage: string, data: Record<string, any>): void {
     .map(([key, value]) => `${key}=${JSON.stringify(value)}`)
     .join(' ');
   console.error(`[${timestamp}] [${stage}] ${fields}`);
+}
+
+// Helper function to write export to both public and data directories
+async function writeToDataDirs(projectRoot: string, exportData: any): Promise<void> {
+  const publicPath = path.join(projectRoot, 'qa-news/public/monthly.json');
+  const dataPath = path.join(projectRoot, 'qa-news/data/monthly-recap.json');
+  const jsonContent = JSON.stringify(exportData, null, 2);
+
+  // Ensure directories exist
+  await fs.mkdir(path.dirname(publicPath), { recursive: true });
+  await fs.mkdir(path.dirname(dataPath), { recursive: true });
+
+  // Write to both locations
+  await Promise.all([fs.writeFile(publicPath, jsonContent), fs.writeFile(dataPath, jsonContent)]);
+
+  logStructured('FILES_WRITTEN', {
+    publicPath,
+    dataPath
+  });
 }
 
 async function main(): Promise<void> {
@@ -94,8 +114,17 @@ async function main(): Promise<void> {
       process.exit(1);
     }
 
-    // Output JSON to stdout
-    console.log(JSON.stringify(monthlyExport, null, 2));
+    // Write export to both public and data directories
+    const writeStartTime = Date.now();
+    logStructured('WRITE_START', {
+      monthCount: monthlyExport.months.length
+    });
+    await writeToDataDirs(projectRoot, monthlyExport);
+    const writeDuration = Date.now() - writeStartTime;
+    logStructured('WRITE_COMPLETE', { durationMs: writeDuration });
+
+    // Log success
+    console.log(`✓ Exported ${monthlyExport.months.length} months to qa-news/public/monthly.json and qa-news/data/monthly-recap.json`);
 
     const totalDuration = Date.now() - workflowStartTime;
     logStructured('WORKFLOW_COMPLETE', {
