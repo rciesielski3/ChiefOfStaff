@@ -2,9 +2,10 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { exportMonthlyRecap, exportMonthlyRecapWithSummaries } from '../business-logic/export-monthly-recap';
+import { exportMonthlyRecap, exportMonthlyRecapWithSummaries, MonthlyRecapExport } from '../business-logic/export-monthly-recap';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { SummaryGenerator } from '../business-logic/summary-generator';
+import { AtomicFileWriter } from '../business-logic/atomic-file-writer';
 
 /**
  * CLI: Export monthly recaps to QA News public API
@@ -46,7 +47,7 @@ function mapCategory(category: string): string {
 }
 
 // Helper function to write export to both public and data directories
-async function writeToDataDirs(projectRoot: string, exportData: any): Promise<void> {
+async function writeToDataDirs(projectRoot: string, exportData: MonthlyRecapExport): Promise<void> {
   const publicPath = path.join(projectRoot, 'qa-news/public/monthly-recap.json');
   const dataPath = path.join(projectRoot, 'qa-news/data/monthly-recap.json');
 
@@ -56,11 +57,11 @@ async function writeToDataDirs(projectRoot: string, exportData: any): Promise<vo
   // 3. Map article categories to valid QA-News categories
   const mappedData = {
     ...exportData,
-    months: exportData.months.map((month: any) => ({
+    months: exportData.months.map((month) => ({
       month: month.monthOf.substring(0, 7), // Convert "2026-07-01" to "2026-07"
       summary: month.summary || '',
       themes: [], // Empty themes for now (will be populated by synthesis)
-      items: month.items.map((article: any) => ({
+      items: month.items.map((article) => ({
         ...article,
         category: mapCategory(article.category)
       }))
@@ -69,12 +70,18 @@ async function writeToDataDirs(projectRoot: string, exportData: any): Promise<vo
 
   const jsonContent = JSON.stringify(mappedData, null, 2);
 
+  // Use AtomicFileWriter for durability
+  const writer = new AtomicFileWriter();
+
   // Ensure directories exist
   await fs.mkdir(path.dirname(publicPath), { recursive: true });
   await fs.mkdir(path.dirname(dataPath), { recursive: true });
 
-  // Write to both locations
-  await Promise.all([fs.writeFile(publicPath, jsonContent), fs.writeFile(dataPath, jsonContent)]);
+  // Write to both locations atomically
+  await Promise.all([
+    writer.writeFile(publicPath, jsonContent),
+    writer.writeFile(dataPath, jsonContent)
+  ]);
 
   logStructured('FILES_WRITTEN', {
     publicPath,

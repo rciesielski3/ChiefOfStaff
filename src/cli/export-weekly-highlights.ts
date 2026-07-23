@@ -49,20 +49,21 @@ function mapCategory(category: string): string {
 /**
  * Write export data to both public and data directories
  * Ensures the weekly files exist in both locations for redundancy
+ * Uses AtomicFileWriter for durability (atomic writes prevent corruption)
  */
 async function writeToDataDirs(
   projectRoot: string,
-  data: any
+  data: WeeklyHighlightsExport
 ): Promise<{ publicPath: string; dataPath: string }> {
   const publicPath = path.join(projectRoot, 'qa-news/public/weekly-highlights.json');
   const dataPath = path.join(projectRoot, 'qa-news/data/weekly-highlights.json');
 
   // Map article categories to QA-News valid categories for data export
-  const mappedData = {
+  const mappedData: WeeklyHighlightsExport = {
     ...data,
-    weeks: data.weeks.map((week: any) => ({
+    weeks: data.weeks.map((week) => ({
       ...week,
-      items: week.items.map((article: any) => ({
+      items: week.items.map((article) => ({
         ...article,
         category: mapCategory(article.category)
       }))
@@ -71,13 +72,18 @@ async function writeToDataDirs(
 
   const jsonContent = JSON.stringify(mappedData, null, 2);
 
-  // Create both directories
+  // Use AtomicFileWriter for durability
+  const writer = new AtomicFileWriter();
+
+  // Ensure directories exist
   await fs.mkdir(path.dirname(publicPath), { recursive: true });
   await fs.mkdir(path.dirname(dataPath), { recursive: true });
 
-  // Write to both locations
-  await fs.writeFile(publicPath, jsonContent);
-  await fs.writeFile(dataPath, jsonContent);
+  // Write to both locations atomically
+  await Promise.all([
+    writer.writeFile(publicPath, jsonContent),
+    writer.writeFile(dataPath, jsonContent)
+  ]);
 
   return { publicPath, dataPath };
 }
