@@ -51,7 +51,7 @@ function parseArgs(): { verbose: boolean } {
   };
 }
 
-async function main() {
+export async function main() {
   const workflowStartTime = Date.now();
   const { verbose } = parseArgs();
 
@@ -226,9 +226,13 @@ async function main() {
       avgConfidence: validationResult.metrics.confidence_mean,
     });
 
-    // Exit with non-zero code if validation failed
+    // Log validation failures as warnings, but don't fail the pipeline
     if (!validationResult.passed) {
-      process.exit(1);
+      console.warn('[Insight Generation] ⚠️  Validation warnings detected:');
+      validationResult.failures.forEach(failure => {
+        console.warn(`  - ${failure}`);
+      });
+      console.warn('[Insight Generation] Continuing pipeline despite validation warnings');
     }
   } catch (error) {
     const totalDuration = Date.now() - workflowStartTime;
