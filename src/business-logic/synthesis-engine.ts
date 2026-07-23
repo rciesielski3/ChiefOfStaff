@@ -94,7 +94,7 @@ export class SynthesisEngine {
           const domains = Array.from(new Set(patterns.flatMap(p => p.domains)));
 
           // Determine evolution stage
-          const evolutionStage = avgConfidence > 0.90 ? 'ESTABLISHED' : 'growth';
+          const evolutionStage = avgConfidence > 0.90 ? 'mature' : 'growth';
 
           // Create best practice insight
           const insight = InsightFactory.create({
