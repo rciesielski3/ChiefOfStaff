@@ -42,23 +42,20 @@ jobs:
       - name: Export monthly recap
         run: npx ts-node src/cli/export-monthly-recap.ts
 
-      - name: Validate exports (dual-write to both locations)
+      - name: Validate exports in data directory
         run: |
           set -e
 
-          echo "Validating latest-news.json in public and data directories..."
-          jq '.' qa-news/public/latest-news.json > /dev/null || exit 1
+          echo "Validating latest-news.json in data directory..."
           jq '.' qa-news/data/latest-news.json > /dev/null || exit 1
 
-          echo "Validating weekly-highlights.json in public and data directories..."
-          jq '.' qa-news/public/weekly-highlights.json > /dev/null || exit 1
+          echo "Validating weekly-highlights.json in data directory..."
           jq '.' qa-news/data/weekly-highlights.json > /dev/null || exit 1
 
-          echo "Validating monthly-recap.json in public and data directories..."
-          jq '.' qa-news/public/monthly-recap.json > /dev/null || exit 1
+          echo "Validating monthly-recap.json in data directory..."
           jq '.' qa-news/data/monthly-recap.json > /dev/null || exit 1
 
-          echo "All JSON files are valid in both locations"
+          echo "All JSON files are valid in data directory"
           echo ""
 
           LATEST_COUNT=$(jq '.items | length' qa-news/data/latest-news.json)
