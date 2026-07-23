@@ -23,6 +23,16 @@ export type FactType =
 export type FactStatus = 'active' | 'superseded' | 'deprecated';
 
 /**
+ * Types of insights generated from cross-article analysis
+ */
+export type InsightType =
+  | 'TREND'         // Multiple articles point to emerging pattern
+  | 'CONTRADICTION' // Conflicting claims across articles
+  | 'SYNTHESIS'     // Combining facts from N articles into new understanding
+  | 'BENCHMARK'     // Repeated measurements/metrics over time
+  | 'ALERT';        // Unusual/surprising finding
+
+/**
  * Method used to extract the fact
  */
 export type ExtractionMethod = 'claude' | 'manual';
@@ -173,6 +183,84 @@ export function validateFact(fact: KnowledgeFact): FactValidationError[] {
 
   if (!['active', 'superseded', 'deprecated'].includes(fact.status)) {
     errors.push({ field: 'status', message: 'Invalid status' });
+  }
+
+  return errors;
+}
+
+/**
+ * M6.4 Insight Generation — Type Definitions
+ *
+ * Represents a cross-article insight synthesized from multiple facts.
+ * See /docs/knowledge/insights.md for detailed specification.
+ */
+export interface Insight {
+  // Unique identifier
+  id: string;
+
+  // Insight content
+  type: InsightType;                  // Semantic classification
+  title: string;                      // Human-readable title
+  description: string;                // Detailed explanation
+
+  // Associated data
+  facts_included: string[];           // IDs of facts that contributed
+  related_articles: string[];         // IDs of source articles
+
+  // Quality and confidence
+  confidence: number;                 // 0.0–1.0, synthesis certainty
+  domain?: string;                    // Domain classification (optional)
+
+  // Metadata
+  generated_at: string;               // ISO timestamp
+  updated_at?: string;                // Last update timestamp (for versioning)
+}
+
+/**
+ * Validate an insight for storage
+ */
+export interface InsightValidationError {
+  field: string;
+  message: string;
+}
+
+export function validateInsight(insight: Insight): InsightValidationError[] {
+  const errors: InsightValidationError[] = [];
+
+  if (!insight.id || insight.id.length === 0) {
+    errors.push({ field: 'id', message: 'ID is required and cannot be empty' });
+  }
+
+  if (!['TREND', 'CONTRADICTION', 'SYNTHESIS', 'BENCHMARK', 'ALERT'].includes(insight.type)) {
+    errors.push({ field: 'type', message: 'Invalid insight type' });
+  }
+
+  if (!insight.title || insight.title.length === 0) {
+    errors.push({ field: 'title', message: 'Title is required' });
+  }
+
+  if (!insight.description || insight.description.length === 0) {
+    errors.push({ field: 'description', message: 'Description is required' });
+  }
+
+  if (!Array.isArray(insight.facts_included)) {
+    errors.push({ field: 'facts_included', message: 'facts_included must be an array' });
+  }
+
+  if (!Array.isArray(insight.related_articles)) {
+    errors.push({ field: 'related_articles', message: 'related_articles must be an array' });
+  }
+
+  if (insight.confidence < 0 || insight.confidence > 1) {
+    errors.push({ field: 'confidence', message: 'Confidence must be between 0.0 and 1.0' });
+  }
+
+  if (isNaN(new Date(insight.generated_at).getTime())) {
+    errors.push({ field: 'generated_at', message: 'generated_at must be valid ISO timestamp' });
+  }
+
+  if (insight.updated_at && isNaN(new Date(insight.updated_at).getTime())) {
+    errors.push({ field: 'updated_at', message: 'updated_at must be valid ISO timestamp' });
   }
 
   return errors;

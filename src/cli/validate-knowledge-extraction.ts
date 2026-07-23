@@ -1,21 +1,35 @@
 #!/usr/bin/env ts-node
 
 /**
- * M6.1 Knowledge Extraction MVP Validation
+ * Knowledge Extraction Validation Tool
  *
- * Validates the knowledge extraction by:
- * 1. Extracting facts from top 20 articles
- * 2. Logging extraction metrics (facts per article, confidence distribution)
- * 3. Generating sample facts for manual review
- * 4. Validating schema compliance
- * 5. Computing baseline statistics
+ * STATUS: Aspirational tool, planned for M6.5 integration as KnowledgeQualityValidator service.
  *
- * Usage:
- *   npx ts-node src/cli/validate-knowledge-extraction.ts
+ * CURRENT USE: Standalone validation and reporting (manual QA)
+ * - Validates extraction metrics (facts per article, confidence distribution)
+ * - Generates domain classification breakdown
+ * - Produces table/JSON validation reports
+ *
+ * FUTURE USE (M6.5 Sprint): Quality assurance component for evergreen knowledge base
+ * - Will be renamed to: src/services/KnowledgeQualityValidator.ts
+ * - Service interface: validateBatch(), validateFact(), generateReport()
+ * - CLI interface: src/cli/validate-knowledge.ts (wrapper around service)
+ * - Use case: Pre-storage validation before facts enter knowledge graph
+ *
+ * INTEGRATION PLAN (M6.5 Sprint):
+ * 1. Extract service logic → src/services/KnowledgeQualityValidator.ts
+ * 2. Keep CLI interface for manual inspection
+ * 3. Add quality gates (confidence threshold, structure validation, PII accuracy)
+ * 4. Wire into M6.5 storage pipeline
+ * 5. Generate weekly knowledge base health reports
+ *
+ * See: docs/knowledge/m6.5-qa-design.md for architecture details
+ *
+ * Usage (current):
+ *   npx ts-node src/cli/validate-knowledge-extraction.ts facts.ndjson
  *
  * Environment variables:
- * - EXTRACT_COUNT: Number of articles to extract from (default: 20)
- * - ANTHROPIC_API_KEY: Claude API key (required)
+ * - ANTHROPIC_API_KEY: Claude API key (required for extraction)
  */
 
 import path from 'path';

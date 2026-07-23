@@ -1,0 +1,110 @@
+name: Export QA-News Data
+
+permissions:
+  contents: write
+
+on:
+  workflow_run:
+    workflows: ["Daily Brief"]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  export-qa-news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ChiefofStaff repository
+        uses: actions/checkout@v4
+
+      - name: Check Daily Brief Status
+        if: github.event.workflow_run.conclusion == 'failure'
+        run: exit 1
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Generate latest.json
+        run: npx ts-node src/cli/export-latest-news.ts > qa-news/public/latest.json
+
+      - name: Generate weekly-highlights.json
+        run: npx ts-node src/cli/export-weekly-highlights.ts > qa-news/public/weekly-highlights.json
+
+      - name: Generate monthly-recap.json
+        run: npx ts-node src/cli/export-monthly-recap.ts > qa-news/public/monthly-recap.json
+
+      - name: Validate all JSON and log article counts
+        run: |
+          set -e
+
+          echo "Validating latest.json..."
+          jq '.' qa-news/public/latest.json > /dev/null || exit 1
+
+          echo "Validating weekly-highlights.json..."
+          jq '.' qa-news/public/weekly-highlights.json > /dev/null || exit 1
+
+          echo "Validating monthly-recap.json..."
+          jq '.' qa-news/public/monthly-recap.json > /dev/null || exit 1
+
+          echo "All JSON files are valid"
+          echo ""
+
+          LATEST_COUNT=$(jq '.items | length' qa-news/public/latest.json)
+          WEEKLY_COUNT=$(jq '[.weeks[].items[]] | length' qa-news/public/weekly-highlights.json)
+          MONTHLY_COUNT=$(jq '[.months[].items[]] | length' qa-news/public/monthly-recap.json)
+
+          echo "Article counts:"
+          echo "  Latest: $LATEST_COUNT articles"
+          echo "  Weekly: $WEEKLY_COUNT articles"
+          echo "  Monthly: $MONTHLY_COUNT articles"
+
+      - name: Sync to qa-news/data directory
+        run: |
+          mkdir -p qa-news/data
+          cp qa-news/public/latest.json qa-news/data/latest-news.json
+          cp qa-news/public/weekly-highlights.json qa-news/data/weekly-highlights.json
+          cp qa-news/public/monthly-recap.json qa-news/data/monthly-recap.json
+          echo "Files synced to qa-news/data/"
+
+      - name: Commit data updates
+        id: commit
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "github-actions@github.com"
+
+          git add qa-news/data/latest-news.json qa-news/data/weekly-highlights.json qa-news/data/monthly-recap.json
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            echo "changed=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          git commit -m "data: update qa-news daily/weekly/monthly exports
+
+Generated from latest RSS articles:
+- latest-news.json: Top 50 articles
+- weekly-highlights.json: All articles grouped by week
+- monthly-recap.json: Top 25 articles per month"
+
+          echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Push to main branch
+        if: steps.commit.outputs.changed == 'true'
+        run: |
+          git push origin main
+
+      - name: Verify sync completed
+        run: |
+          echo "Export QA-News Data workflow completed successfully"
+          echo "Synced files:"
+          ls -lh qa-news/data/*.json

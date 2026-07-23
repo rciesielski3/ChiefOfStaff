@@ -31,15 +31,26 @@
 
 ## In Progress
 
-### ⏳ Task 4: Claude Fallback Classifier
-- **Estimated:** 4-6 hours (Opus model)
-- **Purpose:** High-confidence classification for low-confidence facts (<0.60 heuristic)
-- **Status:** Plan ready, awaiting dispatch
+### ⏳ Task 6: M6.4 Workflow Integration
+- **Estimated:** 4-6 hours
+- **Purpose:** Wire insight pipeline into daily-brief.yml workflow
+- **Status:** Validation complete, ready to start
 
-### ⏳ Task 5: Pipeline Integration
-- **Estimated:** 2-3 hours (Haiku model)
-- **Purpose:** Wire both classifiers into M6.1 extraction flow
-- **Status:** Spec ready, depends on Task 4
+### ⏳ Task 7: M6.4 CLI & Dashboard
+- **Estimated:** 6-8 hours
+- **Purpose:** CLI reporting and dashboard visualization
+- **Status:** Queued after Task 6
+
+## Recently Completed
+
+### ✅ Task 5: M6.4 Insight Pipeline Validation
+- **Date:** 2026-07-22
+- **Tests:** 3/3 passing
+- **Duration:** 7.852 seconds
+- **Stages Validated:** Pattern detection → Synthesis → Storage
+- **Components:** PatternDetector, SynthesisEngine, InsightStore, InsightValidator
+- **Status:** Ready for workflow integration
+- **Report:** `/docs/superpowers/status/2026-07-22-m6-4-task-5-validation.md`
 
 ## Task Groups Status
 
@@ -60,10 +71,10 @@
 - [ ] Task 8: Evolution metrics reporter
 - **Estimated Start:** 2026-07-20 (after M6.2)
 
-### Group 4: M6.4 Insight Generation ⏳ QUEUED
-- [ ] Task 9: Insight discovery
-- [ ] Task 10: Insight ranking
-- [ ] Task 11: Publication engine
+### Group 4: M6.4 Insight Generation 🚧 IN PROGRESS
+- [x] Task 5: Insight pipeline validation ✅ COMPLETE (2026-07-22)
+- [ ] Task 6: Workflow integration
+- [ ] Task 7: CLI command + dashboard reporting
 
 ### Group 5: M6.5 Collections & Curation ⏳ QUEUED
 - [ ] Task 12: Collection management
