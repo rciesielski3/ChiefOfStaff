@@ -33,47 +33,42 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Generate latest.json
-        run: npx ts-node src/cli/export-latest-news.ts > qa-news/public/latest.json
+      - name: Export latest news
+        run: npx ts-node src/cli/export-latest-news.ts
 
-      - name: Generate weekly-highlights.json
-        run: npx ts-node src/cli/export-weekly-highlights.ts > qa-news/public/weekly-highlights.json
+      - name: Export weekly highlights
+        run: npx ts-node src/cli/export-weekly-highlights.ts
 
-      - name: Generate monthly-recap.json
-        run: npx ts-node src/cli/export-monthly-recap.ts > qa-news/public/monthly-recap.json
+      - name: Export monthly recap
+        run: npx ts-node src/cli/export-monthly-recap.ts
 
-      - name: Validate all JSON and log article counts
+      - name: Validate exports (dual-write to both locations)
         run: |
           set -e
 
-          echo "Validating latest.json..."
-          jq '.' qa-news/public/latest.json > /dev/null || exit 1
+          echo "Validating latest-news.json in public and data directories..."
+          jq '.' qa-news/public/latest-news.json > /dev/null || exit 1
+          jq '.' qa-news/data/latest-news.json > /dev/null || exit 1
 
-          echo "Validating weekly-highlights.json..."
+          echo "Validating weekly-highlights.json in public and data directories..."
           jq '.' qa-news/public/weekly-highlights.json > /dev/null || exit 1
+          jq '.' qa-news/data/weekly-highlights.json > /dev/null || exit 1
 
-          echo "Validating monthly-recap.json..."
+          echo "Validating monthly-recap.json in public and data directories..."
           jq '.' qa-news/public/monthly-recap.json > /dev/null || exit 1
+          jq '.' qa-news/data/monthly-recap.json > /dev/null || exit 1
 
-          echo "All JSON files are valid"
+          echo "All JSON files are valid in both locations"
           echo ""
 
-          LATEST_COUNT=$(jq '.items | length' qa-news/public/latest.json)
-          WEEKLY_COUNT=$(jq '[.weeks[].items[]] | length' qa-news/public/weekly-highlights.json)
-          MONTHLY_COUNT=$(jq '[.months[].items[]] | length' qa-news/public/monthly-recap.json)
+          LATEST_COUNT=$(jq '.items | length' qa-news/data/latest-news.json)
+          WEEKLY_COUNT=$(jq '[.weeks[].items[]] | length' qa-news/data/weekly-highlights.json)
+          MONTHLY_COUNT=$(jq '[.months[].items[]] | length' qa-news/data/monthly-recap.json)
 
           echo "Article counts:"
           echo "  Latest: $LATEST_COUNT articles"
           echo "  Weekly: $WEEKLY_COUNT articles"
           echo "  Monthly: $MONTHLY_COUNT articles"
-
-      - name: Sync to qa-news/data directory
-        run: |
-          mkdir -p qa-news/data
-          cp qa-news/public/latest.json qa-news/data/latest-news.json
-          cp qa-news/public/weekly-highlights.json qa-news/data/weekly-highlights.json
-          cp qa-news/public/monthly-recap.json qa-news/data/monthly-recap.json
-          echo "Files synced to qa-news/data/"
 
       - name: Commit data updates
         id: commit
