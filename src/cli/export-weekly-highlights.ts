@@ -2,9 +2,10 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { exportWeeklyHighlights, exportWeeklyHighlightsWithSummaries } from '../business-logic/export-weekly-highlights';
+import { exportWeeklyHighlights, exportWeeklyHighlightsWithSummaries, WeeklyHighlightsExport } from '../business-logic/export-weekly-highlights';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { SummaryGenerator } from '../business-logic/summary-generator';
+import { AtomicFileWriter } from '../business-logic/atomic-file-writer';
 
 /**
  * CLI: Export weekly highlights to QA News public API
@@ -28,6 +29,24 @@ function logStructured(stage: string, data: Record<string, any>): void {
 }
 
 /**
+ * Map article categories to QA-News valid categories
+ */
+function mapCategory(category: string): string {
+  const categoryMap: Record<string, string> = {
+    'test-automation': 'test-automation',
+    'ai': 'ai',
+    'engineering': 'engineering',
+    'qa-practice': 'qa-practice',
+    'tooling': 'tooling',
+    'news': 'test-automation',
+    'article': 'engineering',
+    'release': 'tooling',
+    'tutorial': 'qa-practice',
+  };
+  return categoryMap[category] || 'test-automation';
+}
+
+/**
  * Write export data to both public and data directories
  * Ensures the weekly files exist in both locations for redundancy
  */
@@ -35,9 +54,22 @@ async function writeToDataDirs(
   projectRoot: string,
   data: any
 ): Promise<{ publicPath: string; dataPath: string }> {
-  const publicPath = path.join(projectRoot, 'qa-news/public/weekly.json');
+  const publicPath = path.join(projectRoot, 'qa-news/public/weekly-highlights.json');
   const dataPath = path.join(projectRoot, 'qa-news/data/weekly-highlights.json');
-  const jsonContent = JSON.stringify(data, null, 2);
+
+  // Map article categories to QA-News valid categories for data export
+  const mappedData = {
+    ...data,
+    weeks: data.weeks.map((week: any) => ({
+      ...week,
+      items: week.items.map((article: any) => ({
+        ...article,
+        category: mapCategory(article.category)
+      }))
+    }))
+  };
+
+  const jsonContent = JSON.stringify(mappedData, null, 2);
 
   // Create both directories
   await fs.mkdir(path.dirname(publicPath), { recursive: true });
@@ -130,10 +162,8 @@ async function main(): Promise<void> {
       dataPath
     });
 
-    // Log status
-    console.log(`✓ Exported ${weeklyExport.weeks.length} weeks to weekly files`);
-    console.log(`  Public: ${publicPath}`);
-    console.log(`  Data: ${dataPath}`);
+    // Output JSON to stdout for workflow capture
+    console.log(JSON.stringify(weeklyExport));
 
     const totalDuration = Date.now() - workflowStartTime;
     logStructured('WORKFLOW_COMPLETE', {

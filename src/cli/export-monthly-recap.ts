@@ -27,11 +27,47 @@ function logStructured(stage: string, data: Record<string, any>): void {
   console.error(`[${timestamp}] [${stage}] ${fields}`);
 }
 
+/**
+ * Map article categories to QA-News valid categories
+ */
+function mapCategory(category: string): string {
+  const categoryMap: Record<string, string> = {
+    'test-automation': 'test-automation',
+    'ai': 'ai',
+    'engineering': 'engineering',
+    'qa-practice': 'qa-practice',
+    'tooling': 'tooling',
+    'news': 'test-automation',
+    'article': 'engineering',
+    'release': 'tooling',
+    'tutorial': 'qa-practice',
+  };
+  return categoryMap[category] || 'test-automation';
+}
+
 // Helper function to write export to both public and data directories
 async function writeToDataDirs(projectRoot: string, exportData: any): Promise<void> {
-  const publicPath = path.join(projectRoot, 'qa-news/public/monthly.json');
+  const publicPath = path.join(projectRoot, 'qa-news/public/monthly-recap.json');
   const dataPath = path.join(projectRoot, 'qa-news/data/monthly-recap.json');
-  const jsonContent = JSON.stringify(exportData, null, 2);
+
+  // Transform data for QA-News format:
+  // 1. Rename monthOf to month and convert format from YYYY-MM-01 to YYYY-MM
+  // 2. Add themes array (empty for now, will be populated by Task 6)
+  // 3. Map article categories to valid QA-News categories
+  const mappedData = {
+    ...exportData,
+    months: exportData.months.map((month: any) => ({
+      month: month.monthOf.substring(0, 7), // Convert "2026-07-01" to "2026-07"
+      summary: month.summary || '',
+      themes: [], // Empty themes for now (will be populated by synthesis)
+      items: month.items.map((article: any) => ({
+        ...article,
+        category: mapCategory(article.category)
+      }))
+    }))
+  };
+
+  const jsonContent = JSON.stringify(mappedData, null, 2);
 
   // Ensure directories exist
   await fs.mkdir(path.dirname(publicPath), { recursive: true });
@@ -123,8 +159,8 @@ async function main(): Promise<void> {
     const writeDuration = Date.now() - writeStartTime;
     logStructured('WRITE_COMPLETE', { durationMs: writeDuration });
 
-    // Log success
-    console.log(`✓ Exported ${monthlyExport.months.length} months to qa-news/public/monthly.json and qa-news/data/monthly-recap.json`);
+    // Output JSON to stdout for workflow capture
+    console.log(JSON.stringify(monthlyExport));
 
     const totalDuration = Date.now() - workflowStartTime;
     logStructured('WORKFLOW_COMPLETE', {

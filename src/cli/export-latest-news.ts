@@ -2,8 +2,9 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { exportLatestNews } from '../business-logic/export-latest-news';
+import { exportLatestNews, LatestNewsExport } from '../business-logic/export-latest-news';
 import { NdJsonArticleStore } from '../business-logic/article-store';
+import { AtomicFileWriter } from '../business-logic/atomic-file-writer';
 
 /**
  * CLI: Export latest articles to QA News public API
@@ -23,28 +24,63 @@ function logStructured(stage: string, data: Record<string, any>): void {
   const fields = Object.entries(data)
     .map(([key, value]) => `${key}=${JSON.stringify(value)}`)
     .join(' ');
-  console.log(`[${timestamp}] [${stage}] ${fields}`);
+  console.error(`[${timestamp}] [${stage}] ${fields}`);
+}
+
+/**
+ * Map article categories to QA-News valid categories
+ * QA-News only accepts: 'test-automation' | 'ai' | 'engineering' | 'qa-practice' | 'tooling'
+ */
+function mapCategory(category: string): string {
+  const categoryMap: Record<string, string> = {
+    'test-automation': 'test-automation',
+    'ai': 'ai',
+    'engineering': 'engineering',
+    'qa-practice': 'qa-practice',
+    'tooling': 'tooling',
+    'news': 'test-automation',
+    'article': 'engineering',
+    'release': 'tooling',
+    'tutorial': 'qa-practice',
+  };
+  return categoryMap[category] || 'test-automation';
 }
 
 /**
  * Write export data to both public and data directories
  * Ensures the latest.json file exists in both locations for redundancy
+ * Uses AtomicFileWriter for durability (atomic writes prevent corruption)
  */
 async function writeToDataDirs(
   projectRoot: string,
-  data: any
+  data: LatestNewsExport
 ): Promise<{ publicPath: string; dataPath: string }> {
-  const publicPath = path.join(projectRoot, 'qa-news/public/latest.json');
-  const dataPath = path.join(projectRoot, 'qa-news/data/latest.json');
-  const jsonContent = JSON.stringify(data, null, 2);
+  const publicPath = path.join(projectRoot, 'qa-news/public/latest-news.json');
+  const dataPath = path.join(projectRoot, 'qa-news/data/latest-news.json');
 
-  // Create both directories
+  // Map article categories to QA-News valid categories for data export
+  const mappedData: LatestNewsExport = {
+    ...data,
+    items: data.items.map((article) => ({
+      ...article,
+      category: mapCategory(article.category)
+    }))
+  };
+
+  const jsonContent = JSON.stringify(mappedData, null, 2);
+
+  // Use AtomicFileWriter for durability
+  const writer = new AtomicFileWriter();
+
+  // Ensure directories exist
   await fs.mkdir(path.dirname(publicPath), { recursive: true });
   await fs.mkdir(path.dirname(dataPath), { recursive: true });
 
-  // Write to both locations
-  await fs.writeFile(publicPath, jsonContent);
-  await fs.writeFile(dataPath, jsonContent);
+  // Write to both locations atomically
+  await Promise.all([
+    writer.writeFile(publicPath, jsonContent),
+    writer.writeFile(dataPath, jsonContent)
+  ]);
 
   return { publicPath, dataPath };
 }
@@ -109,12 +145,8 @@ async function main(): Promise<void> {
       dataPath
     });
 
-    // Log status
-    console.log(`✓ Exported ${latest.items.length} articles to:`);
-    console.log(`  Public: ${publicPath}`);
-    console.log(`  Data: ${dataPath}`);
-    console.log(`  Date: ${latest.date}`);
-    console.log(`  Updated: ${latest.updatedAt}`);
+    // Output JSON to stdout for workflow capture
+    console.log(JSON.stringify(latest));
 
     const totalDuration = Date.now() - workflowStartTime;
     logStructured('WORKFLOW_COMPLETE', {
