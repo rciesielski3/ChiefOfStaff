@@ -122,6 +122,13 @@ jobs:
           INSIGHT_COUNT=$(wc -l < data/insights.ndjson || echo 0)
           echo "✅ Insights generated: $INSIGHT_COUNT insights"
 
+      - name: Report insights
+        if: success()
+        run: |
+          npx ts-node src/cli/report-insights.ts >> /tmp/insights-summary.txt
+          cat /tmp/insights-summary.txt
+        continue-on-error: true
+
       - name: Commit changes
         run: |
            git config user.name "PAIOS Bot"
