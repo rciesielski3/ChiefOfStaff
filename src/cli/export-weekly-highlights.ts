@@ -1,19 +1,20 @@
 #!/usr/bin/env ts-node
 
+import * as fs from 'fs/promises';
 import * as path from 'path';
-import { exportWeeklyHighlights, exportWeeklyHighlightsWithSummaries } from '../business-logic/export-weekly-highlights';
+import { exportWeeklyHighlights, exportWeeklyHighlightsWithSummaries, WeeklyHighlightsExport } from '../business-logic/export-weekly-highlights';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { SummaryGenerator } from '../business-logic/summary-generator';
 
 /**
- * CLI: Export weekly highlights to QA News public API
+ * CLI: Export weekly highlights to QA News data directory
  *
  * Usage: npx ts-node src/cli/export-weekly-highlights.ts
  *
  * Flow:
  * 1. Load ArticleStore from data/canonical_articles.ndjson
  * 2. Call exportWeeklyHighlights(articles) to group articles by week
- * 3. Output JSON to stdout
+ * 3. Write JSON output to qa-news/data/weekly-highlights.json
  * 4. Log status and exit
  */
 
@@ -25,6 +26,25 @@ function logStructured(stage: string, data: Record<string, any>): void {
     .join(' ');
   console.error(`[${timestamp}] [${stage}] ${fields}`);
 }
+
+/**
+ * Map article categories to QA-News valid categories
+ */
+function mapCategory(category: string): string {
+  const categoryMap: Record<string, string> = {
+    'test-automation': 'test-automation',
+    'ai': 'ai',
+    'engineering': 'engineering',
+    'qa-practice': 'qa-practice',
+    'tooling': 'tooling',
+    'news': 'test-automation',
+    'article': 'engineering',
+    'release': 'tooling',
+    'tutorial': 'qa-practice',
+  };
+  return categoryMap[category] || 'test-automation';
+}
+
 
 async function main(): Promise<void> {
   const workflowStartTime = Date.now();
@@ -93,8 +113,41 @@ async function main(): Promise<void> {
       process.exit(1);
     }
 
-    // Output JSON to stdout
-    console.log(JSON.stringify(weeklyExport, null, 2));
+    // Write JSON export to qa-news/data/weekly-highlights.json
+    const writeStartTime = Date.now();
+    logStructured('WRITE_START', {
+      weekCount: weeklyExport.weeks.length
+    });
+
+    // Map article categories to QA-News valid categories for data export
+    const mappedData: WeeklyHighlightsExport = {
+      ...weeklyExport,
+      weeks: weeklyExport.weeks.map((week) => ({
+        ...week,
+        items: week.items.map((article) => ({
+          ...article,
+          category: mapCategory(article.category)
+        }))
+      }))
+    };
+
+    const jsonContent = JSON.stringify(mappedData, null, 2);
+    const dataPath = path.join(projectRoot, 'qa-news/data/weekly-highlights.json');
+
+    // Ensure directory exists
+    await fs.mkdir(path.dirname(dataPath), { recursive: true });
+
+    // Write to data directory
+    await fs.writeFile(dataPath, jsonContent, 'utf-8');
+
+    const writeDuration = Date.now() - writeStartTime;
+    logStructured('WRITE_COMPLETE', {
+      durationMs: writeDuration,
+      dataPath
+    });
+
+    // Output JSON to stdout for workflow capture
+    console.log(JSON.stringify(weeklyExport));
 
     const totalDuration = Date.now() - workflowStartTime;
     logStructured('WORKFLOW_COMPLETE', {

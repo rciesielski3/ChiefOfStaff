@@ -29,7 +29,7 @@ describe('QA-News Full Export Integration', () => {
    */
   test('all three exports produce valid JSON with correct structure', () => {
     // === LATEST NEWS ===
-    const latestPath = path.join(projectRoot, 'qa-news/public/latest.json');
+    const latestPath = path.join(projectRoot, 'qa-news/data/latest-news.json');
 
     try {
       execSync(
@@ -240,7 +240,7 @@ describe('QA-News Full Export Integration', () => {
    */
   test('exports are deterministic (same input = same output)', () => {
     // Run latest export twice
-    const latestPath = path.join(projectRoot, 'qa-news/public/latest.json');
+    const latestPath = path.join(projectRoot, 'qa-news/data/latest-news.json');
 
     try {
       execSync(
@@ -427,7 +427,7 @@ describe('QA-News Full Export Integration', () => {
    */
   test('data volumes are reasonable and within constraints', () => {
     // === LATEST VOLUME ===
-    const latestPath = path.join(projectRoot, 'qa-news/public/latest.json');
+    const latestPath = path.join(projectRoot, 'qa-news/data/latest-news.json');
 
     try {
       execSync(

@@ -7,7 +7,7 @@ describe('rebuild-qa-news CLI — Integration Tests', () => {
 
   beforeEach(() => {
     // Ensure export directory exists for tests
-    const exportDir = path.join(projectRoot, 'qa-news/public');
+    const exportDir = path.join(projectRoot, 'qa-news/data');
     if (!fs.existsSync(exportDir)) {
       fs.mkdirSync(exportDir, { recursive: true });
     }
@@ -62,9 +62,9 @@ describe('rebuild-qa-news CLI — Integration Tests', () => {
     );
 
     // Verify all three export files were created
-    const latestPath = path.join(projectRoot, 'qa-news/public/latest.json');
-    const weeklyPath = path.join(projectRoot, 'qa-news/public/weekly.json');
-    const monthlyPath = path.join(projectRoot, 'qa-news/public/monthly.json');
+    const latestPath = path.join(projectRoot, 'qa-news/data/latest-news.json');
+    const weeklyPath = path.join(projectRoot, 'qa-news/data/weekly-highlights.json');
+    const monthlyPath = path.join(projectRoot, 'qa-news/data/monthly-recap.json');
 
     expect(fs.existsSync(latestPath)).toBe(true);
     expect(fs.existsSync(weeklyPath)).toBe(true);

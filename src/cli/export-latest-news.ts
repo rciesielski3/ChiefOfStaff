@@ -2,18 +2,18 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { exportLatestNews } from '../business-logic/export-latest-news';
+import { exportLatestNews, LatestNewsExport } from '../business-logic/export-latest-news';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 
 /**
- * CLI: Export latest articles to QA News public API
+ * CLI: Export latest articles to QA News data directory
  *
  * Usage: npx ts-node src/cli/export-latest-news.ts
  *
  * Flow:
  * 1. Load ArticleStore from data/canonical_articles.ndjson
  * 2. Call exportLatestNews(store, 50) to get top 50 articles
- * 3. Write JSON output to qa-news/public/latest.json
+ * 3. Write JSON output to qa-news/data/latest-news.json
  * 4. Log status and exit
  */
 
@@ -23,8 +23,28 @@ function logStructured(stage: string, data: Record<string, any>): void {
   const fields = Object.entries(data)
     .map(([key, value]) => `${key}=${JSON.stringify(value)}`)
     .join(' ');
-  console.log(`[${timestamp}] [${stage}] ${fields}`);
+  console.error(`[${timestamp}] [${stage}] ${fields}`);
 }
+
+/**
+ * Map article categories to QA-News valid categories
+ * QA-News only accepts: 'test-automation' | 'ai' | 'engineering' | 'qa-practice' | 'tooling'
+ */
+function mapCategory(category: string): string {
+  const categoryMap: Record<string, string> = {
+    'test-automation': 'test-automation',
+    'ai': 'ai',
+    'engineering': 'engineering',
+    'qa-practice': 'qa-practice',
+    'tooling': 'tooling',
+    'news': 'test-automation',
+    'article': 'engineering',
+    'release': 'tooling',
+    'tutorial': 'qa-practice',
+  };
+  return categoryMap[category] || 'test-automation';
+}
+
 
 async function main(): Promise<void> {
   const workflowStartTime = Date.now();
@@ -35,11 +55,10 @@ async function main(): Promise<void> {
     // Resolve paths relative to project root
     const projectRoot = path.resolve(__dirname, '../..');
     const storeFilePath = path.join(projectRoot, 'data/canonical_articles.ndjson');
-    const outputPath = path.join(projectRoot, 'qa-news/public/latest.json');
     logStructured('PATHS_RESOLVED', {
       projectRoot,
       storeFilePath,
-      outputPath
+      outputDir: 'qa-news/data'
     });
 
     // Create article store
@@ -74,34 +93,44 @@ async function main(): Promise<void> {
       process.exit(1);  // Fail workflow so operators notice
     }
 
-    // Ensure output directory exists
-    const mkdirStartTime = Date.now();
-    const outputDir = path.dirname(outputPath);
-    logStructured('MKDIR_START', { outputDir });
-    await fs.mkdir(outputDir, { recursive: true });
-    const mkdirDuration = Date.now() - mkdirStartTime;
-    logStructured('MKDIR_COMPLETE', { durationMs: mkdirDuration });
-
-    // Write JSON export
+    // Write JSON export to qa-news/data directory
     const writeStartTime = Date.now();
     logStructured('WRITE_START', {
-      outputPath,
       articleCount: latest.items.length
     });
-    await fs.writeFile(outputPath, JSON.stringify(latest, null, 2));
-    const writeDuration = Date.now() - writeStartTime;
-    logStructured('WRITE_COMPLETE', { durationMs: writeDuration });
 
-    // Log status
-    console.log(`✓ Exported ${latest.items.length} articles to ${outputPath}`);
-    console.log(`  Date: ${latest.date}`);
-    console.log(`  Updated: ${latest.updatedAt}`);
+    // Map article categories to QA-News valid categories
+    const mappedData: LatestNewsExport = {
+      ...latest,
+      items: latest.items.map((article) => ({
+        ...article,
+        category: mapCategory(article.category)
+      }))
+    };
+
+    const dataPath = path.join(projectRoot, 'qa-news/data/latest-news.json');
+    const jsonContent = JSON.stringify(mappedData, null, 2);
+
+    // Ensure data directory exists
+    await fs.mkdir(path.dirname(dataPath), { recursive: true });
+
+    // Write to data directory
+    await fs.writeFile(dataPath, jsonContent, 'utf-8');
+
+    const writeDuration = Date.now() - writeStartTime;
+    logStructured('WRITE_COMPLETE', {
+      durationMs: writeDuration,
+      dataPath
+    });
+
+    // Output JSON to stdout for workflow capture
+    console.log(JSON.stringify(latest));
 
     const totalDuration = Date.now() - workflowStartTime;
     logStructured('WORKFLOW_COMPLETE', {
       totalDurationMs: totalDuration,
       articleCount: latest.items.length,
-      outputPath
+      dataPath
     });
   } catch (error) {
     const totalDuration = Date.now() - workflowStartTime;

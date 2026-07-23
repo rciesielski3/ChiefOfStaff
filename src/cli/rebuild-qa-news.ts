@@ -3,12 +3,13 @@
 import { fetchRSS } from '../business-logic/rss-fetch';
 import { normalizeArticle } from '../business-logic/normalize-article';
 import { scoreArticles, DEFAULT_CONFIG } from '../business-logic/score-article';
-import { exportLatestNews } from '../business-logic/export-latest-news';
+import { exportLatestNews, LatestNewsExport } from '../business-logic/export-latest-news';
 import { exportWeeklyHighlights } from '../business-logic/export-weekly-highlights';
 import { exportMonthlyRecap } from '../business-logic/export-monthly-recap';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { AtomicFileWriter } from '../business-logic/atomic-file-writer';
 import * as path from 'path';
+import * as fs from 'fs/promises';
 
 /**
  * RSS sources for QA News rebuild
@@ -63,12 +64,31 @@ const RSS_SOURCES = [
  * 1. Fetch articles from all 8 RSS sources
  * 2. Normalize articles
  * 3. Score articles
- * 4. Export latest.json (top 50)
- * 5. Export weekly.json (grouped by week)
- * 6. Export monthly.json (grouped by month, top 25 each)
- * 7. Atomically write all exports
+ * 4. Export latest-news.json (top 50)
+ * 5. Export weekly-highlights.json (grouped by week)
+ * 6. Export monthly-recap.json (grouped by month, top 25 each)
+ * 7. Write all exports to qa-news/data/ directory
  * 8. Exit with code 0 on success, 1 on failure
  */
+
+/**
+ * Map article categories to QA-News valid categories
+ * QA-News only accepts: 'test-automation' | 'ai' | 'engineering' | 'qa-practice' | 'tooling'
+ */
+function mapCategory(category: string): string {
+  const categoryMap: Record<string, string> = {
+    'test-automation': 'test-automation',
+    'ai': 'ai',
+    'engineering': 'engineering',
+    'qa-practice': 'qa-practice',
+    'tooling': 'tooling',
+    'news': 'test-automation',
+    'article': 'engineering',
+    'release': 'tooling',
+    'tutorial': 'qa-practice',
+  };
+  return categoryMap[category] || 'test-automation';
+}
 
 // Helper function for structured logging with timestamps
 function logStructured(stage: string, data: Record<string, any>): void {
@@ -218,7 +238,7 @@ async function main(): Promise<void> {
       durationMs: exportDuration
     });
 
-    // Write exports atomically
+    // Write exports to qa-news/data/ directory
     const writeStartTime = Date.now();
     if (verbose) {
       console.log('[Rebuild QA News] Writing exports...');
@@ -229,14 +249,27 @@ async function main(): Promise<void> {
       monthCount: monthlyExport.months.length
     });
 
-    const writer = new AtomicFileWriter();
-    const latestPath = path.join(projectRoot, 'qa-news/public/latest.json');
-    const weeklyPath = path.join(projectRoot, 'qa-news/public/weekly.json');
-    const monthlyPath = path.join(projectRoot, 'qa-news/public/monthly.json');
+    // Map article categories for latest export
+    const mappedLatestExport: LatestNewsExport = {
+      ...latestExport,
+      items: latestExport.items.map((article) => ({
+        ...article,
+        category: mapCategory(article.category)
+      }))
+    };
 
-    await writer.writeFile(latestPath, JSON.stringify(latestExport, null, 2));
-    await writer.writeFile(weeklyPath, JSON.stringify(weeklyExport, null, 2));
-    await writer.writeFile(monthlyPath, JSON.stringify(monthlyExport, null, 2));
+    const dataDir = path.join(projectRoot, 'qa-news/data');
+    const latestPath = path.join(dataDir, 'latest-news.json');
+    const weeklyPath = path.join(dataDir, 'weekly-highlights.json');
+    const monthlyPath = path.join(dataDir, 'monthly-recap.json');
+
+    // Ensure data directory exists
+    await fs.mkdir(dataDir, { recursive: true });
+
+    // Write files to data directory
+    await fs.writeFile(latestPath, JSON.stringify(mappedLatestExport, null, 2), 'utf-8');
+    await fs.writeFile(weeklyPath, JSON.stringify(weeklyExport, null, 2), 'utf-8');
+    await fs.writeFile(monthlyPath, JSON.stringify(monthlyExport, null, 2), 'utf-8');
 
     const writeDuration = Date.now() - writeStartTime;
     if (verbose) {
