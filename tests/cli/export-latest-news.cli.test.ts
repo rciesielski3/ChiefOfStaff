@@ -1,14 +1,16 @@
 import * as path from 'path';
+import * as fs from 'fs';
 
 /**
- * Tests for export-latest-news CLI error handling
+ * Tests for export-latest-news CLI
  *
  * Verifies that:
  * 1. Errors are caught and logged to stderr
  * 2. Process exits with code 1 on error
  * 3. Error handler wraps the main function call
+ * 4. Single-write writes only to qa-news/data/latest-news.json
  */
-describe('Export Latest News CLI Error Handling', () => {
+describe('Export Latest News CLI', () => {
   let originalExit: (code?: number) => never;
   let exitCode: number | undefined;
   let errorLogs: string[] = [];
@@ -72,5 +74,62 @@ describe('Export Latest News CLI Error Handling', () => {
 
     // Verify error handler exits with code 1
     expect(cliContent).toContain('process.exit(1)');
+  });
+
+  it('does not import AtomicFileWriter (single-write refactor)', () => {
+    const fs = require('fs');
+    const cliContent = fs.readFileSync(
+      path.join(__dirname, '../../src/cli/export-latest-news.ts'),
+      'utf-8'
+    );
+
+    // Verify AtomicFileWriter is not imported
+    expect(cliContent).not.toContain("from '../business-logic/atomic-file-writer'");
+  });
+
+  it('does not define writeToDataDirs helper (single-write refactor)', () => {
+    const fs = require('fs');
+    const cliContent = fs.readFileSync(
+      path.join(__dirname, '../../src/cli/export-latest-news.ts'),
+      'utf-8'
+    );
+
+    // Verify writeToDataDirs function is not defined
+    expect(cliContent).not.toContain('async function writeToDataDirs');
+  });
+
+  it('writes only to qa-news/data/latest-news.json (single-write)', () => {
+    const fs = require('fs');
+    const cliContent = fs.readFileSync(
+      path.join(__dirname, '../../src/cli/export-latest-news.ts'),
+      'utf-8'
+    );
+
+    // Verify single-write logic is present
+    expect(cliContent).toContain("path.join(projectRoot, 'qa-news/data/latest-news.json')");
+    // Verify direct fs.writeFile call
+    expect(cliContent).toContain('fs.writeFile(dataPath, jsonContent');
+    // Verify no Promise.all for dual-write
+    expect(cliContent).not.toContain('Promise.all');
+  });
+
+  it('logs only dataPath in WRITE_COMPLETE (not publicPath)', () => {
+    const fs = require('fs');
+    const cliContent = fs.readFileSync(
+      path.join(__dirname, '../../src/cli/export-latest-news.ts'),
+      'utf-8'
+    );
+
+    // Verify WRITE_COMPLETE logs dataPath only
+    expect(cliContent).toContain('WRITE_COMPLETE');
+    // Extract the WRITE_COMPLETE log section
+    const writeCompleteMatch = cliContent.match(/WRITE_COMPLETE[^}]+}/);
+    if (writeCompleteMatch) {
+      const section = writeCompleteMatch[0];
+      // Should have dataPath logged
+      expect(section).toContain('dataPath');
+      // Should NOT have publicPath
+      expect(section).not.toContain('publicPath');
+    }
   });
 });
