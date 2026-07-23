@@ -3,7 +3,7 @@ import * as path from 'path';
 
 describe('export-weekly-highlights CLI — Environment Variable Handling', () => {
   const dataDir = path.join(process.cwd(), 'data');
-  const outputFile = path.join(process.cwd(), 'qa-news/public/weekly.json');
+  const outputFile = path.join(process.cwd(), 'qa-news/data/weekly-highlights.json');
 
   beforeEach(() => {
     // Ensure test data exists

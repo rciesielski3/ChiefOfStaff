@@ -5,17 +5,16 @@ import * as path from 'path';
 import { exportWeeklyHighlights, exportWeeklyHighlightsWithSummaries, WeeklyHighlightsExport } from '../business-logic/export-weekly-highlights';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { SummaryGenerator } from '../business-logic/summary-generator';
-import { AtomicFileWriter } from '../business-logic/atomic-file-writer';
 
 /**
- * CLI: Export weekly highlights to QA News public API
+ * CLI: Export weekly highlights to QA News data directory
  *
  * Usage: npx ts-node src/cli/export-weekly-highlights.ts
  *
  * Flow:
  * 1. Load ArticleStore from data/canonical_articles.ndjson
  * 2. Call exportWeeklyHighlights(articles) to group articles by week
- * 3. Write JSON output to both qa-news/public/weekly.json and qa-news/data/weekly-highlights.json
+ * 3. Write JSON output to qa-news/data/weekly-highlights.json
  * 4. Log status and exit
  */
 
@@ -46,47 +45,6 @@ function mapCategory(category: string): string {
   return categoryMap[category] || 'test-automation';
 }
 
-/**
- * Write export data to both public and data directories
- * Ensures the weekly files exist in both locations for redundancy
- * Uses AtomicFileWriter for durability (atomic writes prevent corruption)
- */
-async function writeToDataDirs(
-  projectRoot: string,
-  data: WeeklyHighlightsExport
-): Promise<{ publicPath: string; dataPath: string }> {
-  const publicPath = path.join(projectRoot, 'qa-news/public/weekly-highlights.json');
-  const dataPath = path.join(projectRoot, 'qa-news/data/weekly-highlights.json');
-
-  // Map article categories to QA-News valid categories for data export
-  const mappedData: WeeklyHighlightsExport = {
-    ...data,
-    weeks: data.weeks.map((week) => ({
-      ...week,
-      items: week.items.map((article) => ({
-        ...article,
-        category: mapCategory(article.category)
-      }))
-    }))
-  };
-
-  const jsonContent = JSON.stringify(mappedData, null, 2);
-
-  // Use AtomicFileWriter for durability
-  const writer = new AtomicFileWriter();
-
-  // Ensure directories exist
-  await fs.mkdir(path.dirname(publicPath), { recursive: true });
-  await fs.mkdir(path.dirname(dataPath), { recursive: true });
-
-  // Write to both locations atomically
-  await Promise.all([
-    writer.writeFile(publicPath, jsonContent),
-    writer.writeFile(dataPath, jsonContent)
-  ]);
-
-  return { publicPath, dataPath };
-}
 
 async function main(): Promise<void> {
   const workflowStartTime = Date.now();
@@ -155,16 +113,36 @@ async function main(): Promise<void> {
       process.exit(1);
     }
 
-    // Write JSON export to both public and data directories
+    // Write JSON export to qa-news/data/weekly-highlights.json
     const writeStartTime = Date.now();
     logStructured('WRITE_START', {
       weekCount: weeklyExport.weeks.length
     });
-    const { publicPath, dataPath } = await writeToDataDirs(projectRoot, weeklyExport);
+
+    // Map article categories to QA-News valid categories for data export
+    const mappedData: WeeklyHighlightsExport = {
+      ...weeklyExport,
+      weeks: weeklyExport.weeks.map((week) => ({
+        ...week,
+        items: week.items.map((article) => ({
+          ...article,
+          category: mapCategory(article.category)
+        }))
+      }))
+    };
+
+    const jsonContent = JSON.stringify(mappedData, null, 2);
+    const dataPath = path.join(projectRoot, 'qa-news/data/weekly-highlights.json');
+
+    // Ensure directory exists
+    await fs.mkdir(path.dirname(dataPath), { recursive: true });
+
+    // Write to data directory
+    await fs.writeFile(dataPath, jsonContent, 'utf-8');
+
     const writeDuration = Date.now() - writeStartTime;
     logStructured('WRITE_COMPLETE', {
       durationMs: writeDuration,
-      publicPath,
       dataPath
     });
 

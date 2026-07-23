@@ -5,17 +5,16 @@ import * as path from 'path';
 import { exportMonthlyRecap, exportMonthlyRecapWithSummaries, MonthlyRecapExport } from '../business-logic/export-monthly-recap';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { SummaryGenerator } from '../business-logic/summary-generator';
-import { AtomicFileWriter } from '../business-logic/atomic-file-writer';
 
 /**
- * CLI: Export monthly recaps to QA News public API
+ * CLI: Export monthly recaps to QA News data directory
  *
  * Usage: npx ts-node src/cli/export-monthly-recap.ts
  *
  * Flow:
  * 1. Load ArticleStore from data/canonical_articles.ndjson
  * 2. Call exportMonthlyRecap(articles, 25) to group articles by month and curate to top 25
- * 3. Write to both qa-news/public/monthly.json and qa-news/data/monthly-recap.json
+ * 3. Write JSON output to qa-news/data/monthly-recap.json
  * 4. Log status and exit
  */
 
@@ -46,48 +45,6 @@ function mapCategory(category: string): string {
   return categoryMap[category] || 'test-automation';
 }
 
-// Helper function to write export to both public and data directories
-async function writeToDataDirs(projectRoot: string, exportData: MonthlyRecapExport): Promise<void> {
-  const publicPath = path.join(projectRoot, 'qa-news/public/monthly-recap.json');
-  const dataPath = path.join(projectRoot, 'qa-news/data/monthly-recap.json');
-
-  // Transform data for QA-News format:
-  // 1. Rename monthOf to month and convert format from YYYY-MM-01 to YYYY-MM
-  // 2. Add themes array (empty for now, will be populated by Task 6)
-  // 3. Map article categories to valid QA-News categories
-  const mappedData = {
-    ...exportData,
-    months: exportData.months.map((month) => ({
-      month: month.monthOf.substring(0, 7), // Convert "2026-07-01" to "2026-07"
-      summary: month.summary || '',
-      themes: [], // Empty themes for now (will be populated by synthesis)
-      items: month.items.map((article) => ({
-        ...article,
-        category: mapCategory(article.category)
-      }))
-    }))
-  };
-
-  const jsonContent = JSON.stringify(mappedData, null, 2);
-
-  // Use AtomicFileWriter for durability
-  const writer = new AtomicFileWriter();
-
-  // Ensure directories exist
-  await fs.mkdir(path.dirname(publicPath), { recursive: true });
-  await fs.mkdir(path.dirname(dataPath), { recursive: true });
-
-  // Write to both locations atomically
-  await Promise.all([
-    writer.writeFile(publicPath, jsonContent),
-    writer.writeFile(dataPath, jsonContent)
-  ]);
-
-  logStructured('FILES_WRITTEN', {
-    publicPath,
-    dataPath
-  });
-}
 
 async function main(): Promise<void> {
   const workflowStartTime = Date.now();
@@ -157,14 +114,43 @@ async function main(): Promise<void> {
       process.exit(1);
     }
 
-    // Write export to both public and data directories
+    // Write JSON export to qa-news/data directory
     const writeStartTime = Date.now();
     logStructured('WRITE_START', {
       monthCount: monthlyExport.months.length
     });
-    await writeToDataDirs(projectRoot, monthlyExport);
+
+    // Transform data for QA-News format:
+    // 1. Rename monthOf to month and convert format from YYYY-MM-01 to YYYY-MM
+    // 2. Add themes array (empty for now, will be populated by Task 6)
+    // 3. Map article categories to valid QA-News categories
+    const mappedData = {
+      ...monthlyExport,
+      months: monthlyExport.months.map((month) => ({
+        month: month.monthOf.substring(0, 7), // Convert "2026-07-01" to "2026-07"
+        summary: month.summary || '',
+        themes: [], // Empty themes for now (will be populated by synthesis)
+        items: month.items.map((article) => ({
+          ...article,
+          category: mapCategory(article.category)
+        }))
+      }))
+    };
+
+    const dataPath = path.join(projectRoot, 'qa-news/data/monthly-recap.json');
+    const jsonContent = JSON.stringify(mappedData, null, 2);
+
+    // Ensure data directory exists
+    await fs.mkdir(path.dirname(dataPath), { recursive: true });
+
+    // Write to data directory
+    await fs.writeFile(dataPath, jsonContent, 'utf-8');
+
     const writeDuration = Date.now() - writeStartTime;
-    logStructured('WRITE_COMPLETE', { durationMs: writeDuration });
+    logStructured('WRITE_COMPLETE', {
+      durationMs: writeDuration,
+      dataPath
+    });
 
     // Output JSON to stdout for workflow capture
     console.log(JSON.stringify(monthlyExport));
