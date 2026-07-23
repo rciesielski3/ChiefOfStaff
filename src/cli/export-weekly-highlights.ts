@@ -1,5 +1,6 @@
 #!/usr/bin/env ts-node
 
+import * as fs from 'fs/promises';
 import * as path from 'path';
 import { exportWeeklyHighlights, exportWeeklyHighlightsWithSummaries } from '../business-logic/export-weekly-highlights';
 import { NdJsonArticleStore } from '../business-logic/article-store';
@@ -13,7 +14,7 @@ import { SummaryGenerator } from '../business-logic/summary-generator';
  * Flow:
  * 1. Load ArticleStore from data/canonical_articles.ndjson
  * 2. Call exportWeeklyHighlights(articles) to group articles by week
- * 3. Output JSON to stdout
+ * 3. Write JSON output to both qa-news/public/weekly.json and qa-news/data/weekly-highlights.json
  * 4. Log status and exit
  */
 
@@ -24,6 +25,29 @@ function logStructured(stage: string, data: Record<string, any>): void {
     .map(([key, value]) => `${key}=${JSON.stringify(value)}`)
     .join(' ');
   console.error(`[${timestamp}] [${stage}] ${fields}`);
+}
+
+/**
+ * Write export data to both public and data directories
+ * Ensures the weekly files exist in both locations for redundancy
+ */
+async function writeToDataDirs(
+  projectRoot: string,
+  data: any
+): Promise<{ publicPath: string; dataPath: string }> {
+  const publicPath = path.join(projectRoot, 'qa-news/public/weekly.json');
+  const dataPath = path.join(projectRoot, 'qa-news/data/weekly-highlights.json');
+  const jsonContent = JSON.stringify(data, null, 2);
+
+  // Create both directories
+  await fs.mkdir(path.dirname(publicPath), { recursive: true });
+  await fs.mkdir(path.dirname(dataPath), { recursive: true });
+
+  // Write to both locations
+  await fs.writeFile(publicPath, jsonContent);
+  await fs.writeFile(dataPath, jsonContent);
+
+  return { publicPath, dataPath };
 }
 
 async function main(): Promise<void> {
@@ -93,8 +117,23 @@ async function main(): Promise<void> {
       process.exit(1);
     }
 
-    // Output JSON to stdout
-    console.log(JSON.stringify(weeklyExport, null, 2));
+    // Write JSON export to both public and data directories
+    const writeStartTime = Date.now();
+    logStructured('WRITE_START', {
+      weekCount: weeklyExport.weeks.length
+    });
+    const { publicPath, dataPath } = await writeToDataDirs(projectRoot, weeklyExport);
+    const writeDuration = Date.now() - writeStartTime;
+    logStructured('WRITE_COMPLETE', {
+      durationMs: writeDuration,
+      publicPath,
+      dataPath
+    });
+
+    // Log status
+    console.log(`✓ Exported ${weeklyExport.weeks.length} weeks to weekly files`);
+    console.log(`  Public: ${publicPath}`);
+    console.log(`  Data: ${dataPath}`);
 
     const totalDuration = Date.now() - workflowStartTime;
     logStructured('WORKFLOW_COMPLETE', {
