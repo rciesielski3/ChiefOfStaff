@@ -70,7 +70,7 @@ Pass Rate:   97.8%
 ```
 
 **Note on Failures:**
-The 12 test failures are pre-existing issues in secret-handling tests (`export-weekly-highlights-secrets.test.ts`, `export-qa-news-secrets.test.ts`). These failures are unrelated to the single-write refactor and occur when mock data is empty in test scenarios. The export CLIs themselves work correctly with real data (verified in Steps 2-4).
+The integration test (`qa-news-export-full.test.ts`) has been updated to read from `qa-news/data/latest-news.json` to match the single-write refactor. The remaining 12 test failures are pre-existing issues in secret-handling tests (`export-weekly-highlights-secrets.test.ts`, `export-qa-news-secrets.test.ts`). These failures occur when mock data is empty in test scenarios and are unrelated to the refactor. The export CLIs themselves work correctly with real data (verified in Steps 2-4).
 
 ### Test Categories Passing
 - ✅ Export CLI unit tests
