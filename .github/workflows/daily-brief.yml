@@ -111,7 +111,8 @@ jobs:
             exit 0
           fi
 
-          FACT_COUNT=$(grep -c . data/knowledge_facts.ndjson || echo 0)
+          FACT_COUNT=$(grep -c . data/knowledge_facts.ndjson || true)
+          FACT_COUNT=${FACT_COUNT:-0}
 
           if [ "$FACT_COUNT" -eq 0 ]; then
             echo "⚠️  No facts available after evolution, but continuing"
