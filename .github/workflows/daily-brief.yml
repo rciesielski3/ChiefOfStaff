@@ -94,7 +94,7 @@ jobs:
         id: evolve
         run: |
           echo "Starting knowledge evolution..."
-          npx ts-node src/scripts/evolve-knowledge.ts || echo "⚠️  Knowledge evolution encountered warnings but continuing"
+          npx ts-node src/scripts/evolve-knowledge.ts
           echo "✅ Knowledge evolution step completed"
         env:
           INPUT_FACTS: data/knowledge_facts.ndjson
@@ -111,7 +111,7 @@ jobs:
             exit 0
           fi
 
-          FACT_COUNT=$(wc -l < data/knowledge_facts.ndjson || echo 0)
+          FACT_COUNT=$(grep -c . data/knowledge_facts.ndjson || echo 0)
 
           if [ "$FACT_COUNT" -eq 0 ]; then
             echo "⚠️  No facts available after evolution, but continuing"
@@ -131,6 +131,7 @@ jobs:
           KNOWLEDGE_FACTS_PATH: data/knowledge_facts.ndjson
           INSIGHTS_PATH: data/insights.ndjson
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        continue-on-error: true
 
       - name: Check insights generated
         if: always()

@@ -154,7 +154,7 @@ async function main() {
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    fs.writeFileSync(outputPath, evolvedFacts.join('\n'));
+    fs.writeFileSync(outputPath, evolvedFacts.length > 0 ? evolvedFacts.join('\n') + '\n' : '');
 
     const writeDuration = Date.now() - writeStartTime;
     const outputFactCount = evolvedFacts.length;
