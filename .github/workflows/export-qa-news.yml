@@ -42,7 +42,7 @@ jobs:
           # The daily-brief workflow creates PRs with branch "automation/daily-brief"
           PR_NUMBER=$(gh api repos/rciesielski3/ChiefOfStaff/pulls \
             --jq '.[] | select(.head.ref == "automation/daily-brief") | .number' \
-            --limit 1 | head -1)
+            | head -1)
 
           if [ -z "$PR_NUMBER" ]; then
             echo "⚠️  No daily-brief PR found, skipping wait"
