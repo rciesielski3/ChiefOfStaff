@@ -85,10 +85,20 @@ async function main(): Promise<void> {
       console.warn('[Export Latest News] ⚠️  WARNING: Export produced 0 articles');
       console.warn('[Export Latest News] Store may be empty or not yet populated by daily-brief');
       console.warn('[Export Latest News] Check: data/canonical_articles.ndjson exists and has content');
+
+      // Additional diagnostics
+      try {
+        const fileSize = await fs.stat(storeFilePath);
+        console.warn(`[Export Latest News] File exists: ${fileSize.size} bytes`);
+      } catch (e) {
+        console.warn('[Export Latest News] File does not exist or cannot be read');
+      }
+
       logStructured('VALIDATION_FAILED', {
         reason: 'empty_export',
         expectedMinArticles: 1,
-        actualArticles: 0
+        actualArticles: 0,
+        storeFilePath
       });
       process.exit(1);  // Fail workflow so operators notice
     }

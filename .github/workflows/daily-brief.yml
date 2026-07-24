@@ -35,6 +35,7 @@ jobs:
       ENABLE_NOTIFICATIONS: true
     outputs:
       extraction_failed: ${{ steps.verify-extraction.outcome != 'success' }}
+      pr_number: ${{ steps.pr.outputs.pull_request_number }}
     steps:
       - uses: actions/checkout@v4
 
