@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { fetchRSS } from '../business-logic/rss-fetch';
+import { fetchAllSources } from '../business-logic/rss-fetch';
 import { normalizeArticle } from '../business-logic/normalize-article';
 import { scoreArticles, DEFAULT_CONFIG } from '../business-logic/score-article';
 import { generateBrief } from '../business-logic/generate-brief';
@@ -96,38 +96,19 @@ async function main() {
     });
     console.log('');
 
-    // Fetch articles from all sources
+    // Fetch articles from all sources. Per-source failures (network error,
+    // non-2xx status, parse error) are isolated inside fetchAllSources — a
+    // bad source is skipped so the remaining sources still get fetched.
     const fetchStartTime = Date.now();
     console.log('[Daily Brief] Fetching RSS feeds...');
     logStructured('FETCH_START', { sourceCount: RSS_SOURCES.length });
-    const allRawArticles = [];
 
-    for (const source of RSS_SOURCES) {
-      const sourceStartTime = Date.now();
-      try {
-        console.log(`  - Fetching ${source.name} (${source.url})...`);
-        const articles = await fetchRSS(source.url, source.name);
-        const sourceDuration = Date.now() - sourceStartTime;
-        console.log(`    ✓ Got ${articles.length} articles`);
-        logStructured('FETCH_SOURCE_COMPLETE', {
-          source: source.name,
-          articleCount: articles.length,
-          durationMs: sourceDuration
-        });
-        allRawArticles.push(...articles);
-      } catch (error) {
-        const sourceDuration = Date.now() - sourceStartTime;
-        console.warn(
-          `  ✗ Failed to fetch ${source.name}:`,
-          error instanceof Error ? error.message : error
-        );
-        logStructured('FETCH_SOURCE_ERROR', {
-          source: source.name,
-          error: error instanceof Error ? error.message : String(error),
-          durationMs: sourceDuration
-        });
-      }
-    }
+    const {
+      articles: allRawArticles,
+      results: fetchResults,
+      successCount,
+      failureCount
+    } = await fetchAllSources(RSS_SOURCES);
 
     const fetchDuration = Date.now() - fetchStartTime;
     console.log(`[Daily Brief] Total raw articles: ${allRawArticles.length}\n`);
@@ -135,6 +116,37 @@ async function main() {
       totalArticles: allRawArticles.length,
       durationMs: fetchDuration
     });
+
+    // Report fetch summary: how many sources succeeded/failed and total
+    // articles fetched, so a partial-failure run is easy to spot in logs.
+    console.log('[Daily Brief] RSS Fetch Summary:');
+    console.log(`  - Successful sources: ${successCount}/${RSS_SOURCES.length}`);
+    if (failureCount > 0) {
+      console.log(`  - Failed sources: ${failureCount}/${RSS_SOURCES.length}`);
+      fetchResults
+        .filter(r => !r.success)
+        .forEach(r => {
+          console.log(`    - ${r.source}: ${r.error}`);
+        });
+    }
+    console.log(`  - Total articles fetched: ${allRawArticles.length}\n`);
+    logStructured('FETCH_SUMMARY', {
+      successCount,
+      failureCount,
+      totalSources: RSS_SOURCES.length,
+      totalArticles: allRawArticles.length
+    });
+
+    // Only genuine total failure (no articles from any source) short-circuits
+    // the workflow — even then it exits 0 so the GitHub Actions run isn't
+    // marked as failed for what is a transient upstream issue.
+    if (allRawArticles.length === 0) {
+      console.warn('[Daily Brief] ⚠️  No articles fetched from any source');
+      logStructured('WORKFLOW_COMPLETE_NO_ARTICLES', {
+        totalDurationMs: Date.now() - workflowStartTime
+      });
+      process.exit(0);
+    }
 
     // Normalize articles
     const normalizeStartTime = Date.now();

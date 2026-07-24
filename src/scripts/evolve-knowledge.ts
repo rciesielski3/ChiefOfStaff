@@ -64,16 +64,22 @@ async function main() {
       .split('\n')
       .filter(line => line.trim());
 
-    const inputFacts: KnowledgeFact[] = factLines.map((line, index) => {
+    const inputFacts: KnowledgeFact[] = [];
+    let skippedCount = 0;
+
+    for (let index = 0; index < factLines.length; index++) {
       try {
-        return JSON.parse(line) as KnowledgeFact;
+        const fact = JSON.parse(factLines[index]) as KnowledgeFact;
+        inputFacts.push(fact);
       } catch (error) {
-        console.warn(
-          `[Knowledge Evolution] Warning: Failed to parse fact at line ${index + 1}`
-        );
-        throw error;
+        skippedCount++;
+        console.warn(`[Knowledge Evolution] Warning: Failed to parse fact at line ${index + 1}, skipping`);
       }
-    });
+    }
+
+    if (skippedCount > 0) {
+      console.warn(`[Knowledge Evolution] ⚠️  Skipped ${skippedCount} facts due to parse errors`);
+    }
 
     const readDuration = Date.now() - readStartTime;
     console.log(`[Knowledge Evolution] Loaded ${inputFacts.length} facts`);
@@ -114,6 +120,10 @@ async function main() {
     const newCount = evolutionResults.filter(r => r.action === 'new').length;
 
     console.log('[Knowledge Evolution] Evolution results:');
+    console.log(`  - Input facts: ${inputFacts.length}`);
+    if (skippedCount > 0) {
+      console.log(`  - Skipped facts: ${skippedCount}`);
+    }
     console.log(`  - Deduplicated: ${dedupCount}`);
     console.log(`  - Versioned: ${versionCount}`);
     console.log(`  - Related: ${relateCount}`);
@@ -121,6 +131,7 @@ async function main() {
     console.log('');
     logStructured('EVOLUTION_BATCH_COMPLETE', {
       factsProcessed: evolutionResults.length,
+      factsSkipped: skippedCount,
       deduplicateCount: dedupCount,
       versionCount,
       relateCount,
@@ -143,7 +154,7 @@ async function main() {
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    fs.writeFileSync(outputPath, evolvedFacts.join('\n'));
+    fs.writeFileSync(outputPath, evolvedFacts.length > 0 ? evolvedFacts.join('\n') + '\n' : '');
 
     const writeDuration = Date.now() - writeStartTime;
     const outputFactCount = evolvedFacts.length;
@@ -160,21 +171,21 @@ async function main() {
     // Summary log
     const totalDuration = Date.now() - workflowStartTime;
     console.log('[Knowledge Evolution] ✅ Complete!');
-    console.log(
-      `✓ Evolved ${inputFacts.length} facts (Deduplicated: ${dedupCount}, Versioned: ${versionCount}, Related: ${relateCount}, New: ${newCount})`
-    );
+    const summaryMsg = skippedCount > 0
+      ? `✓ Evolved ${inputFacts.length} facts (Skipped: ${skippedCount}, Deduplicated: ${dedupCount}, Versioned: ${versionCount}, Related: ${relateCount}, New: ${newCount})`
+      : `✓ Evolved ${inputFacts.length} facts (Deduplicated: ${dedupCount}, Versioned: ${versionCount}, Related: ${relateCount}, New: ${newCount})`;
+    console.log(summaryMsg);
     console.log('');
     logStructured('EVOLUTION_COMPLETE_SUMMARY', {
       totalDurationMs: totalDuration,
       factsProcessed: inputFacts.length,
+      factsSkipped: skippedCount,
       factsOutput: outputFactCount,
       deduplicateCount: dedupCount,
       versionCount,
       relateCount,
       newCount,
-      evolutionRate: ((dedupCount + versionCount) / inputFacts.length).toFixed(
-        2
-      ),
+      evolutionRate: inputFacts.length > 0 ? ((dedupCount + versionCount) / inputFacts.length).toFixed(2) : '0.00',
     });
   } catch (error) {
     const totalDuration = Date.now() - workflowStartTime;

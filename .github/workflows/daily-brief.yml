@@ -91,13 +91,35 @@ jobs:
 
       - name: Run knowledge evolution
         if: always()
+        id: evolve
         run: |
+          echo "Starting knowledge evolution..."
           npx ts-node src/scripts/evolve-knowledge.ts
+          echo "✅ Knowledge evolution step completed"
         env:
           INPUT_FACTS: data/knowledge_facts.ndjson
           OUTPUT_FACTS: data/knowledge_facts.ndjson
           EMBEDDINGS_CACHE: data/fact_embeddings.ndjson
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        continue-on-error: true
+
+      - name: Validate evolved facts
+        if: always()
+        run: |
+          if [ ! -f "data/knowledge_facts.ndjson" ]; then
+            echo "⚠️  Facts file not found after evolution, but continuing"
+            exit 0
+          fi
+
+          FACT_COUNT=$(grep -c . data/knowledge_facts.ndjson || true)
+          FACT_COUNT=${FACT_COUNT:-0}
+
+          if [ "$FACT_COUNT" -eq 0 ]; then
+            echo "⚠️  No facts available after evolution, but continuing"
+            exit 0
+          fi
+
+          echo "✅ Facts validation: $FACT_COUNT facts ready for processing"
 
       - name: Generate insights
         if: always()
@@ -110,6 +132,7 @@ jobs:
           KNOWLEDGE_FACTS_PATH: data/knowledge_facts.ndjson
           INSIGHTS_PATH: data/insights.ndjson
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        continue-on-error: true
 
       - name: Check insights generated
         if: always()
@@ -153,6 +176,15 @@ jobs:
           gh pr merge --auto --squash "${{ steps.pr.outputs.pull-request-number }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Workflow summary
+        if: always()
+        run: |
+          echo "Daily Brief Workflow Summary:"
+          echo "- Extraction: ${{ steps.verify-extraction.outcome }}"
+          echo "- Evolution: ${{ steps.evolve.outcome }}"
+          echo "- Insights: ${{ steps.generate-insights.outcome }}"
+          echo "✅ Workflow completed (failures non-blocking)"
 
       - name: Log Article Count
         id: count

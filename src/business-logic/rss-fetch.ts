@@ -113,3 +113,90 @@ export async function fetchRSS(sourceUrl: string, sourceName: string): Promise<R
     throw error;
   }
 }
+
+/**
+ * Source descriptor used when fetching from multiple RSS feeds.
+ */
+export interface RSSSourceConfig {
+  url: string;
+  name: string;
+}
+
+/**
+ * Outcome of fetching a single RSS source within fetchAllSources.
+ */
+export interface SourceFetchResult {
+  source: string;
+  success: boolean;
+  count: number;
+  error?: string;
+}
+
+/**
+ * Aggregate result of fetching all configured RSS sources.
+ */
+export interface FetchAllSourcesResult {
+  articles: RawArticle[];
+  results: SourceFetchResult[];
+  successCount: number;
+  failureCount: number;
+}
+
+/**
+ * Fetch RSS articles from multiple sources, isolating per-source failures.
+ *
+ * Algorithm:
+ * 1. Fetch each source sequentially via fetchRSS().
+ * 2. On success, collect its articles and record a success result.
+ * 3. On failure (network error, non-2xx HTTP status, parse error), log a
+ *    warning with the failure reason (fetchRSS's error messages already
+ *    include the HTTP status code when the failure was a bad response, e.g.
+ *    "Status code 406") and record a failure result instead of throwing —
+ *    the remaining sources still get fetched.
+ * 4. Return the combined articles plus a per-source result breakdown so
+ *    callers can report a success/failure summary.
+ *
+ * A single bad source never aborts the fetch of the other sources.
+ *
+ * @param sources - RSS sources to fetch from
+ * @returns Combined articles, per-source results, and success/failure counts
+ */
+export async function fetchAllSources(
+  sources: RSSSourceConfig[]
+): Promise<FetchAllSourcesResult> {
+  const articles: RawArticle[] = [];
+  const results: SourceFetchResult[] = [];
+
+  for (const source of sources) {
+    try {
+      console.log(`[Daily Brief] Fetching from ${source.name}...`);
+      const sourceArticles = await fetchRSS(source.url, source.name);
+      articles.push(...sourceArticles);
+
+      results.push({
+        source: source.name,
+        success: true,
+        count: sourceArticles.length
+      });
+
+      console.log(`[Daily Brief] ✅ ${source.name}: ${sourceArticles.length} articles`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+
+      results.push({
+        source: source.name,
+        success: false,
+        count: 0,
+        error: message
+      });
+
+      console.warn(`[Daily Brief] ⚠️  Failed to fetch from ${source.name}: ${message}`);
+      // Continue to next source instead of throwing
+    }
+  }
+
+  const successCount = results.filter(r => r.success).length;
+  const failureCount = results.filter(r => !r.success).length;
+
+  return { articles, results, successCount, failureCount };
+}
