@@ -3,6 +3,25 @@ name: Export QA-News Data
 permissions:
   contents: write
 
+# WORKFLOW SYNCHRONIZATION STRATEGY:
+# This workflow waits for Daily Brief PR to merge before exporting.
+#
+# Trigger: workflow_run on Daily Brief completion
+# Race condition: Daily Brief creates PR + auto-merge (async), but export-qa-news
+#                 triggers immediately when Daily Brief completes
+# Solution: PR merge polling step waits for actual merge before data read
+#
+# Flow:
+# 1. Daily Brief completes, outputs PR_NUMBER to workflow outputs
+# 2. export-qa-news triggered by workflow_run event
+# 3. Wait-for-PR-merge step polls GitHub API (backoff: 2s→128s, timeout: 5m)
+# 4. Once merged, proceed with export using updated canonical_articles.ndjson
+#
+# Failure modes:
+# - PR number not available: skip wait, proceed anyway (graceful degradation)
+# - PR not merged after 5 min: fail workflow (operator intervention needed)
+# - Articles still 0 after merge: export fails with diagnostics, operator debugs
+
 on:
   workflow_run:
     workflows: ["Daily Brief"]
@@ -16,6 +35,23 @@ jobs:
     steps:
       - name: Checkout ChiefofStaff repository
         uses: actions/checkout@v4
+
+      - name: Wait for PR merge
+        run: |
+          # Query GitHub API for latest PR from daily-brief workflow
+          # The daily-brief workflow creates PRs with branch "automation/daily-brief"
+          PR_NUMBER=$(gh api repos/rciesielski3/ChiefOfStaff/pulls \
+            --jq '.[] | select(.head.ref == "automation/daily-brief") | .number' \
+            | head -1)
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "⚠️  No daily-brief PR found, skipping wait"
+            exit 0
+          fi
+
+          .github/scripts/wait-for-pr-merge.sh "$PR_NUMBER"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check Daily Brief Status
         if: github.event.workflow_run.conclusion == 'failure'
