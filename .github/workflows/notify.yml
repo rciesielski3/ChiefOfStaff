@@ -219,27 +219,14 @@ jobs:
           steps.context.outputs.status == 'success'
         run: |
           echo "Updating PREV_ARTICLE_COUNT to $CURRENT_COUNT"
-          # Attempt to persist the count as a repository variable so the next
-          # run's "Get Previous Article Count" step can read it back via
-          # vars.PREV_ARTICLE_COUNT.
-          #
-          # KNOWN LIMITATION: `gh variable set` requires a token with
-          # repository "Variables: write" permission. The default
-          # GITHUB_TOKEN does NOT carry this scope — GitHub Actions has no
-          # `permissions:` entry that grants it, it can only come from a
-          # fine-grained PAT or GitHub App installation token. Until such a
-          # token is added as a secret (e.g. REPO_VARS_TOKEN) and wired in
-          # below, this call will fail with 403 and the threshold-based
-          # comparison in the notification step will keep treating
-          # PREV_COUNT as 0 on every run (i.e. it always notifies, treating
-          # every run as a 100% change) instead of doing real comparisons.
-          # continue-on-error below keeps that documented no-op from failing
-          # the job.
+          # Persist the count as a repository variable for next run's comparison.
+          # Uses REPO_VARS_TOKEN (fine-grained PAT with Variables:write permission)
+          # instead of GITHUB_TOKEN which lacks that scope.
           gh variable set PREV_ARTICLE_COUNT --body "$CURRENT_COUNT" --repo "${{ github.repository }}"
         continue-on-error: true
         env:
           CURRENT_COUNT: ${{ steps.brief_count.outputs.current_count }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.REPO_VARS_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Get Extraction Status
         id: extraction_status
