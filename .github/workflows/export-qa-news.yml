@@ -32,6 +32,9 @@ on:
 jobs:
   export-qa-news:
     runs-on: ubuntu-latest
+    # Only run when triggered by workflow_run (Daily Brief completion) or manual dispatch
+    # Skip runs triggered by accidental push events
+    if: github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout ChiefofStaff repository
         uses: actions/checkout@v4
@@ -54,7 +57,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check Daily Brief Status
-        if: github.event.workflow_run.conclusion == 'failure'
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
         run: exit 1
 
       - name: Setup Node.js 20
