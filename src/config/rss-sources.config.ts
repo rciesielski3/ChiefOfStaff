@@ -1,20 +1,10 @@
 import { RSSSourceConfig } from '../business-logic/rss-fetch';
 
 /**
- * Extended RSS source configuration with enable/disable toggle
- */
-export interface RSSSourceConfigWithToggle extends RSSSourceConfig {
-  /** Whether this source is enabled. Defaults to true if not specified. */
-  enabled?: boolean;
-  /** Maximum articles to fetch from this source per run (optional, for future use) */
-  maxPerRun?: number;
-}
-
-/**
  * Central registry of all RSS sources used by the application.
  * All sources are enabled by default.
  */
-export const RSS_SOURCES: RSSSourceConfigWithToggle[] = [
+export const RSS_SOURCES: RSSSourceConfig[] = [
   {
     name: 'Ministry of Testing',
     url: 'https://www.ministryoftesting.com/contents/rss',
@@ -53,6 +43,6 @@ export const RSS_SOURCES: RSSSourceConfigWithToggle[] = [
  * Get all enabled RSS sources.
  * Returns sources where enabled !== false (undefined defaults to true).
  */
-export function getEnabledSources(): RSSSourceConfigWithToggle[] {
-  return RSS_SOURCES.filter(source => source.enabled !== false);
+export function getEnabledSources(): RSSSourceConfig[] {
+  return RSS_SOURCES.filter(source => (source as any).enabled !== false);
 }

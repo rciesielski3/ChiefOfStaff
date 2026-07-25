@@ -27,7 +27,7 @@ describe('RSS Sources Configuration', () => {
       const enabled = getEnabledSources();
       // All default sources should be returned if none are explicitly disabled
       expect(enabled.length).toBeGreaterThanOrEqual(8);
-      expect(enabled.every(s => s.enabled !== false)).toBe(true);
+      expect(enabled.every(s => (s as any).enabled !== false)).toBe(true);
     });
 
     it('should filter out disabled sources', () => {
