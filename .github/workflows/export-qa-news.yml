@@ -122,10 +122,10 @@ jobs:
 
           git commit -m "data: update qa-news daily/weekly/monthly exports
 
-Generated from latest RSS articles:
-- latest-news.json: Top 50 articles
-- weekly-highlights.json: All articles grouped by week
-- monthly-recap.json: Top 25 articles per month"
+          Generated from latest RSS articles:
+          - latest-news.json: Top 50 articles
+          - weekly-highlights.json: All articles grouped by week
+          - monthly-recap.json: Top 25 articles per month"
 
           echo "changed=true" >> $GITHUB_OUTPUT
 
