@@ -184,12 +184,16 @@ jobs:
           ELAPSED=0
           while [ $ELAPSED -lt $MAX_WAIT ]; do
             # Check if PR is mergeable
+            # Note: gh pr view returns "MERGEABLE", "CONFLICTING", or "UNKNOWN" (not true/false)
             MERGEABLE=$(gh pr view "$PR_NUMBER" --json mergeable --jq '.mergeable')
-            if [ "$MERGEABLE" = "true" ]; then
+            if [ "$MERGEABLE" = "MERGEABLE" ]; then
               echo "✅ PR #$PR_NUMBER is mergeable, proceeding with merge..."
-              gh pr merge --squash "$PR_NUMBER" && \
-                echo "✅ Successfully merged PR #$PR_NUMBER" || \
-                echo "⚠️  Merge may have failed, PR #$PR_NUMBER may need manual intervention"
+              if gh pr merge --squash "$PR_NUMBER"; then
+                echo "✅ Successfully merged PR #$PR_NUMBER"
+              else
+                echo "❌ Merge failed for PR #$PR_NUMBER"
+                exit 1
+              fi
               exit 0
             fi
             echo "⏳ PR not ready yet ($ELAPSED/$MAX_WAIT seconds)..."
