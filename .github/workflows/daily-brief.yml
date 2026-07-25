@@ -171,9 +171,38 @@ jobs:
            branch: "automation/daily-brief"
            delete-branch: true
 
-      - name: Enable auto-merge
+      - name: Wait for PR and merge
         run: |
-          gh pr merge --auto --squash "${{ steps.pr.outputs.pull-request-number }}"
+          PR_NUMBER="${{ steps.pr.outputs.pull-request-number }}"
+          if [ -z "$PR_NUMBER" ]; then
+            echo "⚠️  PR number not available, skipping merge"
+            exit 0
+          fi
+
+          echo "Waiting for PR #$PR_NUMBER to be ready..."
+          MAX_WAIT=60
+          ELAPSED=0
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            # Check if PR is mergeable
+            # Note: gh pr view returns "MERGEABLE", "CONFLICTING", or "UNKNOWN" (not true/false)
+            MERGEABLE=$(gh pr view "$PR_NUMBER" --json mergeable --jq '.mergeable')
+            if [ "$MERGEABLE" = "MERGEABLE" ]; then
+              echo "✅ PR #$PR_NUMBER is mergeable, proceeding with merge..."
+              if gh pr merge --squash "$PR_NUMBER"; then
+                echo "✅ Successfully merged PR #$PR_NUMBER"
+              else
+                echo "❌ Merge failed for PR #$PR_NUMBER"
+                exit 1
+              fi
+              exit 0
+            fi
+            echo "⏳ PR not ready yet ($ELAPSED/$MAX_WAIT seconds)..."
+            sleep 2
+            ELAPSED=$((ELAPSED + 2))
+          done
+
+          echo "⚠️  PR #$PR_NUMBER not ready after $MAX_WAIT seconds, skipping merge"
+          exit 0
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
