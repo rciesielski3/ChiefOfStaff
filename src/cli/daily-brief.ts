@@ -6,48 +6,11 @@ import { scoreArticles, DEFAULT_CONFIG } from '../business-logic/score-article';
 import { generateBrief } from '../business-logic/generate-brief';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { persistArticles } from '../business-logic/persist-articles';
+import { getEnabledSources } from '../config/rss-sources.config';
 import path from 'path';
 
-/**
- * RSS sources to fetch from
- * Maps to Config Tech workflow configuration
- */
-const RSS_SOURCES = [
-  // Tier 1: QA & Test Automation (PRIMARY FOCUS - 6 sources)
-  {
-    url: 'https://www.ministryoftesting.com/contents/rss',
-    name: 'Ministry of Testing'
-  },
-  {
-    url: 'https://testing.googleblog.com/feeds/posts/default',
-    name: 'Google Testing Blog'
-  },
-  {
-    url: 'https://feed.infoq.com/',
-    name: 'InfoQ'
-  },
-  {
-    url: 'https://martinfowler.com/feed.atom',
-    name: 'Martin Fowler'
-  },
-  {
-    url: 'https://cypress.io/blog/rss',
-    name: 'Cypress'
-  },
-  {
-    url: 'https://github.com/microsoft/playwright/releases.atom',
-    name: 'Playwright'
-  },
-  // Context & Updates (2 sources - lower priority)
-  {
-    url: 'https://openai.com/news/rss.xml',
-    name: 'OpenAI'
-  },
-  {
-    url: 'https://blog.cloudflare.com/rss/',
-    name: 'Cloudflare'
-  }
-];
+// Load RSS sources from config (single source of truth)
+const RSS_SOURCES = getEnabledSources();
 
 /**
  * Main CLI entry point for Daily Brief generation
