@@ -29,6 +29,28 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
+ * Wrap a promise with a timeout. If the promise doesn't resolve/reject within
+ * the specified time, reject with a timeout error.
+ *
+ * @param promise - The promise to wrap
+ * @param timeoutMs - Timeout duration in milliseconds
+ * @param timeoutMessage - Custom error message
+ * @returns The original promise result or timeout error
+ */
+function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  timeoutMessage: string = `Operation timed out after ${timeoutMs}ms`
+): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs)
+    )
+  ]);
+}
+
+/**
  * Run an async operation with retry + exponential backoff.
  *
  * Algorithm:
@@ -78,15 +100,21 @@ export async function fetchWithRetry<T>(
  * Algorithm:
  * 1. Initialize RSS parser
  * 2. Parse URL to get feed items, retrying on failure with exponential backoff
- * 3. Map feed items to RawArticle interface
- * 4. Handle missing fields with defaults
+ * 3. Apply 30-second timeout per feed to prevent hangs
+ * 4. Map feed items to RawArticle interface
+ * 5. Handle missing fields with defaults
  *
  * @param sourceUrl - URL of RSS feed
  * @param sourceName - Human-readable name of the source (e.g., "OpenAI Blog")
+ * @param timeoutMs - Timeout per feed in milliseconds (default: 30000ms = 30s)
  * @returns Array of normalized raw articles
- * @throws Error if feed cannot be parsed after all retry attempts
+ * @throws Error if feed cannot be parsed after all retry attempts or times out
  */
-export async function fetchRSS(sourceUrl: string, sourceName: string): Promise<RawArticle[]> {
+export async function fetchRSS(
+  sourceUrl: string,
+  sourceName: string,
+  timeoutMs: number = 30000
+): Promise<RawArticle[]> {
   const parser = new Parser({
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -99,7 +127,9 @@ export async function fetchRSS(sourceUrl: string, sourceName: string): Promise<R
   });
 
   try {
-    const feed = await fetchWithRetry(() => parser.parseURL(sourceUrl));
+    const feed = await fetchWithRetry(
+      () => withTimeout(parser.parseURL(sourceUrl), timeoutMs, `RSS feed timed out after ${timeoutMs}ms: ${sourceName}`)
+    );
 
     return (feed.items || []).map(item => ({
       link: item.link || '',
