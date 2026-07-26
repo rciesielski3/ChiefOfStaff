@@ -350,6 +350,64 @@ describe('fetchRSS', () => {
     expect(article.source).toBe(mockSourceName);
   });
 
+  it('should timeout if parser hangs beyond timeout duration', async () => {
+    const mockParserInstance = {
+      parseURL: jest.fn().mockImplementation(
+        () => new Promise(resolve => setTimeout(resolve, 5000))
+      )
+    };
+
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
+      () => mockParserInstance as any
+    );
+
+    await expect(fetchRSS(mockSourceUrl, mockSourceName, 100)).rejects.toThrow(
+      'RSS feed timed out after 100ms'
+    );
+  });
+
+  it('should retry on timeout and eventually succeed if feed recovers', async () => {
+    const mockParserInstance = {
+      parseURL: jest.fn()
+        .mockImplementationOnce(
+          () => new Promise(resolve => setTimeout(resolve, 5000))
+        )
+        .mockResolvedValueOnce({
+          items: [
+            {
+              link: 'https://example.com/article-1',
+              title: 'Recovered Article',
+              pubDate: '2026-07-14T10:00:00Z',
+              contentSnippet: 'Content after recovery'
+            }
+          ]
+        })
+    };
+
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
+      () => mockParserInstance as any
+    );
+
+    const result = await fetchRSS(mockSourceUrl, mockSourceName, 50);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].title).toBe('Recovered Article');
+  });
+
+  it('should respect custom timeout value', async () => {
+    const mockParserInstance = {
+      parseURL: jest.fn().mockImplementation(
+        () => new Promise(resolve => setTimeout(resolve, 200))
+      )
+    };
+
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
+      () => mockParserInstance as any
+    );
+
+    await expect(fetchRSS(mockSourceUrl, mockSourceName, 100)).rejects.toThrow();
+  });
+
   it('should succeed after transient failures via retry', async () => {
     const mockFeedItems = [
       {
