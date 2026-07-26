@@ -120,6 +120,7 @@ export async function fetchRSS(sourceUrl: string, sourceName: string): Promise<R
 export interface RSSSourceConfig {
   url: string;
   name: string;
+  enabled?: boolean;
 }
 
 /**
