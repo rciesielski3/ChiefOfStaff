@@ -112,7 +112,7 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "github-actions@github.com"
 
-          git add qa-news/data/latest-news.json qa-news/data/weekly-highlights.json qa-news/data/monthly-recap.json
+          git add -f qa-news/data/latest-news.json qa-news/data/weekly-highlights.json qa-news/data/monthly-recap.json
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
