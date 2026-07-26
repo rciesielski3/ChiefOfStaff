@@ -8,49 +8,12 @@ import { exportWeeklyHighlights } from '../business-logic/export-weekly-highligh
 import { exportMonthlyRecap } from '../business-logic/export-monthly-recap';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { AtomicFileWriter } from '../business-logic/atomic-file-writer';
+import { getEnabledSources } from '../config/rss-sources.config';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 
-/**
- * RSS sources for QA News rebuild
- * Same 8 sources as daily-brief workflow
- */
-const RSS_SOURCES = [
-  // Tier 1: QA & Test Automation (PRIMARY FOCUS - 6 sources)
-  {
-    url: 'https://www.ministryoftesting.com/contents/rss',
-    name: 'Ministry of Testing'
-  },
-  {
-    url: 'https://testing.googleblog.com/feeds/posts/default',
-    name: 'Google Testing Blog'
-  },
-  {
-    url: 'https://feed.infoq.com/',
-    name: 'InfoQ'
-  },
-  {
-    url: 'https://martinfowler.com/feed.atom',
-    name: 'Martin Fowler'
-  },
-  {
-    url: 'https://cypress.io/blog/rss',
-    name: 'Cypress'
-  },
-  {
-    url: 'https://github.com/microsoft/playwright/releases.atom',
-    name: 'Playwright'
-  },
-  // Context & Updates (2 sources - lower priority)
-  {
-    url: 'https://openai.com/news/rss.xml',
-    name: 'OpenAI'
-  },
-  {
-    url: 'https://blog.cloudflare.com/rss/',
-    name: 'Cloudflare'
-  }
-];
+// Load RSS sources from config (single source of truth)
+const RSS_SOURCES = getEnabledSources();
 
 /**
  * CLI: Rebuild QA News data by re-fetching RSS feeds and regenerating exports
