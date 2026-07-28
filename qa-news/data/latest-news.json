@@ -1,7 +1,22 @@
 {
   "date": "2026-07-28",
-  "updatedAt": "2026-07-28T09:39:54.693Z",
+  "updatedAt": "2026-07-28T10:26:27.866Z",
   "items": [
+    {
+      "id": "ministry-of-testing-aHR0cHM6Ly93",
+      "title": "Build an advanced MoT profile",
+      "summary": "",
+      "url": "https://www.ministryoftesting.com/moments/build-an-advanced-mot-profile",
+      "source": "Ministry of Testing",
+      "category": "test-automation",
+      "publishedAt": "2026-07-28T09:44:42.000Z",
+      "tags": [],
+      "score": 54,
+      "priority": "MEDIUM",
+      "reason": [
+        "recent"
+      ]
+    },
     {
       "id": "ministry-of-testing-aHR0cHM6Ly93",
       "title": "Continuous Remembering",
@@ -11,7 +26,7 @@
       "category": "test-automation",
       "publishedAt": "2026-07-27T20:46:02.000Z",
       "tags": [],
-      "score": 53,
+      "score": 52,
       "priority": "MEDIUM",
       "reason": [
         "recent"
@@ -26,7 +41,7 @@
       "category": "test-automation",
       "publishedAt": "2026-07-27T19:14:02.000Z",
       "tags": [],
-      "score": 53,
+      "score": 52,
       "priority": "MEDIUM",
       "reason": [
         "recent"
@@ -103,7 +118,7 @@
       "category": "test-automation",
       "publishedAt": "2026-07-27T14:29:54.000Z",
       "tags": [],
-      "score": 52,
+      "score": 51,
       "priority": "MEDIUM",
       "reason": [
         "recent"
@@ -137,11 +152,9 @@
       "category": "test-automation",
       "publishedAt": "2026-07-27T07:59:00.000Z",
       "tags": [],
-      "score": 51,
+      "score": 50,
       "priority": "MEDIUM",
-      "reason": [
-        "recent"
-      ]
+      "reason": []
     },
     {
       "id": "ministry-of-testing-aHR0cHM6Ly93",
@@ -745,23 +758,6 @@
       "priority": "HIGH",
       "reason": [
         "testing"
-      ]
-    },
-    {
-      "id": "openai-aHR0cHM6Ly9v",
-      "title": "Building AI infrastructure with the Effingham County community",
-      "summary": "OpenAI announces Project Camellia in Effingham County, Georgia, with commitments to responsible energy, community investment, jobs, and access to Codex.",
-      "url": "https://openai.com/index/building-ai-infrastructure-with-the-effingham-county-community",
-      "source": "OpenAI",
-      "category": "test-automation",
-      "publishedAt": "2026-07-22T13:00:00.000Z",
-      "tags": [
-        "ai"
-      ],
-      "score": 65,
-      "priority": "MEDIUM",
-      "reason": [
-        "openai"
       ]
     }
   ]
