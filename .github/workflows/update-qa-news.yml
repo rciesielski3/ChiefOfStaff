@@ -88,10 +88,12 @@ jobs:
 
           echo "Created PR #$PR_NUMBER"
 
-          # Approve PR using automation PAT
-          gh pr review "$PR_NUMBER" --approve || echo "PR approval failed, attempting merge anyway"
-
-          # Auto-merge using squash strategy
-          gh pr merge "$PR_NUMBER" --squash --auto || echo "PR merge queued or manual approval needed"
+          # Auto-merge using squash strategy (approval must be done manually)
+          if gh pr merge "$PR_NUMBER" --squash --auto; then
+            echo "✅ Auto-merge queued (waiting for approval and status checks)"
+          else
+            echo "❌ Auto-merge failed"
+            exit 1
+          fi
         env:
           GH_TOKEN: ${{ secrets.AUTOMATION_PAT }}
