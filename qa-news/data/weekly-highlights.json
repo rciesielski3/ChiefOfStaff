@@ -6,6 +6,21 @@
       "items": [
         {
           "id": "ministry-of-testing-aHR0cHM6Ly93",
+          "title": "Build an advanced MoT profile",
+          "summary": "",
+          "url": "https://www.ministryoftesting.com/moments/build-an-advanced-mot-profile",
+          "source": "Ministry of Testing",
+          "category": "test-automation",
+          "publishedAt": "2026-07-28T09:44:42.000Z",
+          "tags": [],
+          "score": 54,
+          "priority": "MEDIUM",
+          "reason": [
+            "recent"
+          ]
+        },
+        {
+          "id": "ministry-of-testing-aHR0cHM6Ly93",
           "title": "Continuous Remembering",
           "summary": "",
           "url": "https://www.ministryoftesting.com/moments/continuous-remembering",
@@ -13,7 +28,7 @@
           "category": "test-automation",
           "publishedAt": "2026-07-27T20:46:02.000Z",
           "tags": [],
-          "score": 53,
+          "score": 52,
           "priority": "MEDIUM",
           "reason": [
             "recent"
@@ -28,7 +43,7 @@
           "category": "test-automation",
           "publishedAt": "2026-07-27T19:14:02.000Z",
           "tags": [],
-          "score": 53,
+          "score": 52,
           "priority": "MEDIUM",
           "reason": [
             "recent"
@@ -105,7 +120,7 @@
           "category": "test-automation",
           "publishedAt": "2026-07-27T14:29:54.000Z",
           "tags": [],
-          "score": 52,
+          "score": 51,
           "priority": "MEDIUM",
           "reason": [
             "recent"
@@ -139,11 +154,9 @@
           "category": "test-automation",
           "publishedAt": "2026-07-27T07:59:00.000Z",
           "tags": [],
-          "score": 51,
+          "score": 50,
           "priority": "MEDIUM",
-          "reason": [
-            "recent"
-          ]
+          "reason": []
         },
         {
           "id": "ministry-of-testing-aHR0cHM6Ly93",
