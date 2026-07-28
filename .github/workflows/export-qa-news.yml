@@ -2,6 +2,7 @@ name: Export QA-News Data
 
 permissions:
   contents: write
+  pull-requests: write
 
 # WORKFLOW SYNCHRONIZATION STRATEGY:
 # This workflow waits for Daily Brief PR to merge before exporting.
