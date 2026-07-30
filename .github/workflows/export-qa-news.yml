@@ -40,6 +40,13 @@ jobs:
       - name: Checkout ChiefofStaff repository
         uses: actions/checkout@v4
 
+      - name: Checkout QA-News repository (separate)
+        uses: actions/checkout@v4
+        with:
+          repository: rciesielski3/qa-news
+          token: ${{ secrets.QA_NEWS_TOKEN }}
+          path: qa-news
+
       - name: Wait for PR merge
         run: |
           # Query GitHub API for latest PR from daily-brief workflow
@@ -110,10 +117,11 @@ jobs:
       - name: Commit data updates
         id: commit
         run: |
+          cd qa-news
           git config user.name "GitHub Actions"
           git config user.email "github-actions@github.com"
 
-          git add -f qa-news/data/latest-news.json qa-news/data/weekly-highlights.json qa-news/data/monthly-recap.json
+          git add data/latest-news.json data/weekly-highlights.json data/monthly-recap.json
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
@@ -133,6 +141,7 @@ jobs:
       - name: Create Pull Request
         if: steps.commit.outputs.changed == 'true'
         run: |
+          cd qa-news
           BRANCH_NAME="automation/export-qa-news-$(date +%s)"
           git checkout -b "$BRANCH_NAME"
           git push -u origin "$BRANCH_NAME"
