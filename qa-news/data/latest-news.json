@@ -1,7 +1,289 @@
 {
-  "date": "2026-07-29",
-  "updatedAt": "2026-07-29T05:22:47.382Z",
+  "date": "2026-07-30",
+  "updatedAt": "2026-07-30T08:55:39.093Z",
   "items": [
+    {
+      "id": "ministry-of-testing-aHR0cHM6Ly93",
+      "title": "Are boundaries the answer to AI in communities?",
+      "summary": "",
+      "url": "https://www.ministryoftesting.com/media-sessions/are-boundaries-the-answer-to-ai-in-communities",
+      "source": "Ministry of Testing",
+      "category": "test-automation",
+      "publishedAt": "2026-07-29T17:02:00.000Z",
+      "tags": [
+        "ai"
+      ],
+      "score": 52,
+      "priority": "MEDIUM",
+      "reason": [
+        "recent"
+      ]
+    },
+    {
+      "id": "ministry-of-testing-aHR0cHM6Ly93",
+      "title": "Inside the MoTaverse's slow pivot from testing community to tech community",
+      "summary": "",
+      "url": "https://www.ministryoftesting.com/media-sessions/inside-the-motaverse-s-slow-pivot-from-testing-community-to-tech-community",
+      "source": "Ministry of Testing",
+      "category": "test-automation",
+      "publishedAt": "2026-07-29T15:15:40.000Z",
+      "tags": [
+        "testing"
+      ],
+      "score": 77,
+      "priority": "HIGH",
+      "reason": [
+        "testing",
+        "recent"
+      ]
+    },
+    {
+      "id": "openai-aHR0cHM6Ly9v",
+      "title": "How enabling two settings tripled our scores on the ARC-AGI-3 benchmark",
+      "summary": "How two API settings improved GPT-5.6 performance on ARC-AGI-3, boosting scores and efficiency by retaining reasoning and enabling compaction.",
+      "url": "https://openai.com/index/how-two-settings-tripled-our-arc-agi-3-scores",
+      "source": "OpenAI",
+      "category": "test-automation",
+      "publishedAt": "2026-07-29T15:00:00.000Z",
+      "tags": [
+        "api",
+        "performance",
+        "ai"
+      ],
+      "score": 67,
+      "priority": "MEDIUM",
+      "reason": [
+        "openai",
+        "recent"
+      ]
+    },
+    {
+      "id": "ministry-of-testing-aHR0cHM6Ly93",
+      "title": "Quality Engineer III",
+      "summary": "",
+      "url": "https://www.ministryoftesting.com/jobs/quality-engineer-iii",
+      "source": "Ministry of Testing",
+      "category": "test-automation",
+      "publishedAt": "2026-07-29T13:21:04.000Z",
+      "tags": [],
+      "score": 51,
+      "priority": "MEDIUM",
+      "reason": [
+        "recent"
+      ]
+    },
+    {
+      "id": "cloudflare-aHR0cHM6Ly9i",
+      "title": "Post-quantum authentication to origins is now supported",
+      "summary": "Cloudflare now supports post-quantum (PQ) authentication when connecting to customer origin servers via Authenticated Origin Pulls and Custom Origin Trust Store. This is the first step towards providi...",
+      "url": "https://blog.cloudflare.com/post-quantum-authentication-to-origins/",
+      "source": "Cloudflare",
+      "category": "test-automation",
+      "publishedAt": "2026-07-29T13:00:00.000Z",
+      "tags": [],
+      "score": 61,
+      "priority": "MEDIUM",
+      "reason": [
+        "cloudflare",
+        "recent"
+      ]
+    },
+    {
+      "id": "ministry-of-testing-aHR0cHM6Ly93",
+      "title": "Why we should all be embarrassed by the WebAIM Million Report blog",
+      "summary": "",
+      "url": "https://www.ministryoftesting.com/moments/why-we-should-all-be-embarrassed-by-the-webaim-million-report-blog",
+      "source": "Ministry of Testing",
+      "category": "test-automation",
+      "publishedAt": "2026-07-29T12:43:39.000Z",
+      "tags": [
+        "ai"
+      ],
+      "score": 51,
+      "priority": "MEDIUM",
+      "reason": [
+        "recent"
+      ]
+    },
+    {
+      "id": "ministry-of-testing-aHR0cHM6Ly93",
+      "title": "Dr Default persona",
+      "summary": "",
+      "url": "https://www.ministryoftesting.com/moments/dr-default-persona",
+      "source": "Ministry of Testing",
+      "category": "test-automation",
+      "publishedAt": "2026-07-29T12:20:57.000Z",
+      "tags": [],
+      "score": 51,
+      "priority": "MEDIUM",
+      "reason": [
+        "recent"
+      ]
+    },
+    {
+      "id": "ministry-of-testing-aHR0cHM6Ly93",
+      "title": "Re-enacting the chef's kiss and the good problem of MoT Profiles",
+      "summary": "",
+      "url": "https://www.ministryoftesting.com/moments/re-enacting-the-chef-s-kiss-and-the-good-problem-of-mot-profiles",
+      "source": "Ministry of Testing",
+      "category": "test-automation",
+      "publishedAt": "2026-07-29T10:24:26.000Z",
+      "tags": [],
+      "score": 51,
+      "priority": "MEDIUM",
+      "reason": [
+        "recent"
+      ]
+    },
+    {
+      "id": "ministry-of-testing-aHR0cHM6Ly93",
+      "title": "All On-Demand Courses",
+      "summary": "",
+      "url": "https://www.ministryoftesting.com/moments/all-on-demand-courses",
+      "source": "Ministry of Testing",
+      "category": "test-automation",
+      "publishedAt": "2026-07-29T10:20:16.000Z",
+      "tags": [],
+      "score": 51,
+      "priority": "MEDIUM",
+      "reason": [
+        "recent"
+      ]
+    },
+    {
+      "id": "openai-aHR0cHM6Ly9v",
+      "title": "Accelerating scientific discovery with ChatGPT for Academic Researchers",
+      "summary": "OpenAI is giving 100,000 academic researchers free access to ChatGPT's most advanced AI models to accelerate scientific research, collaboration, and discovery.",
+      "url": "https://openai.com/index/chatgpt-for-academic-researchers",
+      "source": "OpenAI",
+      "category": "test-automation",
+      "publishedAt": "2026-07-29T10:00:00.000Z",
+      "tags": [
+        "ai"
+      ],
+      "score": 66,
+      "priority": "MEDIUM",
+      "reason": [
+        "openai",
+        "recent"
+      ]
+    },
+    {
+      "id": "ministry-of-testing-aHR0cHM6Ly93",
+      "title": "Bring your favourite Dev or EM to MoTaCon, on us 😉",
+      "summary": "",
+      "url": "https://www.ministryoftesting.com/news/bring-your-favourite-dev-or-em-to-motacon-on-us",
+      "source": "Ministry of Testing",
+      "category": "test-automation",
+      "publishedAt": "2026-07-29T09:31:00.000Z",
+      "tags": [],
+      "score": 51,
+      "priority": "MEDIUM",
+      "reason": [
+        "recent"
+      ]
+    },
+    {
+      "id": "openai-aHR0cHM6Ly9v",
+      "title": "How GPT-5.6 fuses frontier intelligence with frontier efficiency",
+      "summary": "GPT-5.6 improves AI efficiency across models, inference, and agentic workflows, helping deliver more useful intelligence per dollar.",
+      "url": "https://openai.com/index/gpt-5-6-frontier-intelligence-efficiency",
+      "source": "OpenAI",
+      "category": "test-automation",
+      "publishedAt": "2026-07-29T00:00:00.000Z",
+      "tags": [
+        "ai"
+      ],
+      "score": 85,
+      "priority": "HIGH",
+      "reason": [
+        "agent",
+        "openai"
+      ]
+    },
+    {
+      "id": "openai-aHR0cHM6Ly9v",
+      "title": "Scientific computing in the age of agentic AI",
+      "summary": "A new field report shows how scientists use AI coding agents to modernize scientific computing, accelerating software development and discovery in genomics and beyond.",
+      "url": "https://openai.com/index/scientific-computing-agentic-ai",
+      "source": "OpenAI",
+      "category": "test-automation",
+      "publishedAt": "2026-07-28T17:00:00.000Z",
+      "tags": [
+        "ai"
+      ],
+      "score": 85,
+      "priority": "HIGH",
+      "reason": [
+        "agent",
+        "openai"
+      ]
+    },
+    {
+      "id": "martin-fowler-aHR0cHM6Ly9t",
+      "title": "The Orchestrator's Tax",
+      "summary": "Subagents get justified by time saved and parallel execution, but Rahul Garg explains that's not what matters most. Every token in the orchestrator's context is competing for its attention, and the re...",
+      "url": "https://martinfowler.com/articles/orchestrator-tax.html",
+      "source": "Martin Fowler",
+      "category": "test-automation",
+      "publishedAt": "2026-07-28T13:10:00.000Z",
+      "tags": [
+        "ai"
+      ],
+      "score": 70,
+      "priority": "HIGH",
+      "reason": [
+        "agent"
+      ]
+    },
+    {
+      "id": "cloudflare-aHR0cHM6Ly9i",
+      "title": "Natural disasters and government interference: examining Q2 2026’s major Internet disruption events",
+      "summary": "Cloudflare Radar tracked Internet disruptions driven by natural disasters, government-mandated shutdowns, and DNSSEC key rollovers over the last quarter. This post analyzes traffic telemetry to explai...",
+      "url": "https://blog.cloudflare.com/q2-2026-internet-disruption-summary/",
+      "source": "Cloudflare",
+      "category": "test-automation",
+      "publishedAt": "2026-07-28T13:00:00.000Z",
+      "tags": [
+        "ai"
+      ],
+      "score": 60,
+      "priority": "MEDIUM",
+      "reason": [
+        "cloudflare"
+      ]
+    },
+    {
+      "id": "martin-fowler-aHR0cHM6Ly9t",
+      "title": "Why I’m Writing Rachel’s Ramblings",
+      "summary": "TL;DRI have ideas. I haven’t been writing them. That’s about to change. I promise… myself. I’ve been thinking a lot about talent. Actually, I’ve been thinking a lot about thinking. And writing. Or mor...",
+      "url": "https://martinfowler.com/rachels-ramblings/intro.html",
+      "source": "Martin Fowler",
+      "category": "test-automation",
+      "publishedAt": "2026-07-28T12:32:00.000Z",
+      "tags": [
+        "rest",
+        "ai"
+      ],
+      "score": 50,
+      "priority": "MEDIUM",
+      "reason": []
+    },
+    {
+      "id": "ministry-of-testing-aHR0cHM6Ly93",
+      "title": "Bug lists tell you what. The shape can tell you why. ",
+      "summary": "",
+      "url": "https://www.ministryoftesting.com/moments/bug-lists-tell-you-what-the-shape-can-tell-you-why",
+      "source": "Ministry of Testing",
+      "category": "test-automation",
+      "publishedAt": "2026-07-28T10:51:34.000Z",
+      "tags": [
+        "bug"
+      ],
+      "score": 50,
+      "priority": "MEDIUM",
+      "reason": []
+    },
     {
       "id": "ministry-of-testing-aHR0cHM6Ly93",
       "title": "Build an advanced MoT profile",
@@ -11,11 +293,9 @@
       "category": "test-automation",
       "publishedAt": "2026-07-28T09:44:42.000Z",
       "tags": [],
-      "score": 54,
+      "score": 50,
       "priority": "MEDIUM",
-      "reason": [
-        "recent"
-      ]
+      "reason": []
     },
     {
       "id": "ministry-of-testing-aHR0cHM6Ly93",
@@ -26,11 +306,9 @@
       "category": "test-automation",
       "publishedAt": "2026-07-27T20:46:02.000Z",
       "tags": [],
-      "score": 52,
+      "score": 50,
       "priority": "MEDIUM",
-      "reason": [
-        "recent"
-      ]
+      "reason": []
     },
     {
       "id": "ministry-of-testing-aHR0cHM6Ly93",
@@ -41,11 +319,9 @@
       "category": "test-automation",
       "publishedAt": "2026-07-27T19:14:02.000Z",
       "tags": [],
-      "score": 52,
+      "score": 50,
       "priority": "MEDIUM",
-      "reason": [
-        "recent"
-      ]
+      "reason": []
     },
     {
       "id": "ministry-of-testing-aHR0cHM6Ly93",
@@ -56,11 +332,9 @@
       "category": "test-automation",
       "publishedAt": "2026-07-27T17:56:32.000Z",
       "tags": [],
-      "score": 52,
+      "score": 50,
       "priority": "MEDIUM",
-      "reason": [
-        "recent"
-      ]
+      "reason": []
     },
     {
       "id": "ministry-of-testing-aHR0cHM6Ly93",
@@ -71,11 +345,9 @@
       "category": "test-automation",
       "publishedAt": "2026-07-27T17:52:14.000Z",
       "tags": [],
-      "score": 52,
+      "score": 50,
       "priority": "MEDIUM",
-      "reason": [
-        "recent"
-      ]
+      "reason": []
     },
     {
       "id": "ministry-of-testing-aHR0cHM6Ly93",
@@ -86,11 +358,10 @@
       "category": "test-automation",
       "publishedAt": "2026-07-27T17:45:30.000Z",
       "tags": [],
-      "score": 72,
+      "score": 70,
       "priority": "HIGH",
       "reason": [
-        "qa",
-        "recent"
+        "qa"
       ]
     },
     {
@@ -102,11 +373,10 @@
       "category": "test-automation",
       "publishedAt": "2026-07-27T17:42:50.000Z",
       "tags": [],
-      "score": 72,
+      "score": 70,
       "priority": "HIGH",
       "reason": [
-        "qa",
-        "recent"
+        "qa"
       ]
     },
     {
@@ -118,11 +388,9 @@
       "category": "test-automation",
       "publishedAt": "2026-07-27T14:29:54.000Z",
       "tags": [],
-      "score": 51,
+      "score": 50,
       "priority": "MEDIUM",
-      "reason": [
-        "recent"
-      ]
+      "reason": []
     },
     {
       "id": "cloudflare-aHR0cHM6Ly9i",
@@ -135,12 +403,11 @@
       "tags": [
         "testing"
       ],
-      "score": 86,
+      "score": 85,
       "priority": "HIGH",
       "reason": [
         "testing",
-        "cloudflare",
-        "recent"
+        "cloudflare"
       ]
     },
     {
@@ -506,259 +773,6 @@
       "score": 50,
       "priority": "MEDIUM",
       "reason": []
-    },
-    {
-      "id": "ministry-of-testing-aHR0cHM6Ly93",
-      "title": "The meaning of TestBash ",
-      "summary": "",
-      "url": "https://www.ministryoftesting.com/moments/the-meaning-of-testbash",
-      "source": "Ministry of Testing",
-      "category": "test-automation",
-      "publishedAt": "2026-07-23T11:43:40.000Z",
-      "tags": [],
-      "score": 50,
-      "priority": "MEDIUM",
-      "reason": []
-    },
-    {
-      "id": "ministry-of-testing-aHR0cHM6Ly93",
-      "title": "I'll test in live: Testing song ",
-      "summary": "",
-      "url": "https://www.ministryoftesting.com/moments/i-ll-test-in-live-testing-song",
-      "source": "Ministry of Testing",
-      "category": "test-automation",
-      "publishedAt": "2026-07-23T11:36:50.000Z",
-      "tags": [
-        "testing"
-      ],
-      "score": 75,
-      "priority": "HIGH",
-      "reason": [
-        "testing"
-      ]
-    },
-    {
-      "id": "ministry-of-testing-aHR0cHM6Ly93",
-      "title": "The year of 2020",
-      "summary": "",
-      "url": "https://www.ministryoftesting.com/moments/the-year-of-2020",
-      "source": "Ministry of Testing",
-      "category": "test-automation",
-      "publishedAt": "2026-07-23T11:22:37.000Z",
-      "tags": [],
-      "score": 50,
-      "priority": "MEDIUM",
-      "reason": []
-    },
-    {
-      "id": "ministry-of-testing-aHR0cHM6Ly93",
-      "title": "Who tests the tests? ",
-      "summary": "",
-      "url": "https://www.ministryoftesting.com/moments/who-tests-the-tests",
-      "source": "Ministry of Testing",
-      "category": "test-automation",
-      "publishedAt": "2026-07-23T11:15:07.000Z",
-      "tags": [],
-      "score": 50,
-      "priority": "MEDIUM",
-      "reason": []
-    },
-    {
-      "id": "ministry-of-testing-aHR0cHM6Ly93",
-      "title": "Doing shift-left right: Start thinking and learning early in the development cycle",
-      "summary": "",
-      "url": "https://www.ministryoftesting.com/insights/doing-shift-left-right-start-thinking-and-learning-early-in-the-development-cycle",
-      "source": "Ministry of Testing",
-      "category": "test-automation",
-      "publishedAt": "2026-07-23T00:11:00.000Z",
-      "tags": [],
-      "score": 50,
-      "priority": "MEDIUM",
-      "reason": []
-    },
-    {
-      "id": "openai-aHR0cHM6Ly9v",
-      "title": "Launching Health in ChatGPT ",
-      "summary": "Health in ChatGPT now lets eligible U.S. users securely connect medical records and Apple Health to get more personalized insights and better understand their health.",
-      "url": "https://openai.com/index/health-in-chatgpt",
-      "source": "OpenAI",
-      "category": "test-automation",
-      "publishedAt": "2026-07-23T00:00:00.000Z",
-      "tags": [],
-      "score": 65,
-      "priority": "MEDIUM",
-      "reason": [
-        "openai"
-      ]
-    },
-    {
-      "id": "ministry-of-testing-aHR0cHM6Ly93",
-      "title": "Version 2.0: The tester I became after a career break",
-      "summary": "",
-      "url": "https://www.ministryoftesting.com/media-sessions/version-2-0-the-tester-i-became-after-a-career-break",
-      "source": "Ministry of Testing",
-      "category": "test-automation",
-      "publishedAt": "2026-07-22T19:02:46.000Z",
-      "tags": [],
-      "score": 50,
-      "priority": "MEDIUM",
-      "reason": []
-    },
-    {
-      "id": "ministry-of-testing-aHR0cHM6Ly93",
-      "title": "Small rooms, lifetime members, and community Claude skills",
-      "summary": "",
-      "url": "https://www.ministryoftesting.com/media-sessions/small-rooms-lifetime-members-and-community-claude-skills",
-      "source": "Ministry of Testing",
-      "category": "test-automation",
-      "publishedAt": "2026-07-22T16:43:28.000Z",
-      "tags": [],
-      "score": 50,
-      "priority": "MEDIUM",
-      "reason": []
-    },
-    {
-      "id": "ministry-of-testing-aHR0cHM6Ly93",
-      "title": "Disabled by their environment - Test.Bash() Manchester 2019",
-      "summary": "",
-      "url": "https://www.ministryoftesting.com/moments/disabled-by-their-environment-test-bash-manchester-2019",
-      "source": "Ministry of Testing",
-      "category": "test-automation",
-      "publishedAt": "2026-07-22T16:08:16.000Z",
-      "tags": [],
-      "score": 50,
-      "priority": "MEDIUM",
-      "reason": []
-    },
-    {
-      "id": "ministry-of-testing-aHR0cHM6Ly93",
-      "title": "Testing is for you - TestBash Manchester 2019",
-      "summary": "",
-      "url": "https://www.ministryoftesting.com/moments/testing-is-for-you-testbash-manchester-2019",
-      "source": "Ministry of Testing",
-      "category": "test-automation",
-      "publishedAt": "2026-07-22T15:53:05.000Z",
-      "tags": [
-        "testing"
-      ],
-      "score": 75,
-      "priority": "HIGH",
-      "reason": [
-        "testing"
-      ]
-    },
-    {
-      "id": "ministry-of-testing-aHR0cHM6Ly93",
-      "title": "We Will Test You (music by Queen; lyrics by Ady Stokes)  ",
-      "summary": "",
-      "url": "https://www.ministryoftesting.com/moments/we-will-test-you-music-by-queen-lyrics-by-ady-stokes",
-      "source": "Ministry of Testing",
-      "category": "test-automation",
-      "publishedAt": "2026-07-22T15:37:32.000Z",
-      "tags": [],
-      "score": 50,
-      "priority": "MEDIUM",
-      "reason": []
-    },
-    {
-      "id": "ministry-of-testing-aHR0cHM6Ly93",
-      "title": "Does it work? A testing poem",
-      "summary": "",
-      "url": "https://www.ministryoftesting.com/moments/does-it-work-a-testing-poem",
-      "source": "Ministry of Testing",
-      "category": "test-automation",
-      "publishedAt": "2026-07-22T15:23:57.000Z",
-      "tags": [
-        "testing"
-      ],
-      "score": 75,
-      "priority": "HIGH",
-      "reason": [
-        "testing"
-      ]
-    },
-    {
-      "id": "ministry-of-testing-aHR0cHM6Ly93",
-      "title": "I see no bugs / The Fresh Prince of testing",
-      "summary": "",
-      "url": "https://www.ministryoftesting.com/moments/i-see-no-bugs-the-fresh-prince-of-testing",
-      "source": "Ministry of Testing",
-      "category": "test-automation",
-      "publishedAt": "2026-07-22T15:07:29.000Z",
-      "tags": [
-        "testing",
-        "bug"
-      ],
-      "score": 75,
-      "priority": "HIGH",
-      "reason": [
-        "testing"
-      ]
-    },
-    {
-      "id": "ministry-of-testing-aHR0cHM6Ly93",
-      "title": "Ady's poetry and songs: If ",
-      "summary": "",
-      "url": "https://www.ministryoftesting.com/moments/ady-s-poetry-and-songs-if",
-      "source": "Ministry of Testing",
-      "category": "test-automation",
-      "publishedAt": "2026-07-22T14:43:43.000Z",
-      "tags": [],
-      "score": 50,
-      "priority": "MEDIUM",
-      "reason": []
-    },
-    {
-      "id": "ministry-of-testing-aHR0cHM6Ly93",
-      "title": "Categorising the Periodic Table of Testing to help scope projects using MoSCow ",
-      "summary": "",
-      "url": "https://www.ministryoftesting.com/moments/categorising-the-periodic-table-of-testing-to-help-scope-projects-using-moscow",
-      "source": "Ministry of Testing",
-      "category": "test-automation",
-      "publishedAt": "2026-07-22T14:23:51.000Z",
-      "tags": [
-        "testing"
-      ],
-      "score": 76,
-      "priority": "HIGH",
-      "reason": [
-        "testing",
-        "recent"
-      ]
-    },
-    {
-      "id": "ministry-of-testing-aHR0cHM6Ly93",
-      "title": "Quality Automation Engineer (Maternity Cover)",
-      "summary": "",
-      "url": "https://www.ministryoftesting.com/jobs/quality-automation-engineer-maternity-cover",
-      "source": "Ministry of Testing",
-      "category": "test-automation",
-      "publishedAt": "2026-07-22T14:12:59.000Z",
-      "tags": [
-        "automation"
-      ],
-      "score": 75,
-      "priority": "HIGH",
-      "reason": [
-        "automation"
-      ]
-    },
-    {
-      "id": "ministry-of-testing-aHR0cHM6Ly93",
-      "title": "Periodic Table of Testing: Using personas to understand relationships",
-      "summary": "",
-      "url": "https://www.ministryoftesting.com/moments/periodic-table-of-testing-using-personas-to-understand-relationships",
-      "source": "Ministry of Testing",
-      "category": "test-automation",
-      "publishedAt": "2026-07-22T14:05:04.000Z",
-      "tags": [
-        "testing"
-      ],
-      "score": 75,
-      "priority": "HIGH",
-      "reason": [
-        "testing"
-      ]
     }
   ]
 }
