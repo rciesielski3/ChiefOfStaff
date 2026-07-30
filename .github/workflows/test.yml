@@ -3,6 +3,7 @@ name: Test
 on:
   pull_request:
     paths:
+      - 'qa-news'
       - 'qa-news/**'
       - '.github/workflows/test.yml'
 

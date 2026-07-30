@@ -74,8 +74,6 @@ data/classifier-cache.json
 # Note: Do NOT ignore files in docs/ subdirectory — this pattern only applies to root
 .worktrees/
 
-# External repositories (managed separately)
-
 # Test coverage artifacts
 coverage/
 *.lcov
