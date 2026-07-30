@@ -1,0 +1,3 @@
+[submodule "qa-news"]
+	path = qa-news
+	url = https://github.com/rciesielski3/qa-news.git

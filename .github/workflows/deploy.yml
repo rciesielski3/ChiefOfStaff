@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - 'qa-news'
       - 'qa-news/**'
       - '.github/workflows/deploy.yml'
 
@@ -25,6 +26,8 @@ jobs:
         working-directory: qa-news
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
