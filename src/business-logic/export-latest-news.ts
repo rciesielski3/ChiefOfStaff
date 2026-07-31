@@ -54,3 +54,23 @@ export async function exportLatestNews(
     items: latest
   };
 }
+
+/**
+ * Transform export format to public format
+ *
+ * The export format uses 'items' key for internal consistency,
+ * but the qa-news app expects 'articles' key.
+ * This transformer performs a simple rename with no data loss.
+ *
+ * @param exportData - Export with items array
+ * @returns Public format with articles array (same Article objects)
+ */
+export function transformToPublicFormat(
+  exportData: LatestNewsExport
+): { date: string; updatedAt: string; articles: Article[] } {
+  return {
+    date: exportData.date,
+    updatedAt: exportData.updatedAt,
+    articles: exportData.items
+  };
+}
