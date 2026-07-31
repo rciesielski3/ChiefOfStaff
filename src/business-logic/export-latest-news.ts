@@ -1,5 +1,7 @@
 import { Article } from './normalize-article';
 import { ArticleStore } from './article-store';
+import { promises as fs } from 'fs';
+import { dirname } from 'path';
 
 /**
  * Export format for latest news articles
@@ -53,4 +55,48 @@ export async function exportLatestNews(
     updatedAt,
     items: latest
   };
+}
+
+/**
+ * Transform export format to public format
+ *
+ * The export format uses 'items' key for internal consistency,
+ * but the qa-news app expects 'articles' key.
+ * This transformer performs a simple rename with no data loss.
+ *
+ * @param exportData - Export with items array
+ * @returns Public format with articles array (same Article objects)
+ */
+export function transformToPublicFormat(
+  exportData: LatestNewsExport
+): { date: string; updatedAt: string; articles: Article[] } {
+  return {
+    date: exportData.date,
+    updatedAt: exportData.updatedAt,
+    articles: exportData.items
+  };
+}
+
+/**
+ * Write export to public directory for GitHub Pages deployment
+ *
+ * The qa-news app reads from public/latest.json for the deployed site.
+ * This function ensures fresh data reaches the deployed site via GitHub Pages.
+ *
+ * @param filePath - Destination path (e.g., 'qa-news/public/latest.json')
+ * @param exportData - Export data to write
+ */
+export async function writePublicLatestNews(
+  filePath: string,
+  exportData: LatestNewsExport
+): Promise<void> {
+  // Transform to public format
+  const publicData = transformToPublicFormat(exportData);
+
+  // Ensure directory exists
+  const dir = dirname(filePath);
+  await fs.mkdir(dir, { recursive: true });
+
+  // Write JSON
+  await fs.writeFile(filePath, JSON.stringify(publicData, null, 2));
 }

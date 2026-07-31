@@ -1,4 +1,5 @@
-import { exportLatestNews, LatestNewsExport } from '../../src/business-logic/export-latest-news';
+import { promises as fs } from 'fs';
+import { exportLatestNews, LatestNewsExport, transformToPublicFormat, writePublicLatestNews } from '../../src/business-logic/export-latest-news';
 import { ArticleStore } from '../../src/business-logic/article-store';
 import { Article } from '../../src/business-logic/normalize-article';
 
@@ -269,5 +270,99 @@ describe('exportLatestNews', () => {
 
     expect(result.items.length).toBe(0);
     // CLI will detect this and fail with process.exit(1) to prevent silent empty exports
+  });
+});
+
+describe('transformToPublicFormat', () => {
+  it('renames items to articles without data loss', () => {
+    const input = {
+      date: '2026-07-31',
+      updatedAt: '2026-07-31T10:00:00Z',
+      items: [
+        {
+          id: 'test-1',
+          title: 'Test Article',
+          summary: 'A test',
+          url: 'https://example.com',
+          source: 'Test Source',
+          category: 'news',
+          publishedAt: '2026-07-31T08:00:00Z',
+          tags: ['test']
+        }
+      ]
+    };
+
+    const output = transformToPublicFormat(input);
+
+    expect(output).toEqual({
+      date: '2026-07-31',
+      updatedAt: '2026-07-31T10:00:00Z',
+      articles: input.items
+    });
+
+    // Verify articles and items point to same objects
+    expect(output.articles).toBe(input.items);
+  });
+
+  it('handles empty items array', () => {
+    const input = {
+      date: '2026-07-31',
+      updatedAt: '2026-07-31T10:00:00Z',
+      items: []
+    };
+
+    const output = transformToPublicFormat(input);
+
+    expect(output.articles).toEqual([]);
+  });
+});
+
+describe('writePublicLatestNews', () => {
+  it('creates public directory and writes JSON file', async () => {
+    const tmpDir = '/tmp/qa-news-test-' + Date.now();
+    const filePath = tmpDir + '/public/latest.json';
+
+    const testData = {
+      date: '2026-07-31',
+      updatedAt: '2026-07-31T10:00:00Z',
+      items: [
+        {
+          id: 'test-1',
+          title: 'Test',
+          summary: '',
+          url: 'https://example.com',
+          source: 'Test',
+          category: 'news',
+          publishedAt: '2026-07-31T08:00:00Z',
+          tags: []
+        }
+      ]
+    };
+
+    await writePublicLatestNews(filePath, testData);
+
+    // Verify file was created
+    const content = await fs.readFile(filePath, 'utf-8');
+    const parsed = JSON.parse(content);
+
+    expect(parsed.articles).toHaveLength(1);
+    expect(parsed.articles[0].id).toBe('test-1');
+    expect(parsed.date).toBe('2026-07-31');
+  });
+
+  it('creates nested directories if needed', async () => {
+    const tmpDir = '/tmp/qa-news-test-' + Date.now();
+    const filePath = tmpDir + '/deep/nested/path/latest.json';
+
+    const testData = {
+      date: '2026-07-31',
+      updatedAt: '2026-07-31T10:00:00Z',
+      items: []
+    };
+
+    await writePublicLatestNews(filePath, testData);
+
+    const content = await fs.readFile(filePath, 'utf-8');
+    expect(JSON.parse(content).articles).toEqual([]);
   });
 });
