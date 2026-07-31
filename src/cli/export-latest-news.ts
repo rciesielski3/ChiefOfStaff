@@ -134,8 +134,7 @@ async function main(): Promise<void> {
     const writeDuration = Date.now() - writeStartTime;
     logStructured('WRITE_COMPLETE', {
       durationMs: writeDuration,
-      dataPath,
-      publicPath
+      dataPath
     });
 
     // Output JSON to stdout for workflow capture
