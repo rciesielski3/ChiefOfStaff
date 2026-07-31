@@ -3,7 +3,7 @@
 import { fetchRSS } from '../business-logic/rss-fetch';
 import { normalizeArticle } from '../business-logic/normalize-article';
 import { scoreArticles, DEFAULT_CONFIG } from '../business-logic/score-article';
-import { exportLatestNews, LatestNewsExport } from '../business-logic/export-latest-news';
+import { exportLatestNews, writePublicLatestNews, LatestNewsExport } from '../business-logic/export-latest-news';
 import { exportWeeklyHighlights } from '../business-logic/export-weekly-highlights';
 import { exportMonthlyRecap } from '../business-logic/export-monthly-recap';
 import { NdJsonArticleStore } from '../business-logic/article-store';
@@ -220,6 +220,9 @@ async function main(): Promise<void> {
         category: mapCategory(article.category)
       }))
     };
+
+    // Write public copy for deployed site
+    await writePublicLatestNews('qa-news/public/latest.json', mappedLatestExport);
 
     const dataDir = path.join(projectRoot, 'qa-news/data');
     const latestPath = path.join(dataDir, 'latest-news.json');
