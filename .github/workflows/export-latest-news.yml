@@ -85,7 +85,9 @@ jobs:
           git config user.name "PAIOS Bot"
           git config user.email "bot@paios.local"
 
-          git add public/latest.json
+          # public/latest.json is now managed by export-qa-news.yml (has merge-wait guard)
+          # This workflow only commits data files if any exist
+          git add data/ 2>/dev/null || true
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
@@ -93,7 +95,7 @@ jobs:
             exit 0
           fi
 
-          git commit -m "chore: update latest.json from knowledge layer"
+          git commit -m "chore: update data files from knowledge layer"
           echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
