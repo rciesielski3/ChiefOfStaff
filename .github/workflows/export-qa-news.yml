@@ -114,10 +114,6 @@ jobs:
           echo "  Weekly: $WEEKLY_COUNT articles"
           echo "  Monthly: $MONTHLY_COUNT articles"
 
-      - name: Sync to public directory
-        run: |
-          .github/scripts/sync-qa-news-public.sh
-
       - name: Commit data updates
         id: commit
         run: |
@@ -126,7 +122,7 @@ jobs:
           git config user.email "github-actions@github.com"
 
           git add data/latest-news.json data/weekly-highlights.json data/monthly-recap.json \
-                  public/latest.json public/weekly-highlights.json public/monthly-recap.json
+                  public/latest.json
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
