@@ -2,7 +2,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { exportLatestNews, LatestNewsExport } from '../business-logic/export-latest-news';
+import { exportLatestNews, LatestNewsExport, writePublicLatestNews } from '../business-logic/export-latest-news';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 
 /**
@@ -127,10 +127,15 @@ async function main(): Promise<void> {
     // Write to data directory
     await fs.writeFile(dataPath, jsonContent, 'utf-8');
 
+    // Also write to public directory for deployed site
+    const publicPath = path.join(projectRoot, 'qa-news/public/latest.json');
+    await writePublicLatestNews(publicPath, mappedData);
+
     const writeDuration = Date.now() - writeStartTime;
     logStructured('WRITE_COMPLETE', {
       durationMs: writeDuration,
-      dataPath
+      dataPath,
+      publicPath
     });
 
     // Output JSON to stdout for workflow capture
