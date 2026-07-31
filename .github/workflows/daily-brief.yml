@@ -191,10 +191,10 @@ jobs:
             MERGEABLE=$(gh pr view "$PR_NUMBER" --json mergeable --jq '.mergeable')
             if [ "$MERGEABLE" = "MERGEABLE" ]; then
               echo "✅ PR #$PR_NUMBER is mergeable, proceeding with merge..."
-              if gh pr merge --squash "$PR_NUMBER"; then
-                echo "✅ Successfully merged PR #$PR_NUMBER"
+              if gh pr merge --squash --auto "$PR_NUMBER"; then
+                echo "✅ Queued auto-merge for PR #$PR_NUMBER"
               else
-                echo "❌ Merge failed for PR #$PR_NUMBER"
+                echo "❌ Auto-merge queue failed for PR #$PR_NUMBER"
                 exit 1
               fi
               exit 0
