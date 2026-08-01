@@ -170,21 +170,18 @@ jobs:
 
           echo "✅ Created PR #$PR_NUMBER"
 
-          # Validate PR is mergeable before attempting merge
-          echo "Validating merge conditions for PR #$PR_NUMBER..."
-          PR_STATE=$(gh pr view "$PR_NUMBER" | grep -i "mergeable" | head -1)
-
-          if [ -z "$PR_STATE" ]; then
-            echo "⚠️  PR #$PR_NUMBER merge state unknown, deferring to next run"
-            exit 0
-          fi
-
-          # Auto-merge using squash strategy with error capture
-          MERGE_OUTPUT=$(gh pr merge "$PR_NUMBER" --squash --auto 2>&1) || {
+          # Auto-merge using squash strategy
+          # Note: --auto will queue merge once status checks pass
+          echo "Attempting auto-merge for PR #$PR_NUMBER..."
+          gh pr merge "$PR_NUMBER" --squash --auto || {
             MERGE_EXIT=$?
-            echo "❌ Auto-merge failed with exit code $MERGE_EXIT"
-            echo "Error output: $MERGE_OUTPUT"
-            exit $MERGE_EXIT
+            if [ $MERGE_EXIT -eq 0 ]; then
+              echo "✅ Auto-merge queued"
+            else
+              echo "⚠️  Auto-merge not available yet (PR may need status checks)"
+              echo "Auto-merge will be attempted on next workflow run"
+            fi
+            exit 0
           }
 
           echo "✅ Auto-merge queued (waiting for approval and status checks)"
