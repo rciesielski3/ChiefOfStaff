@@ -186,7 +186,7 @@ jobs:
 
           echo "✅ Auto-merge queued (waiting for approval and status checks)"
         env:
-          GH_TOKEN: ${{ secrets.AUTOMATION_PAT }}
+          GH_TOKEN: ${{ secrets.QA_NEWS_TOKEN }}
 
       - name: Verify sync completed
         run: |
