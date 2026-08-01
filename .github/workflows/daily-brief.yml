@@ -155,14 +155,6 @@ jobs:
       #     cat /tmp/insights-summary.txt
       #   continue-on-error: true
 
-      - name: Commit changes
-        run: |
-           git config user.name "PAIOS Bot"
-           git config user.email "bot@paios.local"
-           git add data/canonical_articles.ndjson
-           git add -f data/knowledge_facts.ndjson || true
-           git commit -m "chore: update articles and knowledge facts from daily brief" || exit 0
-
       - name: Create Pull Request
         id: pr
         uses: peter-evans/create-pull-request@v7
