@@ -20,6 +20,14 @@ export interface AuthConfig {
 }
 
 /**
+ * Rate limiting configuration for a source
+ */
+export interface RateLimitConfig {
+  requestsPerHour: number;
+  delayMs?: number;
+}
+
+/**
  * Source metadata
  */
 export interface SourceMetadata {
@@ -45,6 +53,7 @@ export interface SourceConfig {
   maxRetries: number;
   mapper: string;
   metadata?: SourceMetadata;
+  rateLimit?: RateLimitConfig | null;
 }
 
 /**
