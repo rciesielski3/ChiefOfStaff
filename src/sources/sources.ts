@@ -20,20 +20,31 @@ export interface AuthConfig {
 }
 
 /**
+ * Source metadata
+ */
+export interface SourceMetadata {
+  frequency: string;
+  quality_rating: number;
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
+/**
  * Source configuration
  */
 export interface SourceConfig {
   id: string;
   name: string;
   type: 'rss' | 'rest' | 'graphql';
+  category?: string;
   enabled: boolean;
   url?: string; // RSS
   endpoint?: string; // REST/GraphQL
-  auth?: AuthConfig;
+  auth?: AuthConfig | null;
   filters?: Record<string, unknown>;
   timeout: number;
   maxRetries: number;
   mapper: string;
+  metadata?: SourceMetadata;
 }
 
 /**
