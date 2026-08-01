@@ -5,6 +5,7 @@ on:
     paths:
       - 'qa-news'
       - 'qa-news/**'
+      - 'data/canonical_articles.ndjson'
       - '.github/workflows/test.yml'
 
 jobs:
