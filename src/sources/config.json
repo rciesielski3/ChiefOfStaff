@@ -1,0 +1,84 @@
+{
+  "sources": [
+    {
+      "id": "ministry-of-testing",
+      "name": "Ministry of Testing",
+      "type": "rss",
+      "enabled": true,
+      "url": "https://www.ministryoftesting.com/contents/rss",
+      "timeout": 8000,
+      "maxRetries": 3,
+      "mapper": "mapRSS"
+    },
+    {
+      "id": "google-testing-blog",
+      "name": "Google Testing Blog",
+      "type": "rss",
+      "enabled": true,
+      "url": "https://testing.googleblog.com/feeds/posts/default",
+      "timeout": 8000,
+      "maxRetries": 3,
+      "mapper": "mapRSS"
+    },
+    {
+      "id": "infoq",
+      "name": "InfoQ",
+      "type": "rss",
+      "enabled": true,
+      "url": "https://feed.infoq.com/",
+      "timeout": 8000,
+      "maxRetries": 3,
+      "mapper": "mapRSS"
+    },
+    {
+      "id": "martin-fowler",
+      "name": "Martin Fowler",
+      "type": "rss",
+      "enabled": true,
+      "url": "https://martinfowler.com/feed.atom",
+      "timeout": 8000,
+      "maxRetries": 3,
+      "mapper": "mapRSS"
+    },
+    {
+      "id": "cypress",
+      "name": "Cypress",
+      "type": "rss",
+      "enabled": true,
+      "url": "https://cypress.io/blog/rss",
+      "timeout": 8000,
+      "maxRetries": 3,
+      "mapper": "mapRSS"
+    },
+    {
+      "id": "playwright",
+      "name": "Playwright",
+      "type": "rss",
+      "enabled": true,
+      "url": "https://github.com/microsoft/playwright/releases.atom",
+      "timeout": 8000,
+      "maxRetries": 3,
+      "mapper": "mapRSS"
+    },
+    {
+      "id": "openai",
+      "name": "OpenAI",
+      "type": "rss",
+      "enabled": true,
+      "url": "https://openai.com/news/rss.xml",
+      "timeout": 8000,
+      "maxRetries": 3,
+      "mapper": "mapRSS"
+    },
+    {
+      "id": "cloudflare",
+      "name": "Cloudflare",
+      "type": "rss",
+      "enabled": true,
+      "url": "https://blog.cloudflare.com/rss/",
+      "timeout": 8000,
+      "maxRetries": 3,
+      "mapper": "mapRSS"
+    }
+  ]
+}

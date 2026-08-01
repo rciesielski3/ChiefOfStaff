@@ -1,0 +1,82 @@
+{
+  "sources": [
+    {
+      "id": "news-api",
+      "name": "NewsAPI",
+      "type": "rest",
+      "enabled": true,
+      "endpoint": "https://newsapi.org/v2/everything",
+      "auth": {
+        "type": "apiKey",
+        "headers": {
+          "X-API-Key": "${NEWS_API_KEY}"
+        }
+      },
+      "filters": {
+        "language": "en",
+        "sortBy": "publishedAt"
+      },
+      "timeout": 10000,
+      "maxRetries": 3,
+      "mapper": "mapNewsAPI"
+    },
+    {
+      "id": "github-releases",
+      "name": "GitHub Releases",
+      "type": "rest",
+      "enabled": true,
+      "endpoint": "https://api.github.com/repos/microsoft/playwright/releases",
+      "auth": {
+        "type": "bearer",
+        "headers": {
+          "Authorization": "Bearer ${GITHUB_TOKEN}"
+        }
+      },
+      "timeout": 5000,
+      "maxRetries": 2,
+      "mapper": "mapGitHubReleases"
+    },
+    {
+      "id": "ministry-of-testing-rss",
+      "name": "Ministry of Testing RSS",
+      "type": "rss",
+      "enabled": false,
+      "url": "https://www.ministryoftesting.com/contents/rss",
+      "timeout": 8000,
+      "maxRetries": 3,
+      "mapper": "mapRSS"
+    },
+    {
+      "id": "cloudflare-api",
+      "name": "Cloudflare API",
+      "type": "rest",
+      "enabled": true,
+      "endpoint": "https://api.cloudflare.com/client/v4/accounts/account-id/d1/database/db-id/query",
+      "auth": {
+        "type": "bearer",
+        "headers": {
+          "Authorization": "Bearer ${CLOUDFLARE_API_TOKEN}"
+        }
+      },
+      "timeout": 15000,
+      "maxRetries": 3,
+      "mapper": "mapCloudflareData"
+    },
+    {
+      "id": "graphql-api",
+      "name": "GraphQL API",
+      "type": "graphql",
+      "enabled": true,
+      "endpoint": "https://api.example.com/graphql",
+      "auth": {
+        "type": "bearer",
+        "headers": {
+          "Authorization": "Bearer ${GRAPHQL_API_KEY}"
+        }
+      },
+      "timeout": 12000,
+      "maxRetries": 2,
+      "mapper": "mapGraphQLData"
+    }
+  ]
+}
