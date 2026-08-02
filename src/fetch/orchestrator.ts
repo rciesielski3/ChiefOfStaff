@@ -12,6 +12,15 @@ export interface FetchResult {
   articleCount?: number;
   error?: string;
   durationMs: number;
+  articles?: RawArticle[]; // Actual articles from successful fetch
+}
+
+/**
+ * Combined result from fetching all sources (metrics + articles)
+ */
+export interface FetchOrchestrationResult {
+  results: FetchResult[];
+  articles: RawArticle[];
 }
 
 /**
@@ -89,45 +98,58 @@ export class FetchOrchestrator {
 
   /**
    * Fetch from all enabled RSS sources
-   * Returns: FetchResult[] (partial success OK - one source failure doesn't abort others)
+   * Returns: FetchOrchestrationResult with metrics and articles
    */
-  async fetchRSSSources(): Promise<FetchResult[]> {
+  async fetchRSSSources(): Promise<FetchOrchestrationResult> {
     const sources = this.sourceManager.getByType('rss').filter(s => s.enabled);
     const results: FetchResult[] = [];
+    const articles: RawArticle[] = [];
 
     for (const source of sources) {
-      results.push(await this.fetchSource(source, this.rssFetcher));
+      const result = await this.fetchSource(source, this.rssFetcher);
+      results.push(result);
+      if (result.articles) {
+        articles.push(...result.articles);
+      }
     }
 
-    return results;
+    return { results, articles };
   }
 
   /**
    * Fetch from all enabled REST/GraphQL sources
-   * Returns: FetchResult[] (partial success OK)
+   * Returns: FetchOrchestrationResult with metrics and articles
    */
-  async fetchAPISources(): Promise<FetchResult[]> {
+  async fetchAPISources(): Promise<FetchOrchestrationResult> {
     const restSources = this.sourceManager.getByType('rest').filter(s => s.enabled);
     const graphqlSources = this.sourceManager.getByType('graphql').filter(s => s.enabled);
     const allSources = [...restSources, ...graphqlSources];
     const results: FetchResult[] = [];
+    const articles: RawArticle[] = [];
 
     for (const source of allSources) {
       const fetcher = source.type === 'rest' ? this.restFetcher : this.graphqlFetcher;
-      results.push(await this.fetchSource(source, fetcher));
+      const result = await this.fetchSource(source, fetcher);
+      results.push(result);
+      if (result.articles) {
+        articles.push(...result.articles);
+      }
     }
 
-    return results;
+    return { results, articles };
   }
 
   /**
    * Fetch from all enabled sources (RSS + REST + GraphQL)
-   * Returns: FetchResult[] with combined results
+   * Returns: FetchOrchestrationResult with combined metrics and articles
    */
-  async fetchAllSources(): Promise<FetchResult[]> {
-    const rssResults = await this.fetchRSSSources();
-    const apiResults = await this.fetchAPISources();
-    return [...rssResults, ...apiResults];
+  async fetchAllSources(): Promise<FetchOrchestrationResult> {
+    const rssResult = await this.fetchRSSSources();
+    const apiResult = await this.fetchAPISources();
+    return {
+      results: [...rssResult.results, ...apiResult.results],
+      articles: [...rssResult.articles, ...apiResult.articles]
+    };
   }
 
   /**
@@ -168,10 +190,12 @@ export class FetchOrchestrator {
         const result = await fetcher.fetch(source);
         this.circuitBreaker.recordSuccess(sourceId);
 
-        // Count articles in result
+        // Extract and count articles in result
+        let articles: RawArticle[] = [];
         let articleCount = 0;
         if (Array.isArray(result)) {
-          articleCount = result.length;
+          articles = result as RawArticle[];
+          articleCount = articles.length;
         }
 
         const durationMs = Date.now() - startTime;
@@ -190,7 +214,8 @@ export class FetchOrchestrator {
           sourceId,
           status: 'success',
           articleCount,
-          durationMs
+          durationMs,
+          articles
         };
       } catch (fetchError) {
         this.circuitBreaker.recordFailure(sourceId);

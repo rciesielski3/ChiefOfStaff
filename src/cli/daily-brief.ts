@@ -1,27 +1,27 @@
 #!/usr/bin/env ts-node
 
-import { fetchAllSources } from '../business-logic/rss-fetch';
 import { normalizeArticle } from '../business-logic/normalize-article';
 import { scoreArticles, DEFAULT_CONFIG } from '../business-logic/score-article';
 import { generateBrief } from '../business-logic/generate-brief';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { persistArticles } from '../business-logic/persist-articles';
-import { getEnabledSources } from '../config/rss-sources.config';
+import { FetchOrchestrator } from '../fetch/orchestrator';
+import { SourceManager } from '../sources/sources';
+import { RateLimiter } from '../fetch/rate-limiter';
+import { SourceCircuitBreaker } from '../fetch/circuit-breaker';
 import path from 'path';
-
-// Load RSS sources from config (single source of truth)
-const RSS_SOURCES = getEnabledSources();
 
 /**
  * Main CLI entry point for Daily Brief generation
  *
  * Algorithm:
- * 1. Fetch articles from all RSS sources
- * 2. Normalize articles to standard format
- * 3. Score articles based on keywords and configuration
- * 4. Select top N articles
- * 5. Generate markdown brief
- * 6. Persist articles to the canonical NDJSON store
+ * 1. Initialize fetch orchestrator with SourceManager, RateLimiter, CircuitBreaker
+ * 2. Fetch articles from all enabled sources (RSS + API)
+ * 3. Normalize articles to standard format
+ * 4. Score articles based on keywords and configuration
+ * 5. Select top N articles
+ * 6. Generate markdown brief
+ * 7. Persist articles to the canonical NDJSON store
  *
  * This CLI does NOT send Telegram notifications. Telegram delivery is
  * handled separately by the notify.yml GitHub Actions workflow, which is
@@ -50,28 +50,33 @@ async function main() {
     // Load configuration from environment
     const briefCount = parseInt(process.env.BRIEF_COUNT || '10', 10);
 
+    // Initialize fetch orchestrator with new JSON-driven pipeline
+    const sourceManager = new SourceManager();
+    const rateLimiter = new RateLimiter();
+    const circuitBreaker = new SourceCircuitBreaker();
+    const orchestrator = new FetchOrchestrator(sourceManager, rateLimiter, circuitBreaker);
+
+    // Get total source count for logging
+    const enabledSources = sourceManager.getEnabled();
+    const totalSourceCount = enabledSources.length;
+
     console.log(`[Daily Brief] Configuration:`);
     console.log(`  - Brief count: ${briefCount}`);
-    console.log(`  - Sources: ${RSS_SOURCES.length}`);
+    console.log(`  - Sources: ${totalSourceCount}`);
     logStructured('CONFIG_LOADED', {
       briefCount,
-      sourceCount: RSS_SOURCES.length
+      sourceCount: totalSourceCount
     });
     console.log('');
 
-    // Fetch articles from all sources. Per-source failures (network error,
-    // non-2xx status, parse error) are isolated inside fetchAllSources — a
-    // bad source is skipped so the remaining sources still get fetched.
+    // Fetch articles from all sources using orchestrator.
+    // Per-source failures (network error, non-2xx status, parse error) are isolated
+    // in the orchestrator — a bad source is skipped so remaining sources still get fetched.
     const fetchStartTime = Date.now();
-    console.log('[Daily Brief] Fetching RSS feeds...');
-    logStructured('FETCH_START', { sourceCount: RSS_SOURCES.length });
+    console.log('[Daily Brief] Fetching from all sources...');
+    logStructured('FETCH_START', { sourceCount: totalSourceCount });
 
-    const {
-      articles: allRawArticles,
-      results: fetchResults,
-      successCount,
-      failureCount
-    } = await fetchAllSources(RSS_SOURCES);
+    const { results: allResults, articles: allRawArticles } = await orchestrator.fetchAllSources();
 
     const fetchDuration = Date.now() - fetchStartTime;
     console.log(`[Daily Brief] Total raw articles: ${allRawArticles.length}\n`);
@@ -82,21 +87,31 @@ async function main() {
 
     // Report fetch summary: how many sources succeeded/failed and total
     // articles fetched, so a partial-failure run is easy to spot in logs.
-    console.log('[Daily Brief] RSS Fetch Summary:');
-    console.log(`  - Successful sources: ${successCount}/${RSS_SOURCES.length}`);
+    const successCount = allResults.filter(r => r.status === 'success').length;
+    const failureCount = allResults.filter(r => r.status === 'error').length;
+    const skippedCount = allResults.filter(r => r.status === 'skipped').length;
+
+    console.log('[Daily Brief] Fetch Summary:');
+    console.log(`  - Total sources: ${totalSourceCount}`);
+    console.log(`  - Successful fetches: ${successCount}/${totalSourceCount}`);
+    console.log(`  - Failed fetches: ${failureCount}/${totalSourceCount}`);
+    if (skippedCount > 0) {
+      console.log(`  - Skipped (rate limit/circuit breaker): ${skippedCount}/${totalSourceCount}`);
+    }
     if (failureCount > 0) {
-      console.log(`  - Failed sources: ${failureCount}/${RSS_SOURCES.length}`);
-      fetchResults
-        .filter(r => !r.success)
+      console.log(`  - Failed sources:`);
+      allResults
+        .filter(r => r.status === 'error')
         .forEach(r => {
-          console.log(`    - ${r.source}: ${r.error}`);
+          console.log(`    - ${r.sourceId}: ${r.error}`);
         });
     }
     console.log(`  - Total articles fetched: ${allRawArticles.length}\n`);
     logStructured('FETCH_SUMMARY', {
       successCount,
       failureCount,
-      totalSources: RSS_SOURCES.length,
+      skippedCount,
+      totalSources: totalSourceCount,
       totalArticles: allRawArticles.length
     });
 

@@ -120,10 +120,11 @@ describe('FetchOrchestrator', () => {
     });
 
     it('should return results for all enabled RSS sources', async () => {
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results).toHaveLength(1);
       expect(results[0].status).toBe('success');
       expect(results[0].articleCount).toBe(5);
+      expect(articles).toHaveLength(5);
     });
 
     it('should return empty array when no RSS sources enabled', async () => {
@@ -137,8 +138,9 @@ describe('FetchOrchestrator', () => {
         mockGraphqlFetcher
       );
 
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results).toHaveLength(0);
+      expect(articles).toHaveLength(0);
     });
 
     it('should skip disabled sources', async () => {
@@ -174,13 +176,14 @@ describe('FetchOrchestrator', () => {
         mockGraphqlFetcher
       );
 
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results).toHaveLength(1);
       expect(results[0].sourceId).toBe('enabled-rss');
+      expect(articles).toHaveLength(5);
     });
 
     it('should record duration for each fetch', async () => {
-      const results = await orchestrator.fetchRSSSources();
+      const { results } = await orchestrator.fetchRSSSources();
       expect(results[0].durationMs).toBeGreaterThanOrEqual(0);
       expect(typeof results[0].durationMs).toBe('number');
     });
@@ -196,7 +199,7 @@ describe('FetchOrchestrator', () => {
         mockGraphqlFetcher
       );
 
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results).toHaveLength(1);
       expect(results[0].status).toBe('error');
       expect(results[0].error).toBe('Mock fetch failed');
@@ -220,7 +223,7 @@ describe('FetchOrchestrator', () => {
     });
 
     it('should record circuit breaker success on fetch success', async () => {
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results[0].status).toBe('success');
 
       const failureCount = circuitBreaker.getFailureCount('test-rss-1');
@@ -264,21 +267,21 @@ describe('FetchOrchestrator', () => {
     });
 
     it('should return results for all enabled REST/GraphQL sources', async () => {
-      const results = await orchestrator.fetchAPISources();
+      const { results, articles } = await orchestrator.fetchAPISources();
       expect(results).toHaveLength(2);
       expect(results[0].status).toBe('success');
       expect(results[1].status).toBe('success');
     });
 
     it('should use correct fetcher for REST sources', async () => {
-      const results = await orchestrator.fetchAPISources();
+      const { results, articles } = await orchestrator.fetchAPISources();
       const restResult = results.find(r => r.sourceId === 'test-rest-1');
       expect(restResult?.status).toBe('success');
       expect(restResult?.articleCount).toBe(3); // MockFetcher for REST returns 3
     });
 
     it('should use correct fetcher for GraphQL sources', async () => {
-      const results = await orchestrator.fetchAPISources();
+      const { results, articles } = await orchestrator.fetchAPISources();
       const graphqlResult = results.find(r => r.sourceId === 'test-graphql-1');
       expect(graphqlResult?.status).toBe('success');
       expect(graphqlResult?.articleCount).toBe(4); // MockFetcher for GraphQL returns 4
@@ -295,7 +298,7 @@ describe('FetchOrchestrator', () => {
         mockGraphqlFetcher
       );
 
-      const results = await orchestrator.fetchAPISources();
+      const { results, articles } = await orchestrator.fetchAPISources();
       expect(results).toHaveLength(0);
     });
   });
@@ -336,14 +339,14 @@ describe('FetchOrchestrator', () => {
     });
 
     it('should combine RSS and API results', async () => {
-      const results = await orchestrator.fetchAllSources();
+      const { results, articles } = await orchestrator.fetchAllSources();
       expect(results).toHaveLength(2);
       expect(results.map(r => r.sourceId)).toContain('rss-1');
       expect(results.map(r => r.sourceId)).toContain('rest-1');
     });
 
     it('should maintain order: RSS first, then API', async () => {
-      const results = await orchestrator.fetchAllSources();
+      const { results, articles } = await orchestrator.fetchAllSources();
       expect(results[0].sourceId).toBe('rss-1');
       expect(results[1].sourceId).toBe('rest-1');
     });
@@ -379,7 +382,7 @@ describe('FetchOrchestrator', () => {
     });
 
     it('should fetch when rate limit decision is allow', async () => {
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results[0].status).toBe('success');
     });
 
@@ -388,7 +391,7 @@ describe('FetchOrchestrator', () => {
       await orchestrator.fetchRSSSources();
 
       // Second fetch should be rate limited
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results[0].status).toBe('skipped');
       expect(results[0].durationMs).toBeGreaterThanOrEqual(0);
     });
@@ -397,7 +400,7 @@ describe('FetchOrchestrator', () => {
       // Exhaust rate limit
       await orchestrator.fetchRSSSources();
 
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results[0].status).toBe('skipped');
       expect(results[0].error).toBeUndefined();
       expect(results[0].articleCount).toBeUndefined();
@@ -437,7 +440,7 @@ describe('FetchOrchestrator', () => {
         mockGraphqlFetcher
       );
 
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results[0].status).toBe('skipped');
       expect(results[0].error).toBeUndefined();
     });
@@ -456,7 +459,7 @@ describe('FetchOrchestrator', () => {
         mockGraphqlFetcher
       );
 
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results[0].durationMs).toBeGreaterThanOrEqual(0);
     });
   });
@@ -514,7 +517,7 @@ describe('FetchOrchestrator', () => {
         mockGraphqlFetcher
       );
 
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results).toHaveLength(2);
       expect(results[0].status).toBe('error');
       expect(results[1].status).toBe('success');
@@ -575,7 +578,7 @@ describe('FetchOrchestrator', () => {
         mockGraphqlFetcher
       );
 
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results).toHaveLength(2);
       const successCount = results.filter(r => r.status === 'success').length;
       const errorCount = results.filter(r => r.status === 'error').length;
@@ -769,7 +772,7 @@ describe('FetchOrchestrator', () => {
         mockGraphqlFetcher
       );
 
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results[0].durationMs).toBeGreaterThanOrEqual(delayMs);
     });
 
@@ -797,7 +800,7 @@ describe('FetchOrchestrator', () => {
         mockGraphqlFetcher
       );
 
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results[0].durationMs).toBeGreaterThanOrEqual(0);
       expect(results[0].status).toBe('error');
     });
@@ -833,7 +836,7 @@ describe('FetchOrchestrator', () => {
       await orchestrator.fetchRSSSources();
 
       // Second fetch (rate limited)
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results[0].durationMs).toBeGreaterThanOrEqual(0);
       expect(results[0].status).toBe('skipped');
     });
@@ -900,7 +903,7 @@ describe('FetchOrchestrator', () => {
         mockGraphqlFetcher
       );
 
-      const results = await orchestrator.fetchAllSources();
+      const { results, articles } = await orchestrator.fetchAllSources();
       expect(results).toHaveLength(0);
     });
 
@@ -928,7 +931,7 @@ describe('FetchOrchestrator', () => {
         mockGraphqlFetcher
       );
 
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results[0].status).toBe('success');
       expect(results[0].articleCount).toBe(0);
     });
@@ -962,7 +965,7 @@ describe('FetchOrchestrator', () => {
         mockGraphqlFetcher
       );
 
-      const results = await orchestrator.fetchRSSSources();
+      const { results, articles } = await orchestrator.fetchRSSSources();
       expect(results[0].status).toBe('success');
       expect(results[0].articleCount).toBe(0); // Non-array counts as 0
     });
