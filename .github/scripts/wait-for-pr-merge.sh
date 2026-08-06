@@ -8,9 +8,11 @@
 #
 # Exit codes:
 #   0 = PR merged successfully or PR doesn't exist (skip)
-#   1 = Timeout (>300s) or API error
+#   1 = Timeout (>1200s) or API error
 #
-# Exponential backoff: 2s, 4s, 8s, 16s, 32s, 64s, 128s, 128s, ... (max 300s total)
+# Exponential backoff: 2s, 4s, 8s, 16s, 32s, 64s, 128s, 128s, ... (max 1200s total)
+# Rationale: GitHub Actions runner queues and test execution can exceed 5min;
+# 20min timeout accommodates infrastructure delays while preventing indefinite waits
 
 set -e
 
@@ -28,7 +30,7 @@ fi
 
 PR_NUMBER="$1"
 REPO="rciesielski3/ChiefOfStaff"
-MAX_WAIT_SECONDS=300
+MAX_WAIT_SECONDS=1200
 ELAPSED_SECONDS=0
 BACKOFF_SECONDS=2
 
@@ -87,5 +89,5 @@ while [ $ELAPSED_SECONDS -lt $MAX_WAIT_SECONDS ]; do
 done
 
 # Timeout reached
-echo "❌ ERROR: Timeout waiting for PR #$PR_NUMBER to merge (>300 seconds)"
+echo "❌ ERROR: Timeout waiting for PR #$PR_NUMBER to merge (>1200 seconds / 20 minutes)"
 exit 1
