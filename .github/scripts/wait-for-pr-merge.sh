@@ -3,14 +3,16 @@
 # wait-for-pr-merge.sh
 # Polls GitHub API to wait for a PR to merge with exponential backoff
 #
-# Usage: wait-for-pr-merge.sh <PR_NUMBER>
+# Usage: wait-for-pr-merge.sh <PR_NUMBER> [TIMEOUT_SECONDS]
 # Environment: GH_TOKEN (GitHub token with repo access)
 #
 # Exit codes:
-#   0 = PR merged successfully or PR doesn't exist (skip)
-#   1 = Timeout (>1200s) or API error
+#   0 = PR merged successfully
+#   1 = Timeout (>timeout seconds)
+#   2 = Merge conflict (mergeable: false)
+#   3 = PR closed without merging
 #
-# Exponential backoff: 2s, 4s, 8s, 16s, 32s, 64s, 128s, 128s, ... (max 1200s total)
+# Exponential backoff: 2s, 4s, 8s, 16s, 32s, 64s, 128s, 128s, ... (capped at 128s)
 # Rationale: GitHub Actions runner queues and test execution can exceed 5min;
 # 20min timeout accommodates infrastructure delays while preventing indefinite waits
 
@@ -19,75 +21,78 @@ set -e
 # Validate input
 if [ -z "$1" ]; then
   echo "❌ ERROR: PR_NUMBER argument required"
-  echo "Usage: $0 <PR_NUMBER>"
-  exit 1
-fi
-
-if [ -z "$GH_TOKEN" ]; then
-  echo "❌ ERROR: GH_TOKEN environment variable required"
+  echo "Usage: $0 <PR_NUMBER> [TIMEOUT_SECONDS]"
   exit 1
 fi
 
 PR_NUMBER="$1"
-REPO="rciesielski3/ChiefOfStaff"
-MAX_WAIT_SECONDS=1200
-ELAPSED_SECONDS=0
-BACKOFF_SECONDS=2
+TIMEOUT="${2:-1200}"  # Default 20 minutes, configurable
+POLL_INTERVAL=2
+MAX_POLL_INTERVAL=128
+ELAPSED=0
 
-# Get PR info from GitHub API
-echo "Polling GitHub API for PR #$PR_NUMBER status..."
+echo "🔄 Waiting for PR #$PR_NUMBER to merge (timeout: ${TIMEOUT}s)..."
 
-while [ $ELAPSED_SECONDS -lt $MAX_WAIT_SECONDS ]; do
-  # Check if PR is merged
-  PR_INFO=$(curl -s \
-    -H "Authorization: token $GH_TOKEN" \
-    -H "Accept: application/vnd.github+json" \
-    "https://api.github.com/repos/$REPO/pulls/$PR_NUMBER")
+while [ $ELAPSED -lt $TIMEOUT ]; do
+  # Get PR details using gh CLI
+  PR_STATE=$(gh api repos/rciesielski3/ChiefOfStaff/pulls/$PR_NUMBER \
+    --jq '.state, .merged, .mergeable, .mergeable_state' 2>/dev/null || echo "error")
 
-  # Check if API response is valid JSON
-  if ! echo "$PR_INFO" | jq . >/dev/null 2>&1; then
-    echo "❌ ERROR: Invalid API response for PR #$PR_NUMBER"
-    exit 1
-  fi
+  STATE=$(echo "$PR_STATE" | sed -n '1p')
+  MERGED=$(echo "$PR_STATE" | sed -n '2p')
+  MERGEABLE=$(echo "$PR_STATE" | sed -n '3p')
+  MERGEABLE_STATE=$(echo "$PR_STATE" | sed -n '4p')
 
-  # Extract merged status and state
-  MERGED=$(echo "$PR_INFO" | jq -r '.merged // false')
-  STATE=$(echo "$PR_INFO" | jq -r '.state // "unknown"')
-
-  # Check if PR doesn't exist (404 error)
-  if echo "$PR_INFO" | jq -e '.message == "Not Found"' >/dev/null 2>&1; then
-    echo "⚠️  SKIP: PR #$PR_NUMBER not found (may not have been created)"
-    exit 0
-  fi
-
-  # Check if PR is merged
+  # Check if PR merged successfully
   if [ "$MERGED" = "true" ]; then
-    echo "✅ SUCCESS: PR #$PR_NUMBER merged successfully"
+    echo "✅ PR #$PR_NUMBER merged successfully"
     exit 0
   fi
 
-  # Check if PR is closed without merging
-  if [ "$STATE" = "closed" ] && [ "$MERGED" = "false" ]; then
-    echo "⚠️  SKIP: PR #$PR_NUMBER closed without merging (no changes needed)"
-    exit 0
+  # Check if PR was closed without merging
+  if [ "$STATE" = "closed" ]; then
+    echo "❌ ERROR: PR #$PR_NUMBER was closed without merging"
+    exit 3
   fi
 
-  # PR still open, check if next wait would exceed timeout
-  if [ $((ELAPSED_SECONDS + BACKOFF_SECONDS)) -ge $MAX_WAIT_SECONDS ]; then
-    # Next wait would exceed max, break before sleeping
+  # Check for merge conflicts
+  if [ "$MERGEABLE" = "false" ]; then
+    echo "❌ ERROR: PR #$PR_NUMBER has merge conflicts"
+    exit 2
+  fi
+
+  # Check if blocked by status checks
+  if [ "$MERGEABLE_STATE" = "blocked" ]; then
+    # Get detailed check status
+    CHECK_STATUS=$(gh api repos/rciesielski3/ChiefOfStaff/commits/$(gh api repos/rciesielski3/ChiefOfStaff/pulls/$PR_NUMBER --jq '.head.sha')/status \
+      --jq '.state' 2>/dev/null || echo "unknown")
+    echo "⚠️  PR #$PR_NUMBER blocked by status checks (state: $CHECK_STATUS)"
+  fi
+
+  # Calculate next wait time (cap at MAX_POLL_INTERVAL)
+  if [ $POLL_INTERVAL -ge $MAX_POLL_INTERVAL ]; then
+    WAIT_TIME=$MAX_POLL_INTERVAL
+  else
+    WAIT_TIME=$POLL_INTERVAL
+  fi
+
+  # Check if we can wait before the next poll
+  if [ $((ELAPSED + WAIT_TIME)) -lt $TIMEOUT ]; then
+    echo "⏳ PR #$PR_NUMBER still pending (state: $STATE, mergeable: $MERGEABLE, elapsed: ${ELAPSED}s, next check in ${WAIT_TIME}s)..."
+    sleep "$WAIT_TIME"
+    ELAPSED=$((ELAPSED + WAIT_TIME))
+
+    # Exponential backoff: double each time, cap at MAX_POLL_INTERVAL
+    POLL_INTERVAL=$((POLL_INTERVAL * 2))
+    if [ $POLL_INTERVAL -gt $MAX_POLL_INTERVAL ]; then
+      POLL_INTERVAL=$MAX_POLL_INTERVAL
+    fi
+  else
+    # Next wait would exceed timeout, exit loop
     break
-  fi
-
-  echo "⏳ PR #$PR_NUMBER still pending (state: $STATE, wait ${BACKOFF_SECONDS}s)..."
-  sleep "$BACKOFF_SECONDS"
-  ELAPSED_SECONDS=$((ELAPSED_SECONDS + BACKOFF_SECONDS))
-
-  # Exponential backoff: double each time, cap at 128 seconds
-  if [ $BACKOFF_SECONDS -lt 128 ]; then
-    BACKOFF_SECONDS=$((BACKOFF_SECONDS * 2))
   fi
 done
 
 # Timeout reached
-echo "❌ ERROR: Timeout waiting for PR #$PR_NUMBER to merge (>1200 seconds / 20 minutes)"
+echo "❌ ERROR: Timeout waiting for PR #$PR_NUMBER to merge (>${TIMEOUT} seconds)"
 exit 1
