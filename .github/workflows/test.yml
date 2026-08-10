@@ -7,16 +7,25 @@ on:
       - 'qa-news/**'
       - 'data/canonical_articles.ndjson'
       - '.github/workflows/test.yml'
+  workflow_run:
+    workflows: ['Daily Brief']
+    types: [completed]
+    branches:
+      - automation/daily-brief
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event_name == 'workflow_run')
     defaults:
       run:
         working-directory: qa-news
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.event.workflow_run.head_branch }}
           submodules: recursive
 
       - name: Setup Node.js
