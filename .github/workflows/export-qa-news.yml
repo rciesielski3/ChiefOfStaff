@@ -81,16 +81,24 @@ jobs:
         run: npm run build
 
       - name: Export daily brief
-        run: npx ts-node src/cli/export-daily-brief.ts
+        run: |
+          set -e
+          npx ts-node src/cli/export-daily-brief.ts
 
       - name: Export latest news
-        run: npx ts-node src/cli/export-latest-news.ts
+        run: |
+          set -e
+          npx ts-node src/cli/export-latest-news.ts
 
       - name: Export weekly highlights
-        run: npx ts-node src/cli/export-weekly-highlights.ts
+        run: |
+          set -e
+          npx ts-node src/cli/export-weekly-highlights.ts
 
       - name: Export monthly recap
-        run: npx ts-node src/cli/export-monthly-recap.ts
+        run: |
+          set -e
+          npx ts-node src/cli/export-monthly-recap.ts
 
       - name: Validate exports in data directory
         run: |
