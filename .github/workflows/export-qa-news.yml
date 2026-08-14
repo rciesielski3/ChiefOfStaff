@@ -80,6 +80,9 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Export daily brief
+        run: npx ts-node src/cli/export-daily-brief.ts
+
       - name: Export latest news
         run: npx ts-node src/cli/export-latest-news.ts
 
@@ -93,6 +96,9 @@ jobs:
         run: |
           set -e
 
+          echo "Validating daily-brief.json in data directory..."
+          jq '.' qa-news/data/daily-brief.json > /dev/null || exit 1
+
           echo "Validating latest-news.json in data directory..."
           jq '.' qa-news/data/latest-news.json > /dev/null || exit 1
 
@@ -105,11 +111,13 @@ jobs:
           echo "All JSON files are valid in data directory"
           echo ""
 
+          DAILY_COUNT=$(jq '.items | length' qa-news/data/daily-brief.json)
           LATEST_COUNT=$(jq '.items | length' qa-news/data/latest-news.json)
           WEEKLY_COUNT=$(jq '[.weeks[].items[]] | length' qa-news/data/weekly-highlights.json)
           MONTHLY_COUNT=$(jq '[.months[].items[]] | length' qa-news/data/monthly-recap.json)
 
           echo "Article counts:"
+          echo "  Daily: $DAILY_COUNT articles"
           echo "  Latest: $LATEST_COUNT articles"
           echo "  Weekly: $WEEKLY_COUNT articles"
           echo "  Monthly: $MONTHLY_COUNT articles"
@@ -121,7 +129,7 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "github-actions@github.com"
 
-          git add data/latest-news.json data/weekly-highlights.json data/monthly-recap.json \
+          git add data/daily-brief.json data/latest-news.json data/weekly-highlights.json data/monthly-recap.json \
                   public/latest.json public/weekly-highlights.json public/monthly-recap.json
 
           if git diff --cached --quiet; then
@@ -133,6 +141,7 @@ jobs:
           git commit -m "data: update qa-news daily/weekly/monthly exports
 
           Generated from latest RSS articles:
+          - daily-brief.json: Top 10 articles for today
           - latest-news.json: Top 50 articles
           - weekly-highlights.json: All articles grouped by week
           - monthly-recap.json: Top 25 articles per month"
