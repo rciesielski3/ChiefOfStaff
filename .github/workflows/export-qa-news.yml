@@ -157,6 +157,7 @@ jobs:
           echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
+        id: export_pr
         if: steps.commit.outputs.changed == 'true'
         run: |
           cd qa-news
@@ -169,6 +170,7 @@ jobs:
             --title "data: update qa-news daily/weekly/monthly exports" \
             --body "Automated QA-News data export from latest RSS articles.
 
+          - daily-brief.json: Top 10 articles for today
           - latest-news.json: Top 50 articles
           - weekly-highlights.json: All articles grouped by week
           - monthly-recap.json: Top 25 articles per month
@@ -186,22 +188,27 @@ jobs:
           fi
 
           echo "✅ Created PR #$PR_NUMBER"
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.QA_NEWS_TOKEN }}
 
-          # Auto-merge using squash strategy
-          # Note: --auto will queue merge once status checks pass
-          echo "Attempting auto-merge for PR #$PR_NUMBER..."
-          gh pr merge "$PR_NUMBER" --squash --auto || {
-            MERGE_EXIT=$?
-            if [ $MERGE_EXIT -eq 0 ]; then
-              echo "✅ Auto-merge queued"
-            else
-              echo "⚠️  Auto-merge not available yet (PR may need status checks)"
-              echo "Auto-merge will be attempted on next workflow run"
-            fi
-            exit 0
-          }
+      - name: Auto-approve export PR
+        if: steps.export_pr.outputs.pr_number != ''
+        run: |
+          PR_NUMBER="${{ steps.export_pr.outputs.pr_number }}"
+          echo "Auto-approving QA-News PR #$PR_NUMBER..."
+          gh pr review "$PR_NUMBER" --approve -b "Automated approval for export PR" \
+            --repo rciesielski3/qa-news || echo "⚠️  Could not approve PR (may already be approved)"
+        env:
+          GH_TOKEN: ${{ secrets.QA_NEWS_TOKEN }}
 
-          echo "✅ Auto-merge queued (waiting for approval and status checks)"
+      - name: Auto-merge export PR
+        if: steps.export_pr.outputs.pr_number != ''
+        run: |
+          PR_NUMBER="${{ steps.export_pr.outputs.pr_number }}"
+          echo "Auto-merging QA-News PR #$PR_NUMBER..."
+          gh pr merge "$PR_NUMBER" --squash --auto \
+            --repo rciesielski3/qa-news || echo "⚠️  Auto-merge queued or not available"
         env:
           GH_TOKEN: ${{ secrets.QA_NEWS_TOKEN }}
 

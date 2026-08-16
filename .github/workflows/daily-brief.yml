@@ -176,6 +176,19 @@ jobs:
            branch: "automation/daily-brief"
            delete-branch: true
 
+      - name: Auto-approve PR for automation
+        run: |
+          PR_NUMBER="${{ steps.pr.outputs.pull-request-number }}"
+          if [ -z "$PR_NUMBER" ]; then
+            echo "⚠️  PR number not available, skipping approval"
+            exit 0
+          fi
+
+          echo "Auto-approving PR #$PR_NUMBER..."
+          gh pr review "$PR_NUMBER" --approve -b "Automated approval for automation PR" || echo "⚠️  Could not approve PR (may already be approved)"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Wait for PR and merge
         run: |
           PR_NUMBER="${{ steps.pr.outputs.pull-request-number }}"
