@@ -46,11 +46,12 @@ jobs:
             | head -1)
 
           if [ -z "$PR_NUMBER" ]; then
-            echo "⚠️  No open automation/daily-brief PR found, skipping merge"
-            exit 0
+            echo "❌ ERROR: No open automation/daily-brief PR found"
+            echo "This should not happen. Daily Brief workflow must create the PR before Test triggers this workflow."
+            exit 1
           fi
 
-          echo "Found PR #$PR_NUMBER"
+          echo "✅ Found PR #$PR_NUMBER"
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
