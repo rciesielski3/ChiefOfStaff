@@ -1,10 +1,12 @@
 name: Update QA News Data
 
 on:
-  schedule:
-    # Run daily at 5 AM UTC
-    - cron: '0 5 * * *'
-  workflow_dispatch:  # Allow manual trigger
+  # DISABLED: schedule was running before Daily Brief at 05:00 UTC,
+  # reading stale data and racing with export-qa-news.yml
+  # Re-enable only if needed for emergency backfill
+  # schedule:
+  #   - cron: '0 5 * * *'
+  workflow_dispatch:  # Allow manual trigger only
 
 jobs:
   update-qa-news:
