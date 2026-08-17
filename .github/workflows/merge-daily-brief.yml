@@ -1,0 +1,71 @@
+name: Merge Daily Brief PR
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: merge-daily-brief
+  cancel-in-progress: false
+
+# WORKFLOW PURPOSE:
+# This workflow merges the automation/daily-brief PR exactly when the required
+# "test" status check completes successfully. This replaces the 60-second guessing
+# loop in daily-brief.yml with deterministic, event-driven sequencing.
+#
+# Trigger: workflow_run on Test completion
+# Gate: only proceeds if Test conclusion == 'success'
+# Action: merges automation/daily-brief PR synchronously (no --auto needed,
+#         all required checks have already passed by this point)
+#
+# This ensures:
+# - No timeout guesswork (Test completion is the actual gate)
+# - Merge happens immediately when Test passes
+# - Export workflow only starts after merge is confirmed
+# - Deterministic sequencing replaces polling
+
+on:
+  workflow_run:
+    workflows: ["Test"]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  merge-pr:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find automation/daily-brief PR
+        id: find_pr
+        run: |
+          PR_NUMBER=$(gh api repos/rciesielski3/ChiefOfStaff/pulls \
+            --jq '.[] | select(.head.ref == "automation/daily-brief" and .state == "open") | .number' \
+            | head -1)
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "⚠️  No open automation/daily-brief PR found, skipping merge"
+            exit 0
+          fi
+
+          echo "Found PR #$PR_NUMBER"
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge automation/daily-brief PR
+        if: steps.find_pr.outputs.pr_number != ''
+        run: |
+          PR_NUMBER="${{ steps.find_pr.outputs.pr_number }}"
+          echo "Merging PR #$PR_NUMBER..."
+
+          if gh pr merge --squash "$PR_NUMBER"; then
+            echo "✅ Successfully merged PR #$PR_NUMBER"
+          else
+            echo "❌ Failed to merge PR #$PR_NUMBER"
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

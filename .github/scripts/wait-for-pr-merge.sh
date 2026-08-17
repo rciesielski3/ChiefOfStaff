@@ -3,8 +3,9 @@
 # wait-for-pr-merge.sh
 # Polls GitHub API to wait for a PR to merge with exponential backoff
 #
-# Usage: wait-for-pr-merge.sh <PR_NUMBER> [TIMEOUT_SECONDS]
+# Usage: wait-for-pr-merge.sh <PR_NUMBER> [TIMEOUT_SECONDS] [REPO]
 # Environment: GH_TOKEN (GitHub token with repo access)
+# Defaults: TIMEOUT_SECONDS=1200 (20 minutes), REPO=rciesielski3/ChiefOfStaff
 #
 # Exit codes:
 #   0 = PR merged successfully
@@ -31,12 +32,13 @@ fi
 # Validate input
 if [ -z "$1" ]; then
   echo "❌ ERROR: PR_NUMBER argument required"
-  echo "Usage: $0 <PR_NUMBER> [TIMEOUT_SECONDS]"
+  echo "Usage: $0 <PR_NUMBER> [TIMEOUT_SECONDS] [REPO]"
   exit 1
 fi
 
 PR_NUMBER="$1"
 TIMEOUT="${2:-1200}"  # Default 20 minutes, configurable
+REPO="${3:-rciesielski3/ChiefOfStaff}"  # Default to ChiefofStaff repo
 POLL_INTERVAL=2
 MAX_POLL_INTERVAL=128
 ELAPSED=0
@@ -45,7 +47,7 @@ echo "🔄 Waiting for PR #$PR_NUMBER to merge (timeout: ${TIMEOUT}s)..."
 
 while [ $ELAPSED -lt $TIMEOUT ]; do
   # Get PR details using gh CLI
-  PR_STATE=$(gh api repos/rciesielski3/ChiefOfStaff/pulls/$PR_NUMBER \
+  PR_STATE=$(gh api repos/$REPO/pulls/$PR_NUMBER \
     --jq '.state, .merged, .mergeable, .mergeable_state' 2>/dev/null || echo "error")
 
   # Validate response format (should be exactly 4 lines)
@@ -80,9 +82,9 @@ while [ $ELAPSED -lt $TIMEOUT ]; do
   # Check if blocked by status checks
   if [ "$MERGEABLE_STATE" = "blocked" ]; then
     # Get detailed check status - separate API calls for robustness
-    HEAD_SHA=$(gh api repos/rciesielski3/ChiefOfStaff/pulls/$PR_NUMBER --jq '.head.sha' 2>/dev/null)
+    HEAD_SHA=$(gh api repos/$REPO/pulls/$PR_NUMBER --jq '.head.sha' 2>/dev/null)
     if [ -n "$HEAD_SHA" ]; then
-      CHECK_STATUS=$(gh api repos/rciesielski3/ChiefOfStaff/commits/$HEAD_SHA/status --jq '.state' 2>/dev/null || echo "unknown")
+      CHECK_STATUS=$(gh api repos/$REPO/commits/$HEAD_SHA/status --jq '.state' 2>/dev/null || echo "unknown")
     else
       CHECK_STATUS="unknown"
     fi

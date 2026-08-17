@@ -6,7 +6,7 @@ permissions:
 
 on:
   workflow_run:
-    workflows: ["Daily Brief", "Export Latest News"]
+    workflows: ["Daily Brief", "Export QA-News Data"]
     types:
       - completed
   workflow_dispatch:  # Manual trigger for testing
