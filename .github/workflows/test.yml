@@ -16,16 +16,14 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     defaults:
       run:
         working-directory: qa-news
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.event.workflow_run.head_branch }}
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || (github.event_name == 'workflow_run' && github.event.workflow_run.head_branch) || 'main' }}
           submodules: recursive
 
       - name: Setup Node.js
