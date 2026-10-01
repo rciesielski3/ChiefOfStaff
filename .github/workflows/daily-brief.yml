@@ -164,30 +164,15 @@ jobs:
            git add -f data/knowledge_facts.ndjson || true
            git commit -m "chore: update articles and knowledge facts from daily brief" || exit 0
 
-      - name: Create Pull Request
-        id: pr
-        uses: peter-evans/create-pull-request@v7
-        with:
-           token: ${{ secrets.GITHUB_TOKEN }}
-           commit-message: "chore: update canonical articles from daily brief"
-           title: "chore: update canonical articles"
-           body: "Automated update from Daily Brief workflow."
-           base: "main"
-           branch: "automation/daily-brief"
-           delete-branch: true
-
-      - name: Auto-approve PR for automation
+      - name: Push to main
         run: |
-          PR_NUMBER="${{ steps.pr.outputs.pull-request-number }}"
-          if [ -z "$PR_NUMBER" ]; then
-            echo "⚠️  PR number not available, skipping approval"
+          if git diff --quiet HEAD~1 HEAD -- data/canonical_articles.ndjson data/knowledge_facts.ndjson 2>/dev/null; then
+            echo "ℹ️  No changes to commit, skipping push"
             exit 0
           fi
 
-          echo "Auto-approving PR #$PR_NUMBER..."
-          gh pr review "$PR_NUMBER" --approve -b "Automated approval for automation PR" || echo "⚠️  Could not approve PR (may already be approved)"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Pushing changes to main..."
+          git push origin HEAD:main || echo "⚠️  Push failed or nothing to push"
 
 
       - name: Workflow summary
