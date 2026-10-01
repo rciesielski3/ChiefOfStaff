@@ -5,27 +5,25 @@ permissions:
   pull-requests: write
 
 # WORKFLOW SYNCHRONIZATION STRATEGY:
-# This workflow waits for Daily Brief PR to merge before exporting.
+# This workflow triggers after Daily Brief completes and commits to main.
 #
 # Trigger: workflow_run on Daily Brief completion
-# Race condition: Daily Brief creates PR + auto-merge (async), but export-qa-news
-#                 triggers immediately when Daily Brief completes
-# Solution: PR merge polling step waits for actual merge before data read
+# Daily Brief now pushes directly to main (no PR step), so export triggers
+# immediately after daily-brief completes.
 #
 # Flow:
-# 1. Daily Brief completes, outputs PR_NUMBER to workflow outputs
+# 1. Daily Brief fetches articles and commits to main
 # 2. export-qa-news triggered by workflow_run event
-# 3. Wait-for-PR-merge step polls GitHub API (backoff: 2s→128s, timeout: 5m)
-# 4. Once merged, proceed with export using updated canonical_articles.ndjson
+# 3. Export reads updated canonical_articles.ndjson from main
+# 4. Export updates qa-news repo and syncs to live site
 #
 # Failure modes:
-# - PR number not available: skip wait, proceed anyway (graceful degradation)
-# - PR not merged after 5 min: fail workflow (operator intervention needed)
-# - Articles still 0 after merge: export fails with diagnostics, operator debugs
+# - Daily Brief fails: skip export (guarded by event status check)
+# - Export fails: operator debugs
 
 on:
   workflow_run:
-    workflows: ["Merge Daily Brief PR"]
+    workflows: ["Daily Brief"]
     types:
       - completed
   workflow_dispatch:
