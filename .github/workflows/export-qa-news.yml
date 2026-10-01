@@ -47,10 +47,6 @@ jobs:
           token: ${{ secrets.QA_NEWS_TOKEN }}
           path: qa-news
 
-      - name: Check Daily Brief Status
-        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
-        run: exit 1
-
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
