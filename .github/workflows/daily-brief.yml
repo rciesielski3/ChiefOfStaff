@@ -157,22 +157,33 @@ jobs:
       #   continue-on-error: true
 
       - name: Commit changes
+        id: commit
         run: |
            git config user.name "PAIOS Bot"
            git config user.email "bot@paios.local"
            git add data/canonical_articles.ndjson
            git add -f data/knowledge_facts.ndjson || true
-           git commit -m "chore: update articles and knowledge facts from daily brief" || exit 0
+           git commit -m "chore: update articles and knowledge facts from daily brief" || echo "changed=false" && exit 0
+           echo "changed=true" >> $GITHUB_OUTPUT
 
-      - name: Push to main
+      - name: Create PR
+        if: steps.commit.outputs.changed == 'true'
         run: |
-          if git diff --quiet HEAD~1 HEAD -- data/canonical_articles.ndjson data/knowledge_facts.ndjson 2>/dev/null; then
-            echo "ℹ️  No changes to commit, skipping push"
-            exit 0
-          fi
+          git checkout -b automation/daily-brief
+          git push -u origin automation/daily-brief --force-with-lease
 
-          echo "Pushing changes to main..."
-          git push origin HEAD:main || echo "⚠️  Push failed or nothing to push"
+          gh pr create \
+            --title "chore: update articles and knowledge facts from daily brief" \
+            --body "Automated daily update from RSS feeds" \
+            --base main \
+            --head automation/daily-brief || true
+
+          PR_NUMBER=$(gh pr list --head automation/daily-brief --base main --state open --limit 1 | awk '{print $1}')
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr merge "$PR_NUMBER" --squash --auto || true
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
       - name: Workflow summary
