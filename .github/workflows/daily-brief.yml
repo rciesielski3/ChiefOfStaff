@@ -164,7 +164,7 @@ jobs:
            git config user.email "bot@paios.local"
            git add data/canonical_articles.ndjson
            git add -f data/knowledge_facts.ndjson || true
-           git commit -m "chore: update articles and knowledge facts from daily brief" || echo "changed=false" && exit 0
+           git commit -m "chore: update articles and knowledge facts from daily brief" || { echo "changed=false" && exit 0; }
            echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Create PR
