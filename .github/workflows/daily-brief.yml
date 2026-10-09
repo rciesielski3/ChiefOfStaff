@@ -184,7 +184,7 @@ jobs:
             gh pr merge "$PR_NUMBER" --squash --auto || true
           fi
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.AUTOMATION_PAT }}
 
 
       - name: Workflow summary
