@@ -1,0 +1,12 @@
+name: Test Condition
+on:
+  push:
+    branches: [test/condition-syntax]
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    steps:
+      - id: test
+        run: echo "test=hello" >> $GITHUB_OUTPUT
+      - if: steps.test.outputs.test == 'hello'
+        run: echo "CONDITION_WORKS"
