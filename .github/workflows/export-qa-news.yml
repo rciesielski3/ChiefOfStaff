@@ -107,14 +107,18 @@ jobs:
           echo "  Weekly: $WEEKLY_COUNT articles"
           echo "  Monthly: $MONTHLY_COUNT articles"
 
-      - name: Copy exports to public directory
+      - name: Transform exports for public display
         run: |
           cd qa-news
-          cp data/daily-brief.json public/daily.json
-          cp data/latest-news.json public/latest.json
-          cp data/weekly-highlights.json public/weekly.json
-          cp data/monthly-recap.json public/monthly.json
-          echo "✓ Copied exports to public/"
+          # Copy and transform data files to public with articles key
+          for file in data/daily-brief.json data/latest-news.json data/weekly-highlights.json data/monthly-recap.json; do
+            if [ -f "$file" ]; then
+              outfile="public/$(basename "$file" .json).json"
+              # Transform items to articles using jq
+              jq '{date, updatedAt, articles: .items}' "$file" > "$outfile" 2>/dev/null || cp "$file" "$outfile"
+            fi
+          done
+          echo "✓ Transformed exports to public/"
 
       - name: Commit data updates
         id: commit
