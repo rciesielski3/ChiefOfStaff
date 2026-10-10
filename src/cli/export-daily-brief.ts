@@ -2,7 +2,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { exportDailyBrief, writeDailyBrief } from '../business-logic/export-daily-brief';
+import { exportDailyBrief, writeDailyBrief, writePublicDailyBrief } from '../business-logic/export-daily-brief';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 
 /**
@@ -87,10 +87,16 @@ async function main(): Promise<void> {
     const writeStartTime = Date.now();
     logStructured('WRITE_START', { outputPath });
     await writeDailyBrief(dailyBrief, outputPath);
+
+    // Also write to public directory for deployed site
+    const publicPath = path.join(projectRoot, 'qa-news/public/daily.json');
+    await writePublicDailyBrief(publicPath, dailyBrief);
+
     const writeDuration = Date.now() - writeStartTime;
     logStructured('WRITE_COMPLETE', {
       articleCount: dailyBrief.items.length,
       filePath: outputPath,
+      publicPath,
       durationMs: writeDuration
     });
 
