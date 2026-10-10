@@ -91,3 +91,29 @@ export async function writeDailyBrief(
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(filePath, JSON.stringify(data, null, 2));
 }
+
+/**
+ * Transform daily brief to public format with 'articles' key
+ */
+export function transformDailyBriefToPublic(
+  data: DailyBriefExport
+): { date: string; updatedAt: string; articles: typeof data.items } {
+  return {
+    date: data.date,
+    updatedAt: data.updatedAt,
+    articles: data.items
+  };
+}
+
+/**
+ * Write daily brief to public directory for website
+ */
+export async function writePublicDailyBrief(
+  filePath: string,
+  data: DailyBriefExport
+): Promise<void> {
+  const publicData = transformDailyBriefToPublic(data);
+  const dir = dirname(filePath);
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(filePath, JSON.stringify(publicData, null, 2));
+}
