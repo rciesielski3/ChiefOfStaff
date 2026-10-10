@@ -5,6 +5,21 @@ import * as path from 'path';
 import { exportDailyBrief, writeDailyBrief, writePublicDailyBrief } from '../business-logic/export-daily-brief';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 
+function mapCategory(category: string): string {
+  const categoryMap: Record<string, string> = {
+    'test-automation': 'test-automation',
+    'ai': 'ai',
+    'engineering': 'engineering',
+    'qa-practice': 'qa-practice',
+    'tooling': 'tooling',
+    'news': 'test-automation',
+    'article': 'engineering',
+    'release': 'tooling',
+    'tutorial': 'qa-practice',
+  };
+  return categoryMap[category] || 'test-automation';
+}
+
 /**
  * CLI: Export daily brief articles to QA News data directory
  *
@@ -83,14 +98,23 @@ async function main(): Promise<void> {
       });
     }
 
+    // Map categories for UI filtering
+    const mappedBrief = {
+      ...dailyBrief,
+      items: dailyBrief.items.map((article) => ({
+        ...article,
+        category: mapCategory(article.category)
+      }))
+    };
+
     // Write to output file
     const writeStartTime = Date.now();
     logStructured('WRITE_START', { outputPath });
-    await writeDailyBrief(dailyBrief, outputPath);
+    await writeDailyBrief(mappedBrief, outputPath);
 
     // Also write to public directory for deployed site
     const publicPath = path.join(projectRoot, 'qa-news/public/daily.json');
-    await writePublicDailyBrief(publicPath, dailyBrief);
+    await writePublicDailyBrief(publicPath, mappedBrief);
 
     const writeDuration = Date.now() - writeStartTime;
     logStructured('WRITE_COMPLETE', {
