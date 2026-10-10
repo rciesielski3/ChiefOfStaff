@@ -107,15 +107,6 @@ jobs:
           echo "  Weekly: $WEEKLY_COUNT articles"
           echo "  Monthly: $MONTHLY_COUNT articles"
 
-      - name: Copy exports to public directory
-        run: |
-          cd qa-news
-          cp data/daily-brief.json public/daily.json
-          cp data/latest-news.json public/latest.json
-          cp data/weekly-highlights.json public/weekly.json
-          cp data/monthly-recap.json public/monthly.json
-          echo "✓ Copied exports to public/"
-
       - name: Commit data updates
         id: commit
         run: |
