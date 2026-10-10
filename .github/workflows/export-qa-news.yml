@@ -107,6 +107,15 @@ jobs:
           echo "  Weekly: $WEEKLY_COUNT articles"
           echo "  Monthly: $MONTHLY_COUNT articles"
 
+      - name: Copy exports to public directory
+        run: |
+          cd qa-news
+          cp data/daily-brief.json public/daily.json
+          cp data/latest-news.json public/latest.json
+          cp data/weekly-highlights.json public/weekly.json
+          cp data/monthly-recap.json public/monthly.json
+          echo "✓ Copied exports to public/"
+
       - name: Commit data updates
         id: commit
         run: |
@@ -115,7 +124,7 @@ jobs:
           git config user.email "github-actions@github.com"
 
           git add data/daily-brief.json data/latest-news.json data/weekly-highlights.json data/monthly-recap.json \
-                  public/latest.json
+                  public/daily.json public/latest.json public/weekly.json public/monthly.json
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
