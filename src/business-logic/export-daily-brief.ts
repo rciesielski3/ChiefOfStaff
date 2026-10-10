@@ -46,30 +46,11 @@ export async function exportDailyBrief(
   // Read all articles from store
   const articles = await store.read();
 
-  // Get today's date for filtering
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  // Filter articles from today (published today or after)
-  const todaysArticles = articles.filter(article => {
-    const pubDate = new Date(article.publishedAt);
-    if (isNaN(pubDate.getTime())) {
-      console.warn(`[export-daily-brief] Skipping article with invalid date: ${article.publishedAt}`);
-      return false;
-    }
-    return pubDate >= today && pubDate < tomorrow;
-  });
-
-  // Use only today's articles; if none, return empty list (don't export past articles)
-  const articlesToUse = todaysArticles.length > 0 ? todaysArticles : [];
-
-  // Sort by score descending (highest score first)
-  const sorted = articlesToUse.sort((a, b) => {
-    const scoreA = a.score || 0;
-    const scoreB = b.score || 0;
-    return scoreB - scoreA;
+  // Sort by publishedAt descending (newest first)
+  const sorted = articles.sort((a, b) => {
+    const timeA = new Date(a.publishedAt).getTime();
+    const timeB = new Date(b.publishedAt).getTime();
+    return timeB - timeA;
   });
 
   // Take top N articles
