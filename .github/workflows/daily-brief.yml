@@ -171,7 +171,7 @@ jobs:
         if: steps.commit.outputs.changed == 'true'
         run: |
           git checkout -b automation/daily-brief
-          git push -u origin automation/daily-brief --force-with-lease
+          git push -u origin automation/daily-brief --force
 
           gh pr create \
             --title "chore: update articles and knowledge facts from daily brief" \
