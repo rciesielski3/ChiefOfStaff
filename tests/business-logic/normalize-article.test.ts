@@ -17,6 +17,20 @@ describe('normalizeArticle', () => {
     expect(normalized.id).toContain('test-blog');
   });
 
+  it('should generate distinct IDs for different links on the same host', () => {
+    const first = normalizeArticle({ ...mockRawArticle, link: 'https://www.infoq.com/news/2026/10/a/' });
+    const second = normalizeArticle({ ...mockRawArticle, link: 'https://www.infoq.com/news/2026/10/b/' });
+
+    expect(first.id).not.toEqual(second.id);
+  });
+
+  it('should generate the same ID for the same link', () => {
+    const first = normalizeArticle(mockRawArticle);
+    const second = normalizeArticle({ ...mockRawArticle });
+
+    expect(first.id).toEqual(second.id);
+  });
+
   it('should preserve title', () => {
     const normalized = normalizeArticle(mockRawArticle);
 

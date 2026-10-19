@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { RawArticle } from './rss-fetch';
 
 /**
@@ -33,7 +34,8 @@ export interface Article {
  */
 export function normalizeArticle(raw: RawArticle): Article {
   // Generate ID from source and link (simple hash-like approach)
-  const id = `${raw.source.toLowerCase().replace(/\s+/g, '-')}-${Buffer.from(raw.link).toString('base64').slice(0, 12)}`;
+  const linkHash = createHash('sha256').update(raw.link).digest('hex').slice(0, 16);
+  const id = `${raw.source.toLowerCase().replace(/\s+/g, '-')}-${linkHash}`;
 
   // Clean summary from content: strip HTML tags and truncate
   const cleanContent = raw.content
