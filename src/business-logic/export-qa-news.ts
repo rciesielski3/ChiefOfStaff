@@ -1,4 +1,4 @@
-import { Article } from './normalize-article';
+import { Article, buildArticleId, buildLegacyArticleId } from './normalize-article';
 import { categorizeForQANews } from './categorize-article';
 
 /**
@@ -35,12 +35,21 @@ export interface QANewsExport {
  * @param article - Article from ChiefofStaff
  * @returns QA-News formatted article
  */
+/**
+ * Legacy stored IDs collided for every article from one host, which broke the
+ * QA-News top-pick filter. Recompute those from source+url; keep all other IDs as-is.
+ */
+function resolveExportId(article: Article): string {
+  const isLegacy = article.id === buildLegacyArticleId(article.source, article.url);
+  return isLegacy ? buildArticleId(article.source, article.url) : article.id;
+}
+
 export function articleToQANews(article: Article): QANewsArticle {
   const categories = categorizeForQANews(article);
   const primaryCategory = categories[0] || 'engineering';
 
   return {
-    id: article.id,
+    id: resolveExportId(article),
     title: article.title,
     summary: article.summary,
     url: article.url,

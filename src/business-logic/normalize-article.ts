@@ -17,6 +17,23 @@ export interface Article {
 }
 
 /**
+ * Build a stable, collision-resistant article ID: "<source-slug>-<sha256(link) prefix>".
+ * Exported so export layers can derive the same ID for articles stored with the legacy format.
+ */
+export function buildArticleId(source: string, link: string): string {
+  const linkHash = createHash('sha256').update(link).digest('hex').slice(0, 16);
+  return `${source.toLowerCase().replace(/\s+/g, '-')}-${linkHash}`;
+}
+
+/**
+ * Legacy ID formula used before collisions were fixed: "<source-slug>-<first 12 base64 chars of link>".
+ * Only used to recognise IDs stored in the old format.
+ */
+export function buildLegacyArticleId(source: string, link: string): string {
+  return `${source.toLowerCase().replace(/\s+/g, '-')}-${Buffer.from(link).toString('base64').slice(0, 12)}`;
+}
+
+/**
  * Normalize a raw RSS article to standard Article format
  *
  * Algorithm:
@@ -34,8 +51,7 @@ export interface Article {
  */
 export function normalizeArticle(raw: RawArticle): Article {
   // Generate ID from source and link (simple hash-like approach)
-  const linkHash = createHash('sha256').update(raw.link).digest('hex').slice(0, 16);
-  const id = `${raw.source.toLowerCase().replace(/\s+/g, '-')}-${linkHash}`;
+  const id = buildArticleId(raw.source, raw.link);
 
   // Clean summary from content: strip HTML tags and truncate
   const cleanContent = raw.content

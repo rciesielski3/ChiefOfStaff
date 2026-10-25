@@ -46,6 +46,17 @@ describe('exportQANews', () => {
     expect(result.articles).toHaveLength(30);
   });
 
+  it('should give distinct IDs to legacy articles that shared a host-prefix ID', () => {
+    const legacyId = 'infoq-aHR0cHM6Ly93';
+    const first = mockArticle(legacyId, 'A', 'https://www.infoq.com/news/a/', 'InfoQ');
+    const second = mockArticle(legacyId, 'B', 'https://www.infoq.com/news/b/', 'InfoQ');
+
+    const ids = [articleToQANews(first).id, articleToQANews(second).id];
+
+    expect(ids[0]).not.toEqual(ids[1]);
+    expect(ids[0]).not.toEqual(legacyId);
+  });
+
   it('should map article fields to QA-News format via articleToQANews', () => {
     const article = mockArticle('42', 'Playwright 2.0 Released', 'https://playwright.dev/release/2.0', 'Playwright');
     const result = articleToQANews(article);
