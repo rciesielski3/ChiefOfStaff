@@ -1,4 +1,4 @@
-import { Article } from './normalize-article';
+import { Article, resolveArticleId } from './normalize-article';
 import { categorizeForQANews } from './categorize-article';
 
 /**
@@ -40,7 +40,7 @@ export function articleToQANews(article: Article): QANewsArticle {
   const primaryCategory = categories[0] || 'engineering';
 
   return {
-    id: article.id,
+    id: resolveArticleId(article),
     title: article.title,
     summary: article.summary,
     url: article.url,

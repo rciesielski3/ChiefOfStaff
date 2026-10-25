@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { RawArticle } from './rss-fetch';
 
 /**
@@ -13,6 +14,39 @@ export interface Article {
   publishedAt: string;
   tags: string[];
   score?: number;
+}
+
+/**
+ * Build a stable, collision-resistant article ID: "<source-slug>-<sha256(link) prefix>".
+ * Exported so export layers can derive the same ID for articles stored with the legacy format.
+ */
+export function buildArticleId(source: string, link: string): string {
+  const linkHash = createHash('sha256').update(link).digest('hex').slice(0, 16);
+  return `${source.toLowerCase().replace(/\s+/g, '-')}-${linkHash}`;
+}
+
+/**
+ * Legacy ID formula used before collisions were fixed: "<source-slug>-<first 12 base64 chars of link>".
+ * Only used to recognise IDs stored in the old format.
+ */
+export function buildLegacyArticleId(source: string, link: string): string {
+  return `${source.toLowerCase().replace(/\s+/g, '-')}-${Buffer.from(link).toString('base64').slice(0, 12)}`;
+}
+
+/**
+ * Return the canonical ID for an article. Legacy stored IDs (host-prefix collisions)
+ * are recomputed from source+url; all other IDs are returned unchanged.
+ */
+export function resolveArticleId(article: Pick<Article, 'id' | 'source' | 'url'>): string {
+  const isLegacy = article.id === buildLegacyArticleId(article.source, article.url);
+  return isLegacy ? buildArticleId(article.source, article.url) : article.id;
+}
+
+/**
+ * Apply resolveArticleId at export boundaries. Exports must never write this back to the store.
+ */
+export function withResolvedId<T extends Article>(article: T): T {
+  return { ...article, id: resolveArticleId(article) };
 }
 
 /**
@@ -33,7 +67,7 @@ export interface Article {
  */
 export function normalizeArticle(raw: RawArticle): Article {
   // Generate ID from source and link (simple hash-like approach)
-  const id = `${raw.source.toLowerCase().replace(/\s+/g, '-')}-${Buffer.from(raw.link).toString('base64').slice(0, 12)}`;
+  const id = buildArticleId(raw.source, raw.link);
 
   // Clean summary from content: strip HTML tags and truncate
   const cleanContent = raw.content

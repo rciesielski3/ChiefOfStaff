@@ -1,4 +1,4 @@
-import { Article } from './normalize-article';
+import { Article, withResolvedId } from './normalize-article';
 import { SummaryGenerator } from './summary-generator';
 
 /**
@@ -110,7 +110,7 @@ export function exportWeeklyHighlights(articles: Article[]): WeeklyHighlightsExp
     weeks.push({
       weekOf,
       summary: '',  // Empty for now; will be populated by Task 6
-      items
+      items: items.map(withResolvedId)
     });
   }
 

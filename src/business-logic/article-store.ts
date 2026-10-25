@@ -115,10 +115,10 @@ export class NdJsonArticleStore implements ArticleStore {
     for (const article of newArticles) {
       const key = this.generateDedupKey(article);
 
-      if (dedupMap.has(key)) {
-        // Article already exists - could update last seen time or other fields
-        // For now, just keep the existing one (most recent data is new)
-        dedupMap.set(key, article);
+      const existingArticle = dedupMap.get(key);
+      if (existingArticle) {
+        // Keep the stored ID: knowledge facts reference article_id, so re-seen articles must not change identity
+        dedupMap.set(key, { ...article, id: existingArticle.id });
       } else {
         // New article
         dedupMap.set(key, article);
