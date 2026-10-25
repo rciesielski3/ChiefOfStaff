@@ -34,6 +34,22 @@ export function buildLegacyArticleId(source: string, link: string): string {
 }
 
 /**
+ * Return the canonical ID for an article. Legacy stored IDs (host-prefix collisions)
+ * are recomputed from source+url; all other IDs are returned unchanged.
+ */
+export function resolveArticleId(article: Pick<Article, 'id' | 'source' | 'url'>): string {
+  const isLegacy = article.id === buildLegacyArticleId(article.source, article.url);
+  return isLegacy ? buildArticleId(article.source, article.url) : article.id;
+}
+
+/**
+ * Apply resolveArticleId at export boundaries. Exports must never write this back to the store.
+ */
+export function withResolvedId<T extends Article>(article: T): T {
+  return { ...article, id: resolveArticleId(article) };
+}
+
+/**
  * Normalize a raw RSS article to standard Article format
  *
  * Algorithm:

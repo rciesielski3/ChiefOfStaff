@@ -1,4 +1,4 @@
-import { Article } from './normalize-article';
+import { Article, withResolvedId } from './normalize-article';
 import { ArticleStore } from './article-store';
 import { promises as fs } from 'fs';
 import { dirname } from 'path';
@@ -73,7 +73,7 @@ export async function exportDailyBrief(
     sourcesScanned: sourceCount,
     storiesSelected: topArticles.length,
     lede,
-    items: topArticles
+    items: topArticles.map(withResolvedId)
   };
 }
 

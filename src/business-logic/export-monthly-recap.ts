@@ -1,4 +1,4 @@
-import { Article } from './normalize-article';
+import { Article, withResolvedId } from './normalize-article';
 import { SummaryGenerator } from './summary-generator';
 
 /**
@@ -88,7 +88,7 @@ export function exportMonthlyRecap(
     months.push({
       monthOf,
       summary: '',  // Empty for now; will be populated by Task 6
-      items: curatedItems
+      items: curatedItems.map(withResolvedId)
     });
   }
 
