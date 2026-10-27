@@ -5,25 +5,27 @@ permissions:
   pull-requests: write
 
 # WORKFLOW SYNCHRONIZATION STRATEGY:
-# This workflow triggers after Daily Brief completes and commits to main.
+# Export must read canonical_articles.ndjson AFTER the Daily Brief PR is merged to main.
 #
-# Trigger: workflow_run on Daily Brief completion
-# Daily Brief now pushes directly to main (no PR step), so export triggers
-# immediately after daily-brief completes.
+# Trigger: workflow_run on "Merge Daily Brief PR" completion (success only)
+# Daily Brief commits to automation/daily-brief and opens a PR; the PR is merged
+# by merge-daily-brief.yml. Triggering on Daily Brief itself raced the merge:
+# export checked out main before the PR landed and published stale data.
 #
 # Flow:
-# 1. Daily Brief fetches articles and commits to main
-# 2. export-qa-news triggered by workflow_run event
-# 3. Export reads updated canonical_articles.ndjson from main
-# 4. Export updates qa-news repo and syncs to live site
+# 1. Daily Brief fetches articles and opens automation/daily-brief PR
+# 2. Test passes on the PR, Merge Daily Brief PR merges it to main
+# 3. export-qa-news triggered by that merge workflow's completion
+# 4. Export reads canonical_articles.ndjson from main (includes the merged articles)
+# 5. Export updates qa-news repo and syncs to live site
 #
 # Failure modes:
-# - Daily Brief fails: skip export (guarded by event status check)
+# - Merge step fails: skip export (guarded by conclusion check)
 # - Export fails: operator debugs
 
 on:
   workflow_run:
-    workflows: ["Daily Brief"]
+    workflows: ["Merge Daily Brief PR"]
     types:
       - completed
   workflow_dispatch:
@@ -31,9 +33,10 @@ on:
 jobs:
   export-qa-news:
     runs-on: ubuntu-latest
-    # Only run when triggered by workflow_run (Daily Brief completion) or manual dispatch
-    # Skip runs triggered by accidental push events
-    if: github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch'
+    # Only run after a successful merge workflow, or on manual dispatch
+    if: >-
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout ChiefofStaff repository
         uses: actions/checkout@v4
