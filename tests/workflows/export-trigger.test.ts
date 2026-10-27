@@ -14,6 +14,14 @@ describe('export-qa-news trigger', () => {
     expect(workflow).not.toContain('workflows: ["Daily Brief"]');
   });
 
+  it('treats an auto-merged automation PR as success so the export still runs', () => {
+    const merge = readFileSync(
+      join(__dirname, '../../.github/workflows/merge-daily-brief.yml'),
+      'utf8'
+    );
+    expect(merge).toContain('already merged');
+  });
+
   it('runs only when the merge workflow succeeded', () => {
     expect(workflow).toContain("github.event.workflow_run.conclusion == 'success'");
   });

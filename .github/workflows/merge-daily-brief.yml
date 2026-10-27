@@ -46,7 +46,15 @@ jobs:
             | head -1)
 
           if [ -z "$PR_NUMBER" ]; then
-            echo "❌ ERROR: No open automation/daily-brief PR found"
+            # daily-brief.yml enables native auto-merge, which can merge the PR before this workflow runs.
+            # Already merged is success: the export still runs and reads main, which contains the merge.
+            MERGED_NUMBER=$(gh api "repos/rciesielski3/ChiefOfStaff/pulls?state=closed&per_page=10" \
+              --jq '[.[] | select(.head.ref == "automation/daily-brief" and .merged_at != null)] | .[0].number // empty')
+            if [ -n "$MERGED_NUMBER" ]; then
+              echo "✅ automation/daily-brief PR #$MERGED_NUMBER already merged (auto-merge)"
+              exit 0
+            fi
+            echo "❌ ERROR: No open or merged automation/daily-brief PR found"
             echo "This should not happen. Daily Brief workflow must create the PR before Test triggers this workflow."
             exit 1
           fi
