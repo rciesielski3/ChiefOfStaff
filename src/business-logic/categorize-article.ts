@@ -56,3 +56,45 @@ export function categorizeForQANews(article: Article): string[] {
 
   return Array.from(categories);
 }
+
+/**
+ * Pick one display category for an article (used for UI filtering)
+ *
+ * Content wins over source: the category with the most keyword hits in
+ * title + summary is chosen. Ties go to config order. Only when no keyword
+ * matches does the source name decide, so a source like "Ministry of Testing"
+ * does not force every article into test-automation.
+ *
+ * @param article - Article to categorize
+ * @returns Single category ID
+ */
+export function primaryQANewsCategory(article: Article): string {
+  const text = `${article.title} ${article.summary}`.toLowerCase();
+  const config = categoryConfig as any;
+
+  let bestCategory: string | undefined;
+  let bestHits = 0;
+  for (const [categoryId, rules] of Object.entries(config.categories)) {
+    const { keywords } = rules as CategoryRules;
+    const hits = keywords.filter(keyword =>
+      new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(text)
+    ).length;
+    if (hits > bestHits) {
+      bestHits = hits;
+      bestCategory = categoryId;
+    }
+  }
+  if (bestCategory) {
+    return bestCategory;
+  }
+
+  const source = article.source.toLowerCase();
+  for (const [categoryId, rules] of Object.entries(config.categories)) {
+    const { sourceMatches } = rules as CategoryRules;
+    if (sourceMatches.some(match => source.includes(match.toLowerCase()))) {
+      return categoryId;
+    }
+  }
+
+  return config.defaults.fallbackCategory;
+}

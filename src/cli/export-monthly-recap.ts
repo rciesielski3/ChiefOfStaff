@@ -5,6 +5,7 @@ import * as path from 'path';
 import { exportMonthlyRecap, exportMonthlyRecapWithSummaries, MonthlyRecapExport } from '../business-logic/export-monthly-recap';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { SummaryGenerator } from '../business-logic/summary-generator';
+import { primaryQANewsCategory } from '../business-logic/categorize-article';
 
 /**
  * CLI: Export monthly recaps to QA News data directory
@@ -25,24 +26,6 @@ function logStructured(stage: string, data: Record<string, any>): void {
     .map(([key, value]) => `${key}=${JSON.stringify(value)}`)
     .join(' ');
   console.error(`[${timestamp}] [${stage}] ${fields}`);
-}
-
-/**
- * Map article categories to QA-News valid categories
- */
-function mapCategory(category: string): string {
-  const categoryMap: Record<string, string> = {
-    'test-automation': 'test-automation',
-    'ai': 'ai',
-    'engineering': 'engineering',
-    'qa-practice': 'qa-practice',
-    'tooling': 'tooling',
-    'news': 'test-automation',
-    'article': 'engineering',
-    'release': 'tooling',
-    'tutorial': 'qa-practice',
-  };
-  return categoryMap[category] || 'test-automation';
 }
 
 
@@ -132,7 +115,7 @@ async function main(): Promise<void> {
         themes: [], // Empty themes for now (will be populated by synthesis)
         items: month.items.map((article) => ({
           ...article,
-          category: mapCategory(article.category)
+          category: primaryQANewsCategory(article)
         }))
       }))
     };
