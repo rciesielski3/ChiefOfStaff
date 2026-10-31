@@ -7,6 +7,15 @@ interface CategoryRules {
 }
 
 /**
+ * Case-insensitive whole-word match of `term` inside `text`.
+ * "AI" matches "AI Weekly" but not "Email Weekly" or "Maintainers Weekly".
+ */
+function matchesWholeWord(text: string, term: string): boolean {
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`\\b${escaped}\\b`, 'i').test(text);
+}
+
+/**
  * Map article content to QA News categories using configurable keywords
  *
  * Algorithm:
@@ -41,7 +50,7 @@ export function categorizeForQANews(article: Article): string[] {
     // Check source name matches
     if (!categories.has(categoryId)) {
       for (const sourceMatch of categoryRules.sourceMatches) {
-        if (article.source.toLowerCase().includes(sourceMatch.toLowerCase())) {
+        if (matchesWholeWord(article.source, sourceMatch)) {
           categories.add(categoryId);
           break;
         }
@@ -55,4 +64,45 @@ export function categorizeForQANews(article: Article): string[] {
   }
 
   return Array.from(categories);
+}
+
+/**
+ * Pick one display category for an article (used for UI filtering)
+ *
+ * Content wins over source: the category with the most keyword hits in
+ * title + summary is chosen. Ties go to config order. Only when no keyword
+ * matches does the source name decide, so a source like "Ministry of Testing"
+ * does not force every article into test-automation.
+ *
+ * @param article - Article to categorize
+ * @returns Single category ID
+ */
+export function primaryQANewsCategory(article: Article): string {
+  const text = `${article.title} ${article.summary}`.toLowerCase();
+  const config = categoryConfig as any;
+
+  let bestCategory: string | undefined;
+  let bestHits = 0;
+  for (const [categoryId, rules] of Object.entries(config.categories)) {
+    const { keywords } = rules as CategoryRules;
+    const hits = keywords.filter(keyword =>
+      new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(text)
+    ).length;
+    if (hits > bestHits) {
+      bestHits = hits;
+      bestCategory = categoryId;
+    }
+  }
+  if (bestCategory) {
+    return bestCategory;
+  }
+
+  for (const [categoryId, rules] of Object.entries(config.categories)) {
+    const { sourceMatches } = rules as CategoryRules;
+    if (sourceMatches.some(match => matchesWholeWord(article.source, match))) {
+      return categoryId;
+    }
+  }
+
+  return config.defaults.fallbackCategory;
 }

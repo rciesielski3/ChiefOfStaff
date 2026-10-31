@@ -1,5 +1,5 @@
 import { Article, resolveArticleId } from './normalize-article';
-import { categorizeForQANews } from './categorize-article';
+import { primaryQANewsCategory } from './categorize-article';
 
 /**
  * Article format for QA News
@@ -11,7 +11,7 @@ export interface QANewsArticle {
   summary: string;
   url: string;
   source: string;
-  category: string; // Primary category (first from categorizeForQANews)
+  category: string; // Primary category (from primaryQANewsCategory)
   publishedAt: string;
   tags: string[];
 }
@@ -27,17 +27,15 @@ export interface QANewsExport {
  * Convert ChiefofStaff Article to QA-News format
  *
  * Algorithm:
- * 1. Categorize article using QA-specific rules
- * 2. Use first category as primary (for display)
- * 3. Extract summary from article content or use fallback
- * 4. Return in QA-News JSON schema
+ * 1. Pick the primary QA-specific category (for display)
+ * 2. Extract summary from article content or use fallback
+ * 3. Return in QA-News JSON schema
  *
  * @param article - Article from ChiefofStaff
  * @returns QA-News formatted article
  */
 export function articleToQANews(article: Article): QANewsArticle {
-  const categories = categorizeForQANews(article);
-  const primaryCategory = categories[0] || 'engineering';
+  const primaryCategory = primaryQANewsCategory(article);
 
   return {
     id: resolveArticleId(article),

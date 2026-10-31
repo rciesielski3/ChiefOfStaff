@@ -4,6 +4,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { exportLatestNews, LatestNewsExport, writePublicLatestNews } from '../business-logic/export-latest-news';
 import { NdJsonArticleStore } from '../business-logic/article-store';
+import { primaryQANewsCategory } from '../business-logic/categorize-article';
 
 /**
  * CLI: Export latest articles to QA News data directory
@@ -24,25 +25,6 @@ function logStructured(stage: string, data: Record<string, any>): void {
     .map(([key, value]) => `${key}=${JSON.stringify(value)}`)
     .join(' ');
   console.error(`[${timestamp}] [${stage}] ${fields}`);
-}
-
-/**
- * Map article categories to QA-News valid categories
- * QA-News only accepts: 'test-automation' | 'ai' | 'engineering' | 'qa-practice' | 'tooling'
- */
-function mapCategory(category: string): string {
-  const categoryMap: Record<string, string> = {
-    'test-automation': 'test-automation',
-    'ai': 'ai',
-    'engineering': 'engineering',
-    'qa-practice': 'qa-practice',
-    'tooling': 'tooling',
-    'news': 'test-automation',
-    'article': 'engineering',
-    'release': 'tooling',
-    'tutorial': 'qa-practice',
-  };
-  return categoryMap[category] || 'test-automation';
 }
 
 
@@ -114,7 +96,7 @@ async function main(): Promise<void> {
       ...latest,
       items: latest.items.map((article) => ({
         ...article,
-        category: mapCategory(article.category)
+        category: primaryQANewsCategory(article)
       }))
     };
 

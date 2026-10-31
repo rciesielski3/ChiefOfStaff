@@ -34,6 +34,11 @@ jobs:
     timeout-minutes: 10
     env:
       ENABLE_NOTIFICATIONS: true
+      # Anthropic-dependent steps (knowledge extraction, evolution) are off by
+      # default: the Anthropic account is on hold and the article pipeline must
+      # not depend on paid API calls. Set repo variable ENABLE_ANTHROPIC_STEPS=true
+      # to run them again. When off, they are skipped and never block the PR.
+      ENABLE_ANTHROPIC_STEPS: ${{ vars.ENABLE_ANTHROPIC_STEPS }}
     outputs:
       extraction_failed: ${{ steps.verify-extraction.outcome != 'success' }}
     steps:
@@ -52,14 +57,14 @@ jobs:
         run: npx ts-node src/cli/daily-brief.ts
 
       - name: Verify Extraction Prerequisites
-        if: always()
+        if: always() && env.ENABLE_ANTHROPIC_STEPS == 'true'
         run: |
           test -n "${{ secrets.ANTHROPIC_API_KEY }}" || (echo "ANTHROPIC_API_KEY not configured" && exit 1)
           test -f "data/canonical_articles.ndjson" || (echo "canonical_articles.ndjson not found" && exit 1)
           echo "Extraction prerequisites verified"
 
       - name: Extract Knowledge Facts
-        if: always()
+        if: always() && env.ENABLE_ANTHROPIC_STEPS == 'true'
         id: extract
         run: |
           echo "Starting knowledge fact extraction..."
@@ -92,7 +97,7 @@ jobs:
           echo "✅ Extraction verification: $FACT_COUNT facts extracted"
 
       - name: Run knowledge evolution
-        if: always()
+        if: always() && env.ENABLE_ANTHROPIC_STEPS == 'true'
         id: evolve
         run: |
           echo "Starting knowledge evolution..."

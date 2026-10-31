@@ -1,4 +1,11 @@
-import { fetchRSS, fetchAllSources, fetchWithRetry, RawArticle } from '../../src/business-logic/rss-fetch';
+import {
+  fetchRSS,
+  fetchAllSources,
+  fetchWithRetry,
+  RawArticle,
+  DEFAULT_FEED_TIMEOUT_MS,
+  DEFAULT_MAX_ATTEMPTS
+} from '../../src/business-logic/rss-fetch';
 import Parser from 'rss-parser';
 
 // Mock the rss-parser module
@@ -408,6 +415,44 @@ describe('fetchRSS', () => {
     await expect(fetchRSS(mockSourceUrl, mockSourceName, 100)).rejects.toThrow();
   });
 
+  it('aborts the underlying HTTP request when the timeout fires', async () => {
+    let capturedSignal: AbortSignal | undefined;
+
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
+      (options: any) => {
+        capturedSignal = options.requestOptions.signal;
+        return {
+          parseURL: jest.fn().mockImplementation(
+            () => new Promise(() => { /* never settles, like a stalled socket */ })
+          )
+        } as any;
+      }
+    );
+
+    await expect(
+      fetchRSS(mockSourceUrl, mockSourceName, 50)
+    ).rejects.toThrow('RSS feed timed out after 50ms');
+
+    expect(capturedSignal?.aborted).toBe(true);
+  });
+
+  it('leaves no pending timer behind after a successful fetch', async () => {
+    jest.useFakeTimers();
+    try {
+      (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
+        () => ({
+          parseURL: jest.fn().mockResolvedValue({ items: [] })
+        }) as any
+      );
+
+      await fetchRSS(mockSourceUrl, mockSourceName, 30000);
+
+      expect(jest.getTimerCount()).toBe(0);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('should succeed after transient failures via retry', async () => {
     const mockFeedItems = [
       {
@@ -658,6 +703,44 @@ describe('fetchWithRetry', () => {
 
       const result = await promise;
       expect(result).toBe('done');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+});
+
+describe('per-feed time budget', () => {
+  it('pins the default per-attempt timeout and attempt count', () => {
+    expect(DEFAULT_FEED_TIMEOUT_MS).toBe(10000);
+    expect(DEFAULT_MAX_ATTEMPTS).toBe(3);
+  });
+
+  it('rejects a stalled feed after exactly attempts x timeout plus backoff (30.3s)', async () => {
+    jest.useFakeTimers();
+    try {
+      const parseURL = jest.fn().mockImplementation(
+        () => new Promise(() => { /* never settles */ })
+      );
+      (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
+        () => ({ parseURL }) as any
+      );
+
+      let rejected = false;
+      const promise = fetchRSS('https://example.com/feed.xml', 'Stalled Feed').catch(error => {
+        rejected = true;
+        return error;
+      });
+
+      // 3 attempts x 10s timeout + 100ms + 200ms backoff = 30300ms
+      await jest.advanceTimersByTimeAsync(30299);
+      expect(rejected).toBe(false);
+
+      await jest.advanceTimersByTimeAsync(1);
+      expect(rejected).toBe(true);
+      expect(parseURL).toHaveBeenCalledTimes(3);
+
+      const error = await promise;
+      expect(error).toBeInstanceOf(Error);
     } finally {
       jest.useRealTimers();
     }

@@ -11,6 +11,7 @@ import { AtomicFileWriter } from '../business-logic/atomic-file-writer';
 import { getEnabledSources } from '../config/rss-sources.config';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { primaryQANewsCategory } from '../business-logic/categorize-article';
 
 // Load RSS sources from config (single source of truth)
 const RSS_SOURCES = getEnabledSources();
@@ -33,25 +34,6 @@ const RSS_SOURCES = getEnabledSources();
  * 7. Write all exports to qa-news/data/ directory
  * 8. Exit with code 0 on success, 1 on failure
  */
-
-/**
- * Map article categories to QA-News valid categories
- * QA-News only accepts: 'test-automation' | 'ai' | 'engineering' | 'qa-practice' | 'tooling'
- */
-function mapCategory(category: string): string {
-  const categoryMap: Record<string, string> = {
-    'test-automation': 'test-automation',
-    'ai': 'ai',
-    'engineering': 'engineering',
-    'qa-practice': 'qa-practice',
-    'tooling': 'tooling',
-    'news': 'test-automation',
-    'article': 'engineering',
-    'release': 'tooling',
-    'tutorial': 'qa-practice',
-  };
-  return categoryMap[category] || 'test-automation';
-}
 
 // Helper function for structured logging with timestamps
 function logStructured(stage: string, data: Record<string, any>): void {
@@ -217,7 +199,7 @@ async function main(): Promise<void> {
       ...latestExport,
       items: latestExport.items.map((article) => ({
         ...article,
-        category: mapCategory(article.category)
+        category: primaryQANewsCategory(article)
       }))
     };
 
