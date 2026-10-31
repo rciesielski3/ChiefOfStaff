@@ -408,6 +408,44 @@ describe('fetchRSS', () => {
     await expect(fetchRSS(mockSourceUrl, mockSourceName, 100)).rejects.toThrow();
   });
 
+  it('aborts the underlying HTTP request when the timeout fires', async () => {
+    let capturedSignal: AbortSignal | undefined;
+
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
+      (options: any) => {
+        capturedSignal = options.requestOptions.signal;
+        return {
+          parseURL: jest.fn().mockImplementation(
+            () => new Promise(() => { /* never settles, like a stalled socket */ })
+          )
+        } as any;
+      }
+    );
+
+    await expect(
+      fetchRSS(mockSourceUrl, mockSourceName, 50)
+    ).rejects.toThrow('RSS feed timed out after 50ms');
+
+    expect(capturedSignal?.aborted).toBe(true);
+  });
+
+  it('leaves no pending timer behind after a successful fetch', async () => {
+    jest.useFakeTimers();
+    try {
+      (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
+        () => ({
+          parseURL: jest.fn().mockResolvedValue({ items: [] })
+        }) as any
+      );
+
+      await fetchRSS(mockSourceUrl, mockSourceName, 30000);
+
+      expect(jest.getTimerCount()).toBe(0);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('should succeed after transient failures via retry', async () => {
     const mockFeedItems = [
       {

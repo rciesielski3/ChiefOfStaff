@@ -29,25 +29,54 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Wrap a promise with a timeout. If the promise doesn't resolve/reject within
- * the specified time, reject with a timeout error.
- *
- * @param promise - The promise to wrap
- * @param timeoutMs - Timeout duration in milliseconds
- * @param timeoutMessage - Custom error message
- * @returns The original promise result or timeout error
+ * Create an RSS parser whose HTTP requests are cancelled via `signal`.
  */
-function withTimeout<T>(
-  promise: Promise<T>,
-  timeoutMs: number,
-  timeoutMessage: string = `Operation timed out after ${timeoutMs}ms`
-): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs)
-    )
-  ]);
+function createParser(signal: AbortSignal): Parser {
+  return new Parser({
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'Accept': '*/*'
+    },
+    customFields: {
+      item: [
+        ['content:encoded', 'content']
+      ]
+    },
+    requestOptions: { signal }
+  });
+}
+
+/**
+ * Parse a feed URL with a hard timeout.
+ *
+ * On timeout the underlying HTTP request is aborted: rss-parser only rejects
+ * its promise and leaves the socket open, and an open socket keeps the Node
+ * process alive. The timer is always cleared, so a feed that answers in time
+ * does not leave a pending timer behind either.
+ */
+async function parseFeedWithTimeout(
+  sourceUrl: string,
+  sourceName: string,
+  timeoutMs: number
+) {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  const timedOut = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(new Error(`RSS feed timed out after ${timeoutMs}ms: ${sourceName}`));
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([
+      createParser(controller.signal).parseURL(sourceUrl),
+      timedOut
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**
@@ -115,21 +144,9 @@ export async function fetchRSS(
   sourceName: string,
   timeoutMs: number = 30000
 ): Promise<RawArticle[]> {
-  const parser = new Parser({
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-      'Accept': '*/*'
-    },
-    customFields: {
-      item: [
-        ['content:encoded', 'content']
-      ]
-    }
-  });
-
   try {
     const feed = await fetchWithRetry(
-      () => withTimeout(parser.parseURL(sourceUrl), timeoutMs, `RSS feed timed out after ${timeoutMs}ms: ${sourceName}`)
+      () => parseFeedWithTimeout(sourceUrl, sourceName, timeoutMs)
     );
 
     return (feed.items || []).map(item => ({
