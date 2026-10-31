@@ -112,3 +112,34 @@ describe('primaryQANewsCategory', () => {
     expect(primaryQANewsCategory(article)).toBe('engineering');
   });
 });
+
+describe('source matching uses whole words', () => {
+  const mockArticle = (title: string, summary: string, source: string): Article => ({
+    id: 'test-source-1',
+    title,
+    summary,
+    url: 'https://example.com/source-test',
+    source,
+    category: 'tooling',
+    publishedAt: new Date().toISOString(),
+    tags: []
+  });
+
+  it('does not match the "AI" source rule inside "Email Weekly"', () => {
+    const article = mockArticle('Weekly roundup', 'A short list of links', 'Email Weekly');
+    expect(categorizeForQANews(article)).not.toContain('ai');
+    expect(primaryQANewsCategory(article)).not.toBe('ai');
+  });
+
+  it('does not match the "AI" source rule inside "Maintainers Weekly"', () => {
+    const article = mockArticle('Weekly roundup', 'A short list of links', 'Maintainers Weekly');
+    expect(categorizeForQANews(article)).not.toContain('ai');
+    expect(primaryQANewsCategory(article)).not.toBe('ai');
+  });
+
+  it('still matches the "AI" source rule for "AI Weekly"', () => {
+    const article = mockArticle('Weekly roundup', 'A short list of links', 'AI Weekly');
+    expect(categorizeForQANews(article)).toContain('ai');
+    expect(primaryQANewsCategory(article)).toBe('ai');
+  });
+});

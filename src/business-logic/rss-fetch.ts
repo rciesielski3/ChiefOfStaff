@@ -21,8 +21,15 @@ export interface RetryOptions {
   baseDelayMs?: number;
 }
 
-const DEFAULT_MAX_ATTEMPTS = 3;
+/** Attempts per feed (including the first try) used by fetchWithRetry. */
+export const DEFAULT_MAX_ATTEMPTS = 3;
 const DEFAULT_BASE_DELAY_MS = 100;
+/**
+ * Hard cap on a single feed attempt. Healthy feeds answer well inside this.
+ * Worst case per feed = DEFAULT_MAX_ATTEMPTS * this + backoff (0.1s + 0.2s),
+ * which keeps 8 stalled feeds under the 10-minute daily-brief job timeout.
+ */
+export const DEFAULT_FEED_TIMEOUT_MS = 10000;
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -129,20 +136,20 @@ export async function fetchWithRetry<T>(
  * Algorithm:
  * 1. Initialize RSS parser
  * 2. Parse URL to get feed items, retrying on failure with exponential backoff
- * 3. Apply 30-second timeout per feed to prevent hangs
+ * 3. Apply a 10-second timeout per attempt to prevent hangs
  * 4. Map feed items to RawArticle interface
  * 5. Handle missing fields with defaults
  *
  * @param sourceUrl - URL of RSS feed
  * @param sourceName - Human-readable name of the source (e.g., "OpenAI Blog")
- * @param timeoutMs - Timeout per feed in milliseconds (default: 30000ms = 30s)
+ * @param timeoutMs - Timeout per attempt in milliseconds (default: DEFAULT_FEED_TIMEOUT_MS = 10s)
  * @returns Array of normalized raw articles
  * @throws Error if feed cannot be parsed after all retry attempts or times out
  */
 export async function fetchRSS(
   sourceUrl: string,
   sourceName: string,
-  timeoutMs: number = 30000
+  timeoutMs: number = DEFAULT_FEED_TIMEOUT_MS
 ): Promise<RawArticle[]> {
   try {
     const feed = await fetchWithRetry(

@@ -7,6 +7,15 @@ interface CategoryRules {
 }
 
 /**
+ * Case-insensitive whole-word match of `term` inside `text`.
+ * "AI" matches "AI Weekly" but not "Email Weekly" or "Maintainers Weekly".
+ */
+function matchesWholeWord(text: string, term: string): boolean {
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`\\b${escaped}\\b`, 'i').test(text);
+}
+
+/**
  * Map article content to QA News categories using configurable keywords
  *
  * Algorithm:
@@ -41,7 +50,7 @@ export function categorizeForQANews(article: Article): string[] {
     // Check source name matches
     if (!categories.has(categoryId)) {
       for (const sourceMatch of categoryRules.sourceMatches) {
-        if (article.source.toLowerCase().includes(sourceMatch.toLowerCase())) {
+        if (matchesWholeWord(article.source, sourceMatch)) {
           categories.add(categoryId);
           break;
         }
@@ -88,10 +97,9 @@ export function primaryQANewsCategory(article: Article): string {
     return bestCategory;
   }
 
-  const source = article.source.toLowerCase();
   for (const [categoryId, rules] of Object.entries(config.categories)) {
     const { sourceMatches } = rules as CategoryRules;
-    if (sourceMatches.some(match => source.includes(match.toLowerCase()))) {
+    if (sourceMatches.some(match => matchesWholeWord(article.source, match))) {
       return categoryId;
     }
   }
