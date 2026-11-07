@@ -73,4 +73,18 @@ describe('Daily Brief CLI Error Handling', () => {
     // Verify error handler exits with code 1
     expect(cliContent).toContain('process.exit(1)');
   });
+
+  it('exits with code 0 right after WORKFLOW_COMPLETE, inside the try block only', () => {
+    const fs = require('fs');
+    const cliContent: string = fs.readFileSync(
+      path.join(__dirname, '../../src/cli/daily-brief.ts'),
+      'utf-8'
+    );
+
+    // Success exit must follow the WORKFLOW_COMPLETE log and precede the catch
+    // block, so it runs only on the success path.
+    expect(cliContent).toMatch(
+      /logStructured\('WORKFLOW_COMPLETE'[\s\S]*?process\.exit\(0\);\s*\} catch \(error\)/
+    );
+  });
 });
