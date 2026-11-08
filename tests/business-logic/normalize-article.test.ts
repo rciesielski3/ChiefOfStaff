@@ -283,10 +283,42 @@ describe('truncateDescription', () => {
   });
 
   it('cuts at the last sentence end that fits', () => {
-    const text = 'First sentence. Second sentence! Third sentence? ' + 'x'.repeat(400);
+    // Final sentence end sits past the half-length mark (200), so it is eligible.
+    const text = 'First sentence. ' + 'word '.repeat(40) + 'Third sentence? ' + 'x'.repeat(400);
     const result = truncateDescription(text);
 
-    expect(result).toBe('First sentence. Second sentence! Third sentence?');
+    expect(result).toBe('First sentence. ' + 'word '.repeat(40) + 'Third sentence?');
+    expect(result.length).toBeLessThanOrEqual(400);
+  });
+
+  it('does not collapse to an early sentence end before half the limit', () => {
+    const result = truncateDescription('Breaking. ' + 'word '.repeat(150));
+
+    expect(result.length).toBeGreaterThan(200);
+    expect(result.endsWith('...')).toBe(true);
+    expect(result.length).toBeLessThanOrEqual(400);
+  });
+
+  it('returns a prefix of text when maxLength is smaller than the ellipsis', () => {
+    expect(truncateDescription('Hello world', 2)).toBe('He');
+    expect(truncateDescription('Hello world', 0)).toBe('');
+  });
+
+  it('keeps output within maxLength of 3', () => {
+    const result = truncateDescription('Hello world again', 3);
+
+    expect(result.length).toBeLessThanOrEqual(3);
+  });
+
+  it('does not leave a lone high surrogate on a hard cut', () => {
+    // Emoji (surrogate pair) straddles the cut index; no whitespace available.
+    const text = 'a'.repeat(396) + '😀' + 'a'.repeat(100);
+    const result = truncateDescription(text);
+    const body = result.slice(0, -3);
+
+    expect(result.endsWith('...')).toBe(true);
+    const last = body.charCodeAt(body.length - 1);
+    expect(last >= 0xd800 && last <= 0xdbff).toBe(false);
     expect(result.length).toBeLessThanOrEqual(400);
   });
 

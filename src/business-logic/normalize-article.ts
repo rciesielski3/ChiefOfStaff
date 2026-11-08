@@ -63,9 +63,12 @@ const ELLIPSIS = '...';
  */
 export function truncateDescription(text: string, maxLength: number = DESCRIPTION_MAX_LENGTH): string {
   if (text.length <= maxLength) return text;
+  if (maxLength < ELLIPSIS.length) return text.slice(0, Math.max(0, maxLength));
 
   // A sentence end counts only when followed by whitespace, so "3.14" or "v1.2" are not cut.
-  for (let i = maxLength - 1; i >= 0; i--) {
+  // It must also sit at or past half the limit, so an early period cannot collapse the description.
+  const minSentenceEnd = Math.floor(maxLength / 2);
+  for (let i = maxLength - 1; i >= minSentenceEnd; i--) {
     if (/[.!?]/.test(text[i]) && /\s/.test(text[i + 1] ?? '')) {
       return text.slice(0, i + 1);
     }
@@ -74,8 +77,13 @@ export function truncateDescription(text: string, maxLength: number = DESCRIPTIO
   // No sentence end fits: cut at the last whitespace within the room left for the ellipsis.
   const window = text.slice(0, maxLength - ELLIPSIS.length);
   const lastSpace = window.lastIndexOf(' ');
-  const cut = lastSpace > 0 ? window.slice(0, lastSpace) : window;
-  return cut.trimEnd() + ELLIPSIS;
+  if (lastSpace > 0) return window.slice(0, lastSpace).trimEnd() + ELLIPSIS;
+
+  // Hard cut: never leave a lone high surrogate at the end.
+  let end = window.length;
+  const lastCode = window.charCodeAt(end - 1);
+  if (end > 0 && lastCode >= 0xd800 && lastCode <= 0xdbff) end--;
+  return window.slice(0, end).trimEnd() + ELLIPSIS;
 }
 
 /**
