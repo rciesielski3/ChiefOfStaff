@@ -1,4 +1,4 @@
-import { normalizeArticle } from '../../src/business-logic/normalize-article';
+import { normalizeArticle, truncateDescription } from '../../src/business-logic/normalize-article';
 import { RawArticle } from '../../src/business-logic/rss-fetch';
 
 describe('normalizeArticle', () => {
@@ -210,5 +210,115 @@ describe('normalizeArticle', () => {
     const normalized = normalizeArticle(article);
 
     expect(Array.isArray(normalized.tags)).toBe(true);
+  });
+});
+
+describe('normalizeArticle description', () => {
+  const base: RawArticle = {
+    link: 'https://example.com/desc',
+    title: 'Description Article',
+    pubDate: '2026-07-11T10:00:00Z',
+    content: '',
+    source: 'Test Blog'
+  };
+
+  it('strips HTML and entities from description', () => {
+    const normalized = normalizeArticle({
+      ...base,
+      content: '<p>First <strong>bold</strong> &amp; clear.</p>'
+    });
+
+    expect(normalized.description).toBe('First bold & clear.');
+    expect(normalized.description).not.toContain('<');
+  });
+
+  it('omits description when cleaned content is empty', () => {
+    const normalized = normalizeArticle({ ...base, content: '  <p> </p>  ' });
+
+    expect(normalized.description).toBeUndefined();
+    expect('description' in normalized).toBe(false);
+  });
+
+  it('equals cleaned text for short content', () => {
+    const normalized = normalizeArticle({ ...base, content: 'Short <em>content</em> here.' });
+
+    expect(normalized.description).toBe('Short content here.');
+  });
+
+  it('keeps description within 400 chars and ends on a sentence boundary or ellipsis', () => {
+    const sentence = 'This is a sentence about testing. ';
+    const normalized = normalizeArticle({ ...base, content: sentence.repeat(30) });
+
+    expect(normalized.description!.length).toBeLessThanOrEqual(400);
+    expect(normalized.description!.endsWith('.')).toBe(true);
+  });
+
+  it('keeps summary output unchanged for an existing fixture', () => {
+    const normalized = normalizeArticle({
+      ...base,
+      content: 'A'.repeat(500)
+    });
+
+    expect(normalized.summary).toBe('A'.repeat(200) + '...');
+  });
+
+  it('keeps summary output unchanged for short HTML content', () => {
+    const normalized = normalizeArticle({
+      ...base,
+      content: '<p>Hello &amp; welcome</p>'
+    });
+
+    expect(normalized.summary).toBe('Hello & welcome');
+  });
+});
+
+describe('truncateDescription', () => {
+  it('returns text unchanged when within the limit', () => {
+    expect(truncateDescription('Short text.')).toBe('Short text.');
+  });
+
+  it('returns text unchanged at exactly the limit', () => {
+    const text = 'a'.repeat(400);
+    expect(truncateDescription(text)).toBe(text);
+  });
+
+  it('cuts at the last sentence end that fits', () => {
+    const text = 'First sentence. Second sentence! Third sentence? ' + 'x'.repeat(400);
+    const result = truncateDescription(text);
+
+    expect(result).toBe('First sentence. Second sentence! Third sentence?');
+    expect(result.length).toBeLessThanOrEqual(400);
+  });
+
+  it('ignores sentence-like punctuation not followed by whitespace', () => {
+    const text = 'Version 3.14 ' + 'word '.repeat(100);
+    const result = truncateDescription(text);
+
+    expect(result).toContain('3.14');
+    expect(result.endsWith('...')).toBe(true);
+    expect(result.length).toBeLessThanOrEqual(400);
+  });
+
+  it('falls back to last whitespace plus ellipsis when no sentence end fits', () => {
+    const text = 'word '.repeat(200).trim();
+    const result = truncateDescription(text);
+
+    expect(result.endsWith('word...')).toBe(true);
+    expect(result.length).toBeLessThanOrEqual(400);
+  });
+
+  it('hard cuts with ellipsis when there is no whitespace at all', () => {
+    const text = 'a'.repeat(1000);
+    const result = truncateDescription(text);
+
+    expect(result).toBe('a'.repeat(397) + '...');
+    expect(result.length).toBe(400);
+  });
+
+  it('respects a custom max length', () => {
+    const result = truncateDescription('One two three four five six seven', 15);
+
+    expect(result.length).toBeLessThanOrEqual(15);
+    expect(result).toBe('One two...');
   });
 });
