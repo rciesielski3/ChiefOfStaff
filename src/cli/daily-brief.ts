@@ -187,6 +187,13 @@ async function main() {
       articlesScored: scoredArticles.length,
       briefGenerated: true
     });
+
+    // Success path only: every write above is awaited before this point.
+    // On the CI runner the Node process can stay alive after all work is
+    // persisted (lingering handles), leaving the workflow step to hit its
+    // timeout. This is a deliberate exit after persisted work, not a fix for
+    // that leak. Failure paths keep their existing exit(1) behaviour.
+    process.exit(0);
   } catch (error) {
     const totalDuration = Date.now() - workflowStartTime;
     console.error('[Daily Brief] ❌ Error:', error);
