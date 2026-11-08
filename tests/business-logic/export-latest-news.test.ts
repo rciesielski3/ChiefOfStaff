@@ -304,6 +304,30 @@ describe('transformToPublicFormat', () => {
     expect(output.articles).toBe(input.items);
   });
 
+  it('passes article description through to public output', () => {
+    const input = {
+      date: '2026-07-31',
+      updatedAt: '2026-07-31T10:00:00Z',
+      items: [
+        {
+          id: 'test-2',
+          title: 'Described Article',
+          summary: 'Short',
+          description: 'A longer description. It has two sentences.',
+          url: 'https://example.com/2',
+          source: 'Test Source',
+          category: 'news',
+          publishedAt: '2026-07-31T08:00:00Z',
+          tags: []
+        }
+      ]
+    };
+
+    const output = transformToPublicFormat(input);
+
+    expect(output.articles[0].description).toBe('A longer description. It has two sentences.');
+  });
+
   it('handles empty items array', () => {
     const input = {
       date: '2026-07-31',

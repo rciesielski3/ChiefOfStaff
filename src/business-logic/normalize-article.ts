@@ -8,6 +8,7 @@ export interface Article {
   id: string;
   title: string;
   summary: string;
+  description?: string;
   url: string;
   source: string;
   category: string;
@@ -49,13 +50,49 @@ export function withResolvedId<T extends Article>(article: T): T {
   return { ...article, id: resolveArticleId(article) };
 }
 
+const DESCRIPTION_MAX_LENGTH = 400;
+const ELLIPSIS = '...';
+
+/**
+ * Truncate already-cleaned text to at most `maxLength` characters.
+ * Prefers the last sentence end (. ! ?) that fits; otherwise cuts at the last
+ * whitespace before the limit and appends "...". Pure function.
+ *
+ * @param text - Cleaned text (single spaces, trimmed)
+ * @param maxLength - Maximum length of the returned string
+ */
+export function truncateDescription(text: string, maxLength: number = DESCRIPTION_MAX_LENGTH): string {
+  if (text.length <= maxLength) return text;
+  if (maxLength < ELLIPSIS.length) return text.slice(0, Math.max(0, maxLength));
+
+  // A sentence end counts only when followed by whitespace, so "3.14" or "v1.2" are not cut.
+  // It must also sit at or past half the limit, so an early period cannot collapse the description.
+  const minSentenceEnd = Math.floor(maxLength / 2);
+  for (let i = maxLength - 1; i >= minSentenceEnd; i--) {
+    if (/[.!?]/.test(text[i]) && /\s/.test(text[i + 1] ?? '')) {
+      return text.slice(0, i + 1);
+    }
+  }
+
+  // No sentence end fits: cut at the last whitespace within the room left for the ellipsis.
+  const window = text.slice(0, maxLength - ELLIPSIS.length);
+  const lastSpace = window.lastIndexOf(' ');
+  if (lastSpace > 0) return window.slice(0, lastSpace).trimEnd() + ELLIPSIS;
+
+  // Hard cut: never leave a lone high surrogate at the end.
+  let end = window.length;
+  const lastCode = window.charCodeAt(end - 1);
+  if (end > 0 && lastCode >= 0xd800 && lastCode <= 0xdbff) end--;
+  return window.slice(0, end).trimEnd() + ELLIPSIS;
+}
+
 /**
  * Normalize a raw RSS article to standard Article format
  *
  * Algorithm:
  * 1. Generate unique ID from source + link hash
  * 2. Extract title (required)
- * 3. Extract summary from content (first 200 chars, strip HTML)
+ * 3. Extract summary from content (first 200 chars, strip HTML) and description (up to 400 chars, sentence-aware)
  * 4. Preserve URL
  * 5. Store source name
  * 6. Infer category from source name (heuristic)
@@ -83,6 +120,8 @@ export function normalizeArticle(raw: RawArticle): Article {
     ? cleanContent.substring(0, 200) + '...'
     : cleanContent;
 
+  const description = truncateDescription(cleanContent);
+
   // Infer category from source name
   const sourceUpper = raw.source.toLowerCase();
   let category = 'news';
@@ -106,6 +145,7 @@ export function normalizeArticle(raw: RawArticle): Article {
     id,
     title: raw.title,
     summary,
+    ...(description ? { description } : {}),
     url: raw.link,
     source: raw.source,
     category,
