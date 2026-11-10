@@ -156,13 +156,23 @@ export async function fetchRSS(
       () => parseFeedWithTimeout(sourceUrl, sourceName, timeoutMs)
     );
 
-    return (feed.items || []).map(item => ({
-      link: item.link || '',
-      title: item.title || '',
-      pubDate: item.pubDate || new Date().toISOString(),
-      content: (item as any).content || item.contentSnippet || (item as any).description || '',
-      source: sourceName
-    }));
+    // Items without a usable publish date are dropped: stamping them with the
+    // fetch time would make them look fresh and earn the "recent" bonus.
+    return (feed.items || [])
+      .map(item => ({
+        link: item.link || '',
+        title: item.title || '',
+        pubDate: item.pubDate || item.isoDate || '',
+        content: (item as any).content || item.contentSnippet || (item as any).description || '',
+        source: sourceName
+      }))
+      .filter(item => {
+        const valid = item.pubDate !== '' && !Number.isNaN(Date.parse(item.pubDate));
+        if (!valid) {
+          console.warn(`[RSS] Dropping undated item from ${sourceName}: ${item.link}`);
+        }
+        return valid;
+      });
   } catch (error) {
     console.error(`Failed to fetch RSS from ${sourceUrl} after retries:`, error);
     throw error;
@@ -176,6 +186,28 @@ export interface RSSSourceConfig {
   url: string;
   name: string;
   enabled?: boolean;
+  /** URL path prefixes that are not news for this source (e.g. "/jobs/"). Matching items are dropped. */
+  excludePathPrefixes?: string[];
+}
+
+/**
+ * Drop items whose link path starts with one of the given prefixes.
+ * Links that do not parse as URLs are kept.
+ */
+export function filterExcludedPaths<T extends { link: string }>(
+  items: T[],
+  excludePathPrefixes: string[] = []
+): T[] {
+  if (excludePathPrefixes.length === 0) return items;
+  return items.filter(item => {
+    let pathname: string;
+    try {
+      pathname = new URL(item.link).pathname;
+    } catch {
+      return true;
+    }
+    return !excludePathPrefixes.some(prefix => pathname.startsWith(prefix));
+  });
 }
 
 /**
@@ -226,7 +258,10 @@ export async function fetchAllSources(
   for (const source of sources) {
     try {
       console.log(`[Daily Brief] Fetching from ${source.name}...`);
-      const sourceArticles = await fetchRSS(source.url, source.name);
+      const sourceArticles = filterExcludedPaths(
+        await fetchRSS(source.url, source.name),
+        source.excludePathPrefixes
+      );
       articles.push(...sourceArticles);
 
       results.push({
