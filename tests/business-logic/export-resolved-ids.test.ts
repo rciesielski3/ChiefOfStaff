@@ -57,3 +57,27 @@ describe('exporters emit distinct IDs for legacy-colliding articles', () => {
     expect(legacyRows[0].id).toBe(buildLegacyArticleId('InfoQ', legacyRows[0].url));
   });
 });
+
+describe('weekly and monthly exports fail loudly on an ID collision', () => {
+  // Non-legacy IDs are kept as stored, so two different URLs sharing one ID must throw.
+  const clashing = (url: string): Article => ({
+    id: 'infoq-0000000000000000',
+    title: url,
+    summary: 'summary',
+    url,
+    source: 'InfoQ',
+    category: 'news',
+    publishedAt: now,
+    tags: [],
+    score: 50
+  });
+  const clashRows = [clashing('https://www.infoq.com/news/x/'), clashing('https://www.infoq.com/news/y/')];
+
+  it('exportWeeklyHighlights throws', () => {
+    expect(() => exportWeeklyHighlights(clashRows)).toThrow(/Article ID collision/);
+  });
+
+  it('exportMonthlyRecap throws', () => {
+    expect(() => exportMonthlyRecap(clashRows)).toThrow(/Article ID collision/);
+  });
+});
