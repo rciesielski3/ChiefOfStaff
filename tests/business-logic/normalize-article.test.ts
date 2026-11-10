@@ -1,5 +1,42 @@
-import { normalizeArticle, truncateDescription } from '../../src/business-logic/normalize-article';
+import { normalizeArticle, truncateDescription, buildArticleId, assertUniqueArticleIds } from '../../src/business-logic/normalize-article';
 import { RawArticle } from '../../src/business-logic/rss-fetch';
+
+describe('buildArticleId', () => {
+  it('gives different URLs with the same host different IDs', () => {
+    const a = buildArticleId('Cloudflare', 'https://blog.cloudflare.com/post-a/');
+    const b = buildArticleId('Cloudflare', 'https://blog.cloudflare.com/post-b/');
+    expect(a).not.toEqual(b);
+  });
+
+  it('gives the same URL a stable ID with the source-slug prefix', () => {
+    const url = 'https://blog.cloudflare.com/post-a/';
+    expect(buildArticleId('Cloudflare', url)).toEqual(buildArticleId('Cloudflare', url));
+    expect(buildArticleId('Cloudflare', url)).toMatch(/^cloudflare-[0-9a-f]{16}$/);
+  });
+});
+
+describe('assertUniqueArticleIds', () => {
+  it('passes when IDs are distinct', () => {
+    expect(() => assertUniqueArticleIds([
+      { id: 'a', url: 'https://x.test/1' },
+      { id: 'b', url: 'https://x.test/2' }
+    ])).not.toThrow();
+  });
+
+  it('allows the same URL to appear twice', () => {
+    expect(() => assertUniqueArticleIds([
+      { id: 'a', url: 'https://x.test/1' },
+      { id: 'a', url: 'https://x.test/1' }
+    ])).not.toThrow();
+  });
+
+  it('throws when two different URLs share one ID', () => {
+    expect(() => assertUniqueArticleIds([
+      { id: 'a', url: 'https://x.test/1' },
+      { id: 'a', url: 'https://x.test/2' }
+    ])).toThrow(/Article ID collision: "a"/);
+  });
+});
 
 describe('normalizeArticle', () => {
   const mockRawArticle: RawArticle = {

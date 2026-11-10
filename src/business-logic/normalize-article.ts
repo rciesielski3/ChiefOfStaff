@@ -50,6 +50,22 @@ export function withResolvedId<T extends Article>(article: T): T {
   return { ...article, id: resolveArticleId(article) };
 }
 
+/**
+ * Throw if two different URLs share one article ID. The same URL repeated is allowed.
+ * Export layers call this so a collision fails the run instead of silently overwriting an article.
+ */
+export function assertUniqueArticleIds(articles: Array<Pick<Article, 'id' | 'url'>>): void {
+  const urlById = new Map<string, string>();
+  for (const article of articles) {
+    const seenUrl = urlById.get(article.id);
+    if (seenUrl === undefined) {
+      urlById.set(article.id, article.url);
+    } else if (seenUrl !== article.url) {
+      throw new Error(`Article ID collision: "${article.id}" maps to both ${seenUrl} and ${article.url}`);
+    }
+  }
+}
+
 const DESCRIPTION_MAX_LENGTH = 400;
 const ELLIPSIS = '...';
 
