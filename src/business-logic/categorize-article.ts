@@ -16,6 +16,14 @@ function matchesWholeWord(text: string, term: string): boolean {
 }
 
 /**
+ * Text used for keyword matching: title, summary and tags. Source names are
+ * deliberately excluded here so that they cannot override the article content.
+ */
+function contentText(article: Article): string {
+  return `${article.title} ${article.summary} ${(article.tags ?? []).join(' ')}`.toLowerCase();
+}
+
+/**
  * Map article content to QA News categories using configurable keywords
  *
  * Algorithm:
@@ -29,7 +37,7 @@ function matchesWholeWord(text: string, term: string): boolean {
  * @returns Array of matching category IDs
  */
 export function categorizeForQANews(article: Article): string[] {
-  const text = `${article.title} ${article.summary}`.toLowerCase();
+  const text = contentText(article);
   const categories = new Set<string>();
 
   const config = categoryConfig as any;
@@ -69,16 +77,19 @@ export function categorizeForQANews(article: Article): string[] {
 /**
  * Pick one display category for an article (used for UI filtering)
  *
- * Content wins over source: the category with the most keyword hits in
- * title + summary is chosen. Ties go to config order. Only when no keyword
- * matches does the source name decide, so a source like "Ministry of Testing"
- * does not force every article into test-automation.
+ * Rule order:
+ * 1. Keyword hits in title, summary and tags. The category with the most hits
+ *    wins; ties go to config order.
+ * 2. Only when no keyword hits, an exact whole-word source key (e.g. "Jest",
+ *    "OpenAI") picks the category. Broad source words such as "Testing" are
+ *    not in the config, so "Ministry of Testing" cannot force test-automation.
+ * 3. Otherwise the configured default (engineering).
  *
  * @param article - Article to categorize
  * @returns Single category ID
  */
 export function primaryQANewsCategory(article: Article): string {
-  const text = `${article.title} ${article.summary}`.toLowerCase();
+  const text = contentText(article);
   const config = categoryConfig as any;
 
   let bestCategory: string | undefined;

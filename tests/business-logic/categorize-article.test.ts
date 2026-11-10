@@ -94,13 +94,53 @@ describe('primaryQANewsCategory', () => {
     expect(primaryQANewsCategory(article)).toBe('test-automation');
   });
 
-  it('should fall back to the source match when no keyword matches', () => {
+  it('should fall back to the default when no keyword matches, even for a broad source name', () => {
     const article = mockArticle(
       'Weekly roundup',
       'A short list of links',
       'Ministry of Testing'
     );
+    expect(primaryQANewsCategory(article)).toBe('engineering');
+  });
+
+  it('should fall back to an exact source key when no keyword matches', () => {
+    const article = mockArticle(
+      'Weekly roundup',
+      'A short list of links',
+      'Jest'
+    );
     expect(primaryQANewsCategory(article)).toBe('test-automation');
+  });
+
+  it('should keep an AI article as ai when the source name contains "Testing"', () => {
+    const article = mockArticle(
+      'New LLM model release for coding agents',
+      'A faster model with better reasoning',
+      'Testing Blog'
+    );
+    expect(primaryQANewsCategory(article)).toBe('ai');
+  });
+
+  it('should keep a test automation article as test-automation', () => {
+    const article = mockArticle(
+      'Playwright adds a new test runner',
+      'Faster e2e test suites with less flakiness',
+      'Some Source'
+    );
+    expect(primaryQANewsCategory(article)).toBe('test-automation');
+  });
+
+  it('should let article tags count as content', () => {
+    const article: Article = {
+      ...mockArticle('Weekly roundup', 'A short list of links', 'Some Source'),
+      tags: ['LLM']
+    };
+    expect(primaryQANewsCategory(article)).toBe('ai');
+  });
+
+  it('should not match a source key inside a longer word', () => {
+    const article = mockArticle('Weekly roundup', 'A short list of links', 'Playwrights Notes');
+    expect(primaryQANewsCategory(article)).toBe('engineering');
   });
 
   it('should use the engineering fallback when nothing matches', () => {
