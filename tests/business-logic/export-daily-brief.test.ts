@@ -58,23 +58,25 @@ describe('export-daily-brief', () => {
     id: 'test-1',
     title: 'Article from today',
     publishedAt: new Date(today.getTime() + 3600000).toISOString(), // 1 hour after midnight today
-    score: 85
+    score: 40
   });
 
+  // Scores are deliberately ordered opposite to publish dates so a sort by score
+  // would produce a different order than the date-based sort under test.
   const mockArticleYesterday = createArticle({
     id: 'test-2',
     title: 'Article from yesterday',
     publishedAt: new Date(yesterday.getTime() + 3600000).toISOString(),
     category: 'ai',
-    score: 75
+    score: 90
   });
 
   const mockArticleHighScore = createArticle({
     id: 'test-3',
-    title: 'High score today',
+    title: 'Latest article today',
     publishedAt: new Date(today.getTime() + 7200000).toISOString(), // 2 hours after midnight today
     category: 'engineering',
-    score: 95
+    score: 10
   });
 
   // The publish-date filter was removed on purpose (commit 8fbd72d, "export latest articles
@@ -141,9 +143,10 @@ describe('export-daily-brief', () => {
     const store = new MockArticleStore([invalidArticle, mockArticleToday]);
     const result = await exportDailyBrief(store, 10);
 
-    // No date filter, so both are exported; order of the unparseable article is unspecified
+    // No date filter, so both are exported. The sort comparator returns NaN for the
+    // unparseable date, which is treated as equal, so the stable sort keeps input order.
     expect(result.items).toHaveLength(2);
-    expect(result.items.map(a => a.id)).toEqual(expect.arrayContaining(['test-1', 'test-invalid']));
+    expect(result.items.map(a => a.id)).toEqual(['test-invalid', 'test-1']);
   });
 
   test('sets updatedAt to current timestamp', async () => {
