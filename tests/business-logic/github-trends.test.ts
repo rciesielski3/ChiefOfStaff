@@ -5,6 +5,7 @@ import {
   formatSearchDate,
   GitHubRepo,
   GITHUB_TREND_MIN_STARS,
+  hasDescription,
   repoToArticle,
   windowStart,
   FetchLike
@@ -52,6 +53,14 @@ describe('repoToArticle', () => {
   });
 });
 
+describe('hasDescription', () => {
+  it('is false for null or whitespace-only descriptions', () => {
+    expect(hasDescription(makeRepo({ description: null }))).toBe(false);
+    expect(hasDescription(makeRepo({ description: '  ' }))).toBe(false);
+    expect(hasDescription(makeRepo())).toBe(true);
+  });
+});
+
 describe('dedupeByUrl', () => {
   it('keeps the first article per URL across topics', () => {
     const repo = makeRepo();
@@ -82,9 +91,9 @@ describe('date window and query', () => {
   it('builds the topic, date and star threshold query', () => {
     const since = new Date('2026-10-11T00:00:00Z');
     expect(buildTrendQuery('test-automation', since)).toBe(
-      'topic:test-automation created:>2026-10-11 stars:>=50'
+      'topic:test-automation created:>2026-10-11 stars:>=200 fork:false archived:false'
     );
-    expect(GITHUB_TREND_MIN_STARS).toBe(50);
+    expect(GITHUB_TREND_MIN_STARS).toBe(200);
   });
 });
 
@@ -111,7 +120,9 @@ describe('fetchGitHubTrends', () => {
     const [url, init] = fetchImpl.mock.calls[0];
     const parsed = new URL(url);
     expect(parsed.origin + parsed.pathname).toBe('https://api.github.com/search/repositories');
-    expect(parsed.searchParams.get('q')).toBe('topic:test-automation created:>2026-10-11 stars:>=50');
+    expect(parsed.searchParams.get('q')).toBe(
+      'topic:test-automation created:>2026-10-11 stars:>=200 fork:false archived:false'
+    );
     expect(parsed.searchParams.get('sort')).toBe('stars');
     expect(parsed.searchParams.get('per_page')).toBe('20');
     expect(init?.headers?.['User-Agent']).toBe('qa-news-trends/1.0');
@@ -122,6 +133,14 @@ describe('fetchGitHubTrends', () => {
     const fetchImpl = mockFetch({});
     await fetchGitHubTrends({ now, fetchImpl });
     expect(fetchImpl.mock.calls[0][1]?.headers?.Authorization).toBeUndefined();
+  });
+
+  it('drops repositories without a description', async () => {
+    const fetchImpl = mockFetch({
+      'test-automation': [makeRepo({ description: null }), makeRepo({ html_url: 'https://github.com/acme/blank', name: 'blank', description: '   ' }), makeRepo()]
+    });
+    const items = await fetchGitHubTrends({ now, fetchImpl });
+    expect(items.map(i => i.url)).toEqual(['https://github.com/acme/widget']);
   });
 
   it('combines topics and dedupes repeated URLs', async () => {

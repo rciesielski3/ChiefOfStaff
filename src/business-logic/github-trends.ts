@@ -12,7 +12,7 @@ const TOPIC_CATEGORY: Record<GitHubTrendTopic, string> = {
   'llm-evaluation': 'ai'
 };
 
-export const GITHUB_TREND_MIN_STARS = 50;
+export const GITHUB_TREND_MIN_STARS = 200;
 export const GITHUB_TREND_WINDOW_DAYS = 30;
 export const GITHUB_TREND_PER_PAGE = 20;
 const SEARCH_URL = 'https://api.github.com/search/repositories';
@@ -39,9 +39,14 @@ export function windowStart(now: Date, days: number = GITHUB_TREND_WINDOW_DAYS):
   return new Date(now.getTime() - days * DAY_MS);
 }
 
-/** Build the repository search query for one topic. */
+/** Build the repository search query for one topic. Forks and archived repos are excluded. */
 export function buildTrendQuery(topic: GitHubTrendTopic, since: Date, minStars: number = GITHUB_TREND_MIN_STARS): string {
-  return `topic:${topic} created:>${formatSearchDate(since)} stars:>=${minStars}`;
+  return `topic:${topic} created:>${formatSearchDate(since)} stars:>=${minStars} fork:false archived:false`;
+}
+
+/** True when the repository has a non-empty description. Pure. */
+export function hasDescription(repo: GitHubRepo): boolean {
+  return (repo.description ?? '').trim().length > 0;
 }
 
 /** Map one GitHub repository to an Article. Pure. */
@@ -115,7 +120,7 @@ export async function fetchGitHubTrends(opts: FetchTrendsOptions = {}): Promise<
   const since = windowStart(opts.now ?? new Date());
   const articles: Article[] = [];
   for (const topic of GITHUB_TREND_TOPICS) {
-    const repos = await searchTopic(topic, since, opts);
+    const repos = (await searchTopic(topic, since, opts)).filter(hasDescription);
     articles.push(...repos.map(repo => repoToArticle(repo, topic)));
   }
   return dedupeByUrl(articles);
