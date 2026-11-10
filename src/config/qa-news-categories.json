@@ -7,7 +7,7 @@
         "mocha", "ava", "tap", "jasmine", "qunit", "webdriver",
         "puppeteer", "testcafe", "nightwatch", "codeceptjs"
       ],
-      "sourceMatches": ["Jest", "Vitest", "Cypress", "Playwright", "Testing"]
+      "sourceMatches": ["Jest", "Vitest", "Cypress", "Playwright"]
     },
     "qa-practice": {
       "keywords": [
