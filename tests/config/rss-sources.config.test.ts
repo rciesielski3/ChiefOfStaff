@@ -15,6 +15,13 @@ describe('RSS Sources Configuration', () => {
       expect(ministryOfTesting?.url).toContain('ministryoftesting');
     });
 
+    it('should exclude non-news Ministry of Testing paths', () => {
+      const ministryOfTesting = RSS_SOURCES.find(source => source.name === 'Ministry of Testing');
+      expect(ministryOfTesting?.excludePathPrefixes).toEqual(
+        expect.arrayContaining(['/glossary/', '/software-testing-glossary/', '/jobs/', '/newsletter/'])
+      );
+    });
+
     it('should have OpenAI source', () => {
       const openAI = RSS_SOURCES.find(source => source.name.toLowerCase().includes('openai'));
       expect(openAI).toBeDefined();
