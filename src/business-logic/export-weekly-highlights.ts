@@ -1,4 +1,4 @@
-import { Article, withResolvedId } from './normalize-article';
+import { Article, assertUniqueArticleIds, withResolvedId } from './normalize-article';
 import { SummaryGenerator } from './summary-generator';
 
 /**
@@ -119,7 +119,10 @@ export function exportWeeklyHighlights(articles: Article[]): WeeklyHighlightsExp
     return b.weekOf.localeCompare(a.weekOf);
   });
 
-  // Step 5: Return export object
+  // Step 5: Fail loudly if two different URLs ended up with the same ID
+  assertUniqueArticleIds(weeks.flatMap(week => week.items));
+
+  // Step 6: Return export object
   return {
     weeks
   };

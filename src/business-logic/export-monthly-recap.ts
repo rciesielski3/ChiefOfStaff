@@ -1,4 +1,4 @@
-import { Article, withResolvedId } from './normalize-article';
+import { Article, assertUniqueArticleIds, withResolvedId } from './normalize-article';
 import { SummaryGenerator } from './summary-generator';
 
 /**
@@ -97,7 +97,10 @@ export function exportMonthlyRecap(
     return b.monthOf.localeCompare(a.monthOf);
   });
 
-  // Step 6: Return export object
+  // Step 6: Fail loudly if two different URLs ended up with the same ID
+  assertUniqueArticleIds(months.flatMap(month => month.items));
+
+  // Step 7: Return export object
   return {
     months
   };
