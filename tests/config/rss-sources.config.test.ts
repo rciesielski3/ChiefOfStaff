@@ -27,6 +27,18 @@ describe('RSS Sources Configuration', () => {
       expect(openAI).toBeDefined();
       expect(openAI?.url).toContain('openai');
     });
+
+    it('should have unique source names', () => {
+      const names = RSS_SOURCES.map(source => source.name);
+      expect(new Set(names).size).toBe(names.length);
+    });
+
+    it('should have a valid https URL for every source', () => {
+      for (const source of RSS_SOURCES) {
+        const parsed = new URL(source.url);
+        expect(parsed.protocol).toBe('https:');
+      }
+    });
   });
 
   describe('getEnabledSources()', () => {
