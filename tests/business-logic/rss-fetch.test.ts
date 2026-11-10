@@ -4,7 +4,8 @@ import {
   fetchWithRetry,
   RawArticle,
   DEFAULT_FEED_TIMEOUT_MS,
-  DEFAULT_MAX_ATTEMPTS
+  DEFAULT_MAX_ATTEMPTS,
+  filterExcludedPaths
 } from '../../src/business-logic/rss-fetch';
 import Parser from 'rss-parser';
 
@@ -183,12 +184,17 @@ describe('fetchRSS', () => {
     expect(result[0].title).toBe('');
   });
 
-  it('should use current date when pubDate is missing', async () => {
-    const beforeTime = new Date();
+  it('should drop items without a publish date instead of using the current time', async () => {
     const mockFeedItems = [
       {
         link: 'https://example.com/article-1',
         title: 'Article without pubDate',
+        contentSnippet: 'Some content'
+      },
+      {
+        link: 'https://example.com/article-2',
+        title: 'Dated article',
+        pubDate: '2026-07-14T10:00:00Z',
         contentSnippet: 'Some content'
       }
     ];
@@ -204,12 +210,33 @@ describe('fetchRSS', () => {
     );
 
     const result = await fetchRSS(mockSourceUrl, mockSourceName);
-    const afterTime = new Date();
 
     expect(result).toHaveLength(1);
-    const parsedDate = new Date(result[0].pubDate);
-    expect(parsedDate.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
-    expect(parsedDate.getTime()).toBeLessThanOrEqual(afterTime.getTime() + 1000);
+    expect(result[0].title).toBe('Dated article');
+    expect(result[0].pubDate).toBe('2026-07-14T10:00:00Z');
+  });
+
+  it('should use the feed item date when pubDate is absent but isoDate is present', async () => {
+    const mockParserInstance = {
+      parseURL: jest.fn().mockResolvedValue({
+        items: [
+          {
+            link: 'https://example.com/article-1',
+            title: 'ISO dated',
+            isoDate: '2026-07-13T08:00:00.000Z'
+          }
+        ]
+      })
+    };
+
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
+      () => mockParserInstance as any
+    );
+
+    const result = await fetchRSS(mockSourceUrl, mockSourceName);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].pubDate).toBe('2026-07-13T08:00:00.000Z');
   });
 
   it('should handle feed with no items', async () => {
@@ -744,5 +771,85 @@ describe('per-feed time budget', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+});
+
+describe('filterExcludedPaths', () => {
+  const items = [
+    { link: 'https://www.ministryoftesting.com/glossary/feedback-model' },
+    { link: 'https://www.ministryoftesting.com/software-testing-glossary/wrapper' },
+    { link: 'https://www.ministryoftesting.com/jobs/engineering-manager-keyloop' },
+    { link: 'https://www.ministryoftesting.com/newsletter/sign-up' },
+    { link: 'https://www.ministryoftesting.com/moments/a-real-post' },
+    { link: 'not a url' }
+  ];
+
+  it('drops items whose path starts with an excluded prefix', () => {
+    const kept = filterExcludedPaths(items, ['/glossary/', '/software-testing-glossary/', '/jobs/', '/newsletter/']);
+    expect(kept.map(i => i.link)).toEqual([
+      'https://www.ministryoftesting.com/moments/a-real-post',
+      'not a url'
+    ]);
+  });
+
+  it('does not drop items when no prefixes are configured', () => {
+    expect(filterExcludedPaths(items)).toHaveLength(items.length);
+  });
+
+  it('matches on path only, not on a substring elsewhere in the URL', () => {
+    const kept = filterExcludedPaths(
+      [{ link: 'https://example.com/news/jobs/post' }],
+      ['/jobs/']
+    );
+    expect(kept).toHaveLength(1);
+  });
+});
+
+describe('fetchAllSources excludePathPrefixes', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('removes excluded-path items and keeps real publish dates', async () => {
+    const mockParserInstance = {
+      parseURL: jest.fn().mockResolvedValue({
+        items: [
+          {
+            link: 'https://www.ministryoftesting.com/glossary/feedback-model',
+            title: 'Feedback Model',
+            pubDate: '2026-11-01T09:00:00Z'
+          },
+          {
+            link: 'https://www.ministryoftesting.com/jobs/engineering-manager-keyloop',
+            title: 'Engineering Manager',
+            pubDate: '2026-11-02T09:00:00Z'
+          },
+          {
+            link: 'https://www.ministryoftesting.com/moments/real-news',
+            title: 'Real news',
+            pubDate: '2026-11-03T09:00:00Z'
+          },
+          {
+            link: 'https://www.ministryoftesting.com/moments/no-date',
+            title: 'No date'
+          }
+        ]
+      })
+    };
+
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
+      () => mockParserInstance as any
+    );
+
+    const result = await fetchAllSources([
+      {
+        name: 'Ministry of Testing',
+        url: 'https://www.ministryoftesting.com/contents/rss',
+        excludePathPrefixes: ['/glossary/', '/jobs/']
+      }
+    ]);
+
+    expect(result.articles.map(a => a.title)).toEqual(['Real news']);
+    expect(result.articles[0].pubDate).toBe('2026-11-03T09:00:00Z');
   });
 });

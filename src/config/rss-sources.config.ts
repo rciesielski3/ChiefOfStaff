@@ -8,6 +8,8 @@ export const RSS_SOURCES: RSSSourceConfig[] = [
   {
     name: 'Ministry of Testing',
     url: 'https://www.ministryoftesting.com/contents/rss',
+    // Glossary definitions, job listings and newsletter pages are not news.
+    excludePathPrefixes: ['/glossary/', '/software-testing-glossary/', '/jobs/', '/newsletter/'],
   },
   {
     name: 'Google Testing Blog',

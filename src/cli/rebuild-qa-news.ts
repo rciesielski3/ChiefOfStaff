@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { fetchRSS } from '../business-logic/rss-fetch';
+import { fetchRSS, filterExcludedPaths } from '../business-logic/rss-fetch';
 import { normalizeArticle } from '../business-logic/normalize-article';
 import { scoreArticles, DEFAULT_CONFIG } from '../business-logic/score-article';
 import { exportLatestNews, writePublicLatestNews, LatestNewsExport } from '../business-logic/export-latest-news';
@@ -82,7 +82,10 @@ async function main(): Promise<void> {
         if (verbose) {
           console.log(`  - Fetching ${source.name} (${source.url})...`);
         }
-        const articles = await fetchRSS(source.url, source.name);
+        const articles = filterExcludedPaths(
+          await fetchRSS(source.url, source.name),
+          source.excludePathPrefixes
+        );
         const sourceDuration = Date.now() - sourceStartTime;
         if (verbose) {
           console.log(`    ✓ Got ${articles.length} articles`);
