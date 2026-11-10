@@ -2,7 +2,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { exportWeeklyHighlights, exportWeeklyHighlightsWithSummaries, WeeklyHighlightsExport } from '../business-logic/export-weekly-highlights';
+import { exportWeeklyHighlightsWithSummaries, WeeklyHighlightsExport } from '../business-logic/export-weekly-highlights';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { SummaryGenerator } from '../business-logic/summary-generator';
 import { primaryQANewsCategory } from '../business-logic/categorize-article';
@@ -72,8 +72,8 @@ async function main(): Promise<void> {
       const summaryGenerator = new SummaryGenerator(apiKey);
       weeklyExport = await exportWeeklyHighlightsWithSummaries(articles, summaryGenerator);
     } else {
-      logStructured('SUMMARIES_SKIPPED', { reason: 'ANTHROPIC_API_KEY not set' });
-      weeklyExport = exportWeeklyHighlights(articles);
+      logStructured('SUMMARIES_SKIPPED', { reason: 'ANTHROPIC_API_KEY not set', fallback: 'deterministic' });
+      weeklyExport = await exportWeeklyHighlightsWithSummaries(articles);
     }
 
     const exportDuration = Date.now() - exportStartTime;

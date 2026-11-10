@@ -51,8 +51,8 @@ describe('export-weekly-highlights CLI — Environment Variable Handling', () =>
 
       const json = JSON.parse(output);
       expect(json.weeks).toBeDefined();
-      // Summaries should be empty or fallback text when key missing
-      expect(json.weeks[0].summary).toBe('');
+      // Deterministic summary (derived from items, not AI) when key missing
+      expect(json.weeks[0].summary).toMatch(/^[0-9]+ stor(y|ies)\. Top stories: /);
     } finally {
       if (originalKey) {
         process.env.ANTHROPIC_API_KEY = originalKey;
@@ -82,7 +82,7 @@ describe('export-weekly-highlights CLI — Environment Variable Handling', () =>
     }
   });
 
-  it('should produce valid JSON with empty summary field when key missing', () => {
+  it('should produce valid JSON with deterministic summary when key missing', () => {
     const originalKey = process.env.ANTHROPIC_API_KEY;
     delete process.env.ANTHROPIC_API_KEY;
 
@@ -94,7 +94,7 @@ describe('export-weekly-highlights CLI — Environment Variable Handling', () =>
       });
 
       const json = JSON.parse(output);
-      expect(json.weeks[0].summary).toBe('');
+      expect(json.weeks[0].summary).toMatch(/^[0-9]+ stor(y|ies)\. Top stories: /);
       expect(json.weeks[0].items).toBeDefined();
       expect(Array.isArray(json.weeks[0].items)).toBe(true);
     } finally {
@@ -130,7 +130,7 @@ describe('export-weekly-highlights CLI — Environment Variable Handling', () =>
 
       const json = JSON.parse(output);
       expect(json.weeks).toBeDefined();
-      expect(json.weeks[0].summary).toBe('');
+      expect(json.weeks[0].summary).toMatch(/^[0-9]+ stor(y|ies)\. Top stories: /);
       // Fallback: articles should still be exported
       expect(json.weeks[0].items).toBeDefined();
     } finally {

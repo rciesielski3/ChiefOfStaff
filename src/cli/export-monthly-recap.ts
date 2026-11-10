@@ -2,7 +2,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { exportMonthlyRecap, exportMonthlyRecapWithSummaries, MonthlyRecapExport } from '../business-logic/export-monthly-recap';
+import { exportMonthlyRecapWithSummaries, MonthlyRecapExport } from '../business-logic/export-monthly-recap';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { SummaryGenerator } from '../business-logic/summary-generator';
 import { primaryQANewsCategory } from '../business-logic/categorize-article';
@@ -73,8 +73,8 @@ async function main(): Promise<void> {
       const summaryGenerator = new SummaryGenerator(apiKey);
       monthlyExport = await exportMonthlyRecapWithSummaries(articles, curateLimit, summaryGenerator);
     } else {
-      logStructured('SUMMARIES_SKIPPED', { reason: 'ANTHROPIC_API_KEY not set' });
-      monthlyExport = exportMonthlyRecap(articles, curateLimit);
+      logStructured('SUMMARIES_SKIPPED', { reason: 'ANTHROPIC_API_KEY not set', fallback: 'deterministic' });
+      monthlyExport = await exportMonthlyRecapWithSummaries(articles, curateLimit);
     }
 
     const exportDuration = Date.now() - exportStartTime;
@@ -112,7 +112,7 @@ async function main(): Promise<void> {
       months: monthlyExport.months.map((month) => ({
         month: month.monthOf.substring(0, 7), // Convert "2026-07-01" to "2026-07"
         summary: month.summary || '',
-        themes: [], // Empty themes for now (will be populated by synthesis)
+        themes: [], // Empty by design: the deterministic path does not derive themes; populated by synthesis
         items: month.items.map((article) => ({
           ...article,
           category: primaryQANewsCategory(article)
