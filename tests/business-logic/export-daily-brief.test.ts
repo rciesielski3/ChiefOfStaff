@@ -77,15 +77,19 @@ describe('export-daily-brief', () => {
     score: 95
   });
 
-  test('exports top articles from today sorted by score', async () => {
+  // The publish-date filter was removed on purpose (commit 8fbd72d, "export latest articles
+  // instead of filtering by publish date"). The export now takes the newest N articles
+  // regardless of which day they were published.
+  test('exports top articles by publish time with no publish-date filter', async () => {
     const store = new MockArticleStore([mockArticleToday, mockArticleYesterday, mockArticleHighScore]);
     const result = await exportDailyBrief(store, 10);
 
-    expect(result.items).toHaveLength(2); // Only 2 from today
-    expect(result.items[0].id).toBe('test-3'); // Highest score first
-    expect(result.items[1].id).toBe('test-1'); // Second highest
+    expect(result.items).toHaveLength(3); // Yesterday's article is included
+    expect(result.items[0].id).toBe('test-3'); // Newest publishedAt first
+    expect(result.items[1].id).toBe('test-1');
+    expect(result.items[2].id).toBe('test-2');
     expect(result.date).toMatch(/^\d{4}-\d{2}-\d{2}$/); // YYYY-MM-DD format
-    expect(result.storiesSelected).toBe(2);
+    expect(result.storiesSelected).toBe(3);
   });
 
   test('respects limit parameter', async () => {
@@ -96,8 +100,17 @@ describe('export-daily-brief', () => {
     expect(result.items[0].id).toBe('test-3'); // Highest score
   });
 
-  test('returns empty list if no articles from today', async () => {
+  test('includes articles from yesterday (no publish-date filter)', async () => {
     const store = new MockArticleStore([mockArticleYesterday]);
+    const result = await exportDailyBrief(store, 10);
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].id).toBe('test-2');
+    expect(result.storiesSelected).toBe(1);
+  });
+
+  test('returns empty list for an empty store', async () => {
+    const store = new MockArticleStore([]);
     const result = await exportDailyBrief(store, 10);
 
     expect(result.items).toHaveLength(0);
@@ -118,7 +131,7 @@ describe('export-daily-brief', () => {
     expect(result.lede).toContain('Daily brief');
   });
 
-  test('handles articles with invalid dates', async () => {
+  test('does not throw on articles with invalid dates', async () => {
     const invalidArticle = createArticle({
       id: 'test-invalid',
       title: 'Invalid date',
@@ -128,9 +141,9 @@ describe('export-daily-brief', () => {
     const store = new MockArticleStore([invalidArticle, mockArticleToday]);
     const result = await exportDailyBrief(store, 10);
 
-    // Should only include valid article from today
-    expect(result.items).toHaveLength(1);
-    expect(result.items[0].id).toBe('test-1');
+    // No date filter, so both are exported; order of the unparseable article is unspecified
+    expect(result.items).toHaveLength(2);
+    expect(result.items.map(a => a.id)).toEqual(expect.arrayContaining(['test-1', 'test-invalid']));
   });
 
   test('sets updatedAt to current timestamp', async () => {

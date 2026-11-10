@@ -2,6 +2,10 @@ import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Cases that actually call the extraction service need ANTHROPIC_API_KEY.
+// Without it the CLI exits early, so these are skipped rather than failed.
+const apiTest = process.env.ANTHROPIC_API_KEY ? test : test.skip;
+
 describe('Extract-Knowledge CLI (E2E Stubs)', () => {
   const testDataDir = 'data/test-e2e';
 
@@ -17,7 +21,7 @@ describe('Extract-Knowledge CLI (E2E Stubs)', () => {
     }
   });
 
-  test('CLI is callable: --help option', () => {
+  apiTest('CLI is callable: --help option', () => {
     const output = execSync(
       'npx ts-node src/cli/extract-knowledge.ts --help',
       { encoding: 'utf-8' }
@@ -27,33 +31,40 @@ describe('Extract-Knowledge CLI (E2E Stubs)', () => {
     expect(output).toContain('Options:');
   });
 
-  test('CLI callable with basic invocation (returns exit code 0)', () => {
+  // The CLI checks ANTHROPIC_API_KEY before handling any flag, so this exits 1 without a key.
+  apiTest('CLI callable with basic invocation (returns exit code 0)', () => {
+    let exitError: any;
+    let output = '';
     try {
-      const output = execSync(
+      output = execSync(
         'npx ts-node src/cli/extract-knowledge.ts --version',
         { encoding: 'utf-8' }
       );
-
-      expect(output).toBeDefined();
     } catch (error: any) {
-      fail(`CLI should exit with 0, got: ${error.message}`);
+      exitError = error;
     }
+
+    expect(exitError).toBeUndefined();
+    expect(output).toBeDefined();
   });
 
   test('CLI validates required arguments (exit 1 on missing input)', () => {
+    let exitError: any;
     try {
       execSync(
         'npx ts-node src/cli/extract-knowledge.ts',
         { encoding: 'utf-8' }
       );
-      fail('Should have exited with error');
     } catch (error: any) {
-      expect(error.status).toBe(1);
-      expect(error.stderr || error.message).toContain('require');
+      exitError = error;
     }
+
+    expect(exitError).toBeDefined();
+    expect(exitError.status).toBe(1);
+    expect(exitError.stderr || exitError.message).toContain('require');
   });
 
-  test('CLI processes sample articles and produces NDJSON output', () => {
+  apiTest('CLI processes sample articles and produces NDJSON output', () => {
     const sampleArticles = [
       {
         id: 'a1',
@@ -70,30 +81,25 @@ describe('Extract-Knowledge CLI (E2E Stubs)', () => {
 
     const outputPath = path.join(testDataDir, 'output.ndjson');
 
-    try {
-      execSync(
-        `npx ts-node src/cli/extract-knowledge.ts --input ${inputPath} --output ${outputPath}`,
-        { encoding: 'utf-8' }
-      );
+    execSync(
+      `npx ts-node src/cli/extract-knowledge.ts --input ${inputPath} --output ${outputPath}`,
+      { encoding: 'utf-8' }
+    );
 
-      expect(fs.existsSync(outputPath)).toBe(true);
+    expect(fs.existsSync(outputPath)).toBe(true);
 
-      const output = fs.readFileSync(outputPath, 'utf-8');
-      const lines = output.split('\n').filter(l => l.trim());
-      expect(lines.length).toBeGreaterThan(0);
+    const output = fs.readFileSync(outputPath, 'utf-8');
+    const lines = output.split('\n').filter(l => l.trim());
+    expect(lines.length).toBeGreaterThan(0);
 
-      lines.forEach(line => {
-        const parsed = JSON.parse(line);
-        expect(parsed).toHaveProperty('id');
-        expect(parsed).toHaveProperty('content');
-      });
-    } catch (error) {
-      console.error('CLI execution failed:', error);
-      fail('CLI should process articles and produce NDJSON');
-    }
+    lines.forEach(line => {
+      const parsed = JSON.parse(line);
+      expect(parsed).toHaveProperty('id');
+      expect(parsed).toHaveProperty('content');
+    });
   });
 
-  test('CLI exit code validation: success path (exit 0)', () => {
+  apiTest('CLI exit code validation: success path (exit 0)', () => {
     const inputPath = path.join(testDataDir, 'sample.ndjson');
     const outputPath = path.join(testDataDir, 'output.ndjson');
 
@@ -104,14 +110,16 @@ describe('Extract-Knowledge CLI (E2E Stubs)', () => {
       );
     }
 
+    let exitError: any;
     try {
       execSync(
         `npx ts-node src/cli/extract-knowledge.ts --input ${inputPath} --output ${outputPath}`
       );
-      expect(true).toBe(true);
     } catch (error: any) {
-      fail(`Expected exit code 0, got ${error.status}`);
+      exitError = error;
     }
+
+    expect(exitError).toBeUndefined();
   });
 
   test('CLI documentation: E2E stubs verify callable, full E2E in future', () => {
