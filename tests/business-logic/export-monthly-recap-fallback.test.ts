@@ -26,7 +26,7 @@ describe('exportMonthlyRecap — Deterministic Fallback Text Validation', () => 
     }
   ];
 
-  it('should use deterministic fallback text format: "{count} stories. Top stories: ...; Top categories: ..."', async () => {
+  it('should use deterministic fallback text format: "{count} stories. Latest: ...; Top categories: ..."', async () => {
     const result = await exportMonthlyRecapWithSummaries(testArticles, 25, undefined);
 
     expect(result.months).toBeDefined();
@@ -35,7 +35,7 @@ describe('exportMonthlyRecap — Deterministic Fallback Text Validation', () => 
     const summary = result.months[0].summary;
     // Items are newest first, so the top titles start with Article 2
     const label = primaryQANewsCategory(testArticles[1]);
-    expect(summary).toBe(`2 stories. Top stories: Test Article 2; Test Article 1. Top categories: ${label} (2).`);
+    expect(summary).toBe(`2 stories. Latest: Test Article 2; Test Article 1. Top categories: ${label} (2).`);
   });
 
   it('should use deterministic fallback text when SummaryGenerator is not provided', async () => {
@@ -43,7 +43,7 @@ describe('exportMonthlyRecap — Deterministic Fallback Text Validation', () => 
     const result = await exportMonthlyRecapWithSummaries(testArticles, 25, undefined);
 
     expect(result.months[0].summary).toMatch(/^2 stories\./);
-    expect(result.months[0].summary).toContain('Top stories');
+    expect(result.months[0].summary).toContain('Latest');
     // Should not be empty
     expect(result.months[0].summary.length).toBeGreaterThan(0);
   });
@@ -54,7 +54,7 @@ describe('exportMonthlyRecap — Deterministic Fallback Text Validation', () => 
     // Verify JSON structure
     expect(result.months).toBeDefined();
     expect(Array.isArray(result.months)).toBe(true);
-    expect(result.months[0].summary).toContain('Top stories');
+    expect(result.months[0].summary).toContain('Latest');
 
     // Verify all required fields present
     expect(result.months[0].items).toBeDefined();
