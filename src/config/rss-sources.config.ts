@@ -37,6 +37,42 @@ export const RSS_SOURCES: RSSSourceConfig[] = [
     name: 'Cloudflare',
     url: 'https://blog.cloudflare.com/rss/',
   },
+  {
+    name: 'On Test Automation',
+    url: 'https://www.ontestautomation.com/feed.xml',
+  },
+  {
+    name: 'Ultimate QA',
+    url: 'https://ultimateqa.com/feed',
+  },
+  {
+    name: 'LogiGear Blog',
+    url: 'https://www.logigear.com/blogs/feed.xml',
+  },
+  {
+    name: 'Vitest Releases',
+    url: 'https://github.com/vitest-dev/vitest/releases.atom',
+  },
+  {
+    name: 'Selenium Releases',
+    url: 'https://github.com/SeleniumHQ/selenium/releases.atom',
+  },
+  {
+    name: 'Grafana k6 Releases',
+    url: 'https://github.com/grafana/k6/releases.atom',
+  },
+  {
+    name: 'WebdriverIO Releases',
+    url: 'https://github.com/webdriverio/webdriverio/releases.atom',
+  },
+  {
+    name: 'Jest Releases',
+    url: 'https://github.com/jestjs/jest/releases.atom',
+  },
+  {
+    name: 'Storybook Releases',
+    url: 'https://github.com/storybookjs/storybook/releases.atom',
+  },
 ];
 
 /**
