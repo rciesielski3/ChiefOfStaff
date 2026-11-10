@@ -81,8 +81,8 @@ describe('Workflow Integration — Secret Passing (Finding 1)', () => {
       }
       const weeklyJson = JSON.parse(weeklyOutput);
 
-      // Both should have empty summaries (current broken behavior)
-      expect(weeklyJson.weeks[0].summary).toBe('');
+      // Without a key the summary is the deterministic, item-derived text (not an AI summary)
+      expect(weeklyJson.weeks[0].summary).toMatch(/^[0-9]+ stor(y|ies)\. Top stories: /);
       // But articles should still be exported (exports succeed)
       expect(weeklyJson.weeks[0].items.length).toBeGreaterThan(0);
     } catch (error: any) {

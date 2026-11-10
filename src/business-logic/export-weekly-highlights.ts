@@ -1,5 +1,6 @@
 import { Article, assertUniqueArticleIds, withResolvedId } from './normalize-article';
 import { SummaryGenerator } from './summary-generator';
+import { buildDeterministicSummary } from './deterministic-summary';
 
 /**
  * A single week's highlight collection with summary and articles
@@ -154,7 +155,7 @@ export async function exportWeeklyHighlightsWithSummaries(
       if (summaryGenerator) {
         week.summary = await summaryGenerator.generateSummary(week.items);
       } else {
-        week.summary = `Week of ${week.weekOf}: ${week.items.length} articles`;
+        week.summary = buildDeterministicSummary(week.items);
       }
     } catch (error) {
       console.warn(`Failed to generate summary for week ${week.weekOf}: ${error}`);

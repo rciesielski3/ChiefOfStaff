@@ -1,7 +1,8 @@
 import { exportMonthlyRecapWithSummaries } from '../../src/business-logic/export-monthly-recap';
 import { Article } from '../../src/business-logic/normalize-article';
+import { primaryQANewsCategory } from '../../src/business-logic/categorize-article';
 
-describe('exportMonthlyRecap — Fallback Text Validation', () => {
+describe('exportMonthlyRecap — Deterministic Fallback Text Validation', () => {
   const testArticles: Article[] = [
     {
       id: 'a1',
@@ -25,23 +26,24 @@ describe('exportMonthlyRecap — Fallback Text Validation', () => {
     }
   ];
 
-  it('should use fallback text format: "Month of {monthOf}: {count} articles"', async () => {
+  it('should use deterministic fallback text format: "{count} stories. Top stories: ...; Top categories: ..."', async () => {
     const result = await exportMonthlyRecapWithSummaries(testArticles, 25, undefined);
 
     expect(result.months).toBeDefined();
     expect(result.months.length).toBeGreaterThan(0);
 
     const summary = result.months[0].summary;
-    // Fallback format should match pattern: "Month of YYYY-MM-DD: N articles"
-    expect(summary).toMatch(/^Month of \d{4}-\d{2}-\d{2}: \d+ articles$/);
+    // Items are newest first, so the top titles start with Article 2
+    const label = primaryQANewsCategory(testArticles[1]);
+    expect(summary).toBe(`2 stories. Top stories: Test Article 2; Test Article 1. Top categories: ${label} (2).`);
   });
 
-  it('should use fallback text when SummaryGenerator is not provided', async () => {
+  it('should use deterministic fallback text when SummaryGenerator is not provided', async () => {
     // Invoke without API key (no SummaryGenerator)
     const result = await exportMonthlyRecapWithSummaries(testArticles, 25, undefined);
 
-    expect(result.months[0].summary).toMatch(/^Month of/);
-    expect(result.months[0].summary).toContain('articles');
+    expect(result.months[0].summary).toMatch(/^2 stories\./);
+    expect(result.months[0].summary).toContain('Top stories');
     // Should not be empty
     expect(result.months[0].summary.length).toBeGreaterThan(0);
   });
@@ -52,7 +54,7 @@ describe('exportMonthlyRecap — Fallback Text Validation', () => {
     // Verify JSON structure
     expect(result.months).toBeDefined();
     expect(Array.isArray(result.months)).toBe(true);
-    expect(result.months[0].summary).toContain('Month of');
+    expect(result.months[0].summary).toContain('Top stories');
 
     // Verify all required fields present
     expect(result.months[0].items).toBeDefined();

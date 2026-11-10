@@ -1,5 +1,6 @@
 import { Article, assertUniqueArticleIds, withResolvedId } from './normalize-article';
 import { SummaryGenerator } from './summary-generator';
+import { buildDeterministicSummary } from './deterministic-summary';
 
 /**
  * A single month's curated collection with summary and articles
@@ -134,7 +135,7 @@ export async function exportMonthlyRecapWithSummaries(
       if (summaryGenerator) {
         month.summary = await summaryGenerator.generateSummary(month.items);
       } else {
-        month.summary = `Month of ${month.monthOf}: ${month.items.length} articles`;
+        month.summary = buildDeterministicSummary(month.items);
       }
     } catch (error) {
       console.warn(`Failed to generate summary for month ${month.monthOf}: ${error}`);
