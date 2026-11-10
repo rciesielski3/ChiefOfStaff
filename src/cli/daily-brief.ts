@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 
 import { fetchAllSources } from '../business-logic/rss-fetch';
-import { normalizeArticle } from '../business-logic/normalize-article';
+import { normalizeArticles } from '../business-logic/normalize-article';
 import { scoreArticles, DEFAULT_CONFIG } from '../business-logic/score-article';
 import { generateBrief } from '../business-logic/generate-brief';
 import { NdJsonArticleStore } from '../business-logic/article-store';
@@ -115,7 +115,7 @@ async function main() {
     const normalizeStartTime = Date.now();
     console.log('[Daily Brief] Normalizing articles...');
     logStructured('NORMALIZE_START', { articleCount: allRawArticles.length });
-    const articles = allRawArticles.map(normalizeArticle);
+    const articles = normalizeArticles(allRawArticles);
     const normalizeDuration = Date.now() - normalizeStartTime;
     console.log(`[Daily Brief] Normalized: ${articles.length} articles\n`);
     logStructured('NORMALIZE_COMPLETE', {
