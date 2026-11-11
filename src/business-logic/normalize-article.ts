@@ -103,6 +103,17 @@ export function truncateDescription(text: string, maxLength: number = DESCRIPTIO
 }
 
 /**
+ * Thrown when a raw article has no parseable publish date. Such articles are rejected,
+ * never stamped with the current time (that would give crawl times a false "recent" score).
+ */
+export class InvalidPublishDateError extends Error {
+  constructor(public readonly link: string, public readonly pubDate: string) {
+    super(`Invalid publish date "${pubDate}" for ${link}`);
+    this.name = 'InvalidPublishDateError';
+  }
+}
+
+/**
  * Normalize a raw RSS article to standard Article format
  *
  * Algorithm:
@@ -112,11 +123,12 @@ export function truncateDescription(text: string, maxLength: number = DESCRIPTIO
  * 4. Preserve URL
  * 5. Store source name
  * 6. Infer category from source name (heuristic)
- * 7. Parse publish date, default to now
+ * 7. Parse publish date; throws InvalidPublishDateError if it is missing or invalid
  * 8. Extract tags from content keywords
  *
  * @param raw - Raw article from RSS feed
  * @returns Normalized Article
+ * @throws InvalidPublishDateError when raw.pubDate is not a valid date
  */
 export function normalizeArticle(raw: RawArticle): Article {
   // Generate ID from source and link (simple hash-like approach)
@@ -147,12 +159,11 @@ export function normalizeArticle(raw: RawArticle): Article {
   else if (sourceUpper.includes('tutorial')) category = 'tutorial';
 
   // Parse published date
-  let publishedAt: string;
-  try {
-    publishedAt = new Date(raw.pubDate).toISOString();
-  } catch {
-    publishedAt = new Date().toISOString();
+  const publishedMs = Date.parse(raw.pubDate);
+  if (Number.isNaN(publishedMs)) {
+    throw new InvalidPublishDateError(raw.link, raw.pubDate);
   }
+  const publishedAt = new Date(publishedMs).toISOString();
 
   // Extract tags: look for common technical terms in title
   const tags = extractTags(raw.title, raw.content);
@@ -168,6 +179,26 @@ export function normalizeArticle(raw: RawArticle): Article {
     publishedAt,
     tags
   };
+}
+
+/**
+ * Normalize a batch of raw articles. Articles with an invalid publish date are dropped
+ * and logged; every other error propagates.
+ */
+export function normalizeArticles(raws: RawArticle[]): Article[] {
+  const articles: Article[] = [];
+  for (const raw of raws) {
+    try {
+      articles.push(normalizeArticle(raw));
+    } catch (error) {
+      if (error instanceof InvalidPublishDateError) {
+        console.warn(`[Normalize] Rejected article with invalid publish date: ${error.message}`);
+        continue;
+      }
+      throw error;
+    }
+  }
+  return articles;
 }
 
 /**
