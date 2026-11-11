@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 
 import { fetchRSS, filterExcludedPaths } from '../business-logic/rss-fetch';
-import { normalizeArticle } from '../business-logic/normalize-article';
+import { normalizeArticles } from '../business-logic/normalize-article';
 import { scoreArticles, DEFAULT_CONFIG } from '../business-logic/score-article';
 import { exportLatestNews, writePublicLatestNews, LatestNewsExport } from '../business-logic/export-latest-news';
 import { exportWeeklyHighlights } from '../business-logic/export-weekly-highlights';
@@ -127,7 +127,7 @@ async function main(): Promise<void> {
       console.log('[Rebuild QA News] Normalizing articles...');
     }
     logStructured('NORMALIZE_START', { articleCount: allRawArticles.length });
-    const articles = allRawArticles.map(normalizeArticle);
+    const articles = normalizeArticles(allRawArticles);
     const normalizeDuration = Date.now() - normalizeStartTime;
     if (verbose) {
       console.log(`[Rebuild QA News] Normalized: ${articles.length} articles\n`);
