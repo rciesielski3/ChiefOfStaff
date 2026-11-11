@@ -38,5 +38,5 @@ export function buildDeterministicSummary(items: Article[]): string {
     .map(([category, n]) => `${category} (${n})`);
 
   const storyLabel = count === 1 ? 'story' : 'stories';
-  return `${count} ${storyLabel}. Top stories: ${topTitles.join('; ')}. Top categories: ${topCategories.join(', ')}.`;
+  return `${count} ${storyLabel}. Latest: ${topTitles.join('; ')}. Top categories: ${topCategories.join(', ')}.`;
 }

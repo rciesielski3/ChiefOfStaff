@@ -39,7 +39,7 @@ describe('buildDeterministicSummary', () => {
     const summary = buildDeterministicSummary(items);
 
     expect(summary).toBe(
-      '5 stories. Top stories: Alpha release; Beta tooling; Gamma testing. Top categories: ai (3), test-automation (1), tooling (1).'
+      '5 stories. Latest: Alpha release; Beta tooling; Gamma testing. Top categories: ai (3), test-automation (1), tooling (1).'
     );
   });
 
@@ -47,7 +47,7 @@ describe('buildDeterministicSummary', () => {
     const summary = buildDeterministicSummary([makeArticle(1, 'Only one', 'ai', '2026-10-06T10:00:00Z')]);
 
     expect(summary.startsWith('1 story. ')).toBe(true);
-    expect(summary).toContain('Top stories: Only one.');
+    expect(summary).toContain('Latest: Only one.');
   });
 
   it('returns the explicit empty-state for an empty period, not a fake summary', () => {
@@ -68,7 +68,7 @@ describe('digest summaries without an API key', () => {
     expect(result.weeks).toHaveLength(1);
     expect(result.weeks[0].summary).not.toBe('');
     expect(result.weeks[0].summary).toBe(buildDeterministicSummary(result.weeks[0].items));
-    expect(result.weeks[0].summary).toMatch(/^2 stories\. Top stories: First story; Second story\./);
+    expect(result.weeks[0].summary).toMatch(/^2 stories\. Latest: First story; Second story\./);
   });
 
   it('monthly: no generator yields a non-empty deterministic summary for a period with items', async () => {
