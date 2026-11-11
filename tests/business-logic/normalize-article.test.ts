@@ -1,4 +1,11 @@
-import { normalizeArticle, truncateDescription, buildArticleId, assertUniqueArticleIds } from '../../src/business-logic/normalize-article';
+import {
+  normalizeArticle,
+  normalizeArticles,
+  truncateDescription,
+  buildArticleId,
+  assertUniqueArticleIds,
+  InvalidPublishDateError
+} from '../../src/business-logic/normalize-article';
 import { RawArticle } from '../../src/business-logic/rss-fetch';
 
 describe('buildArticleId', () => {
@@ -137,20 +144,20 @@ describe('normalizeArticle', () => {
     expect(new Date(normalized.publishedAt).getTime()).toBeGreaterThan(0);
   });
 
-  it('should handle invalid date by using current time', () => {
-    const article = {
-      ...mockRawArticle,
-      pubDate: 'invalid-date'
-    };
+  it('keeps a valid ISO publish date unchanged', () => {
+    const normalized = normalizeArticle({ ...mockRawArticle, pubDate: '2026-07-11T10:00:00Z' });
 
-    const normalized = normalizeArticle(article);
+    expect(normalized.publishedAt).toBe('2026-07-11T10:00:00.000Z');
+  });
 
-    // Should have current date (within last minute)
-    const now = new Date();
-    const pubDate = new Date(normalized.publishedAt);
-    const diff = now.getTime() - pubDate.getTime();
+  it('rejects an invalid publish date instead of using the current time', () => {
+    expect(() => normalizeArticle({ ...mockRawArticle, pubDate: 'invalid-date' }))
+      .toThrow(InvalidPublishDateError);
+  });
 
-    expect(Math.abs(diff)).toBeLessThan(60000); // Within 60 seconds
+  it('rejects an empty publish date instead of using the current time', () => {
+    expect(() => normalizeArticle({ ...mockRawArticle, pubDate: '' }))
+      .toThrow(InvalidPublishDateError);
   });
 
   it('should extract tags from content', () => {
@@ -247,6 +254,32 @@ describe('normalizeArticle', () => {
     const normalized = normalizeArticle(article);
 
     expect(Array.isArray(normalized.tags)).toBe(true);
+  });
+});
+
+describe('normalizeArticles', () => {
+  const base: RawArticle = {
+    link: 'https://example.com/batch',
+    title: 'Batch Article',
+    pubDate: '2026-07-11T10:00:00Z',
+    content: 'Body',
+    source: 'Test Blog'
+  };
+
+  it('drops articles with invalid publish dates, logs them, and keeps the rest', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const result = normalizeArticles([
+        base,
+        { ...base, link: 'https://example.com/undated', pubDate: '' },
+        { ...base, link: 'https://example.com/other' }
+      ]);
+
+      expect(result.map(a => a.url)).toEqual(['https://example.com/batch', 'https://example.com/other']);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('https://example.com/undated'));
+    } finally {
+      warn.mockRestore();
+    }
   });
 });
 
