@@ -890,6 +890,9 @@ describe('DomainClassifier', () => {
         'Kubernetes uses declarative configuration for desired state management'
       );
 
+      // Warm up once so cold-start JIT/module init is not measured
+      classifier.classifyFact(fact);
+
       const start = performance.now();
       classifier.classifyFact(fact);
       const elapsed = performance.now() - start;
