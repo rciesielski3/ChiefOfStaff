@@ -213,6 +213,30 @@ describe('NdJsonArticleStore', () => {
   });
 
   describe('dedupAndMerge()', () => {
+    // Fixtures are dated 2026-07-11..14; the 30-day retention window is relative to "now".
+    // Freeze Date only (timers stay real so the file lock still works) so fixtures stay in-window.
+    beforeEach(() => {
+      jest.useFakeTimers({
+        now: new Date('2026-07-15T12:00:00Z'),
+        doNotFake: [
+          'nextTick',
+          'setImmediate',
+          'clearImmediate',
+          'setTimeout',
+          'clearTimeout',
+          'setInterval',
+          'clearInterval',
+          'queueMicrotask',
+          'hrtime',
+          'performance',
+        ],
+      });
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it('should deduplicate articles by source + title hash', async () => {
       const article1: Article = {
         id: 'test-1-v1',
@@ -529,7 +553,8 @@ describe('NdJsonArticleStore', () => {
 
     it('should handle mixed scenario: dedup, merge, retain', async () => {
       const now = new Date();
-      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      // 31 days old: outside the 30-day window (exactly 30 days sits on the inclusive boundary)
+      const thirtyOneDaysAgo = new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000);
 
       const existing1: Article = {
         id: 'exist-1',
@@ -538,7 +563,7 @@ describe('NdJsonArticleStore', () => {
         url: 'https://example.com/exist1',
         source: 'Source A',
         category: 'news',
-        publishedAt: thirtyDaysAgo.toISOString(),
+        publishedAt: thirtyOneDaysAgo.toISOString(),
         tags: []
       };
 

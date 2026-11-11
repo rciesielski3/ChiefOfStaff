@@ -52,7 +52,7 @@ describe('export-monthly-recap CLI — Environment Variable Handling', () => {
       const json = JSON.parse(output);
       expect(json.months).toBeDefined();
       // Deterministic summary (derived from items, not AI) when key missing
-      expect(json.months[0].summary).toMatch(/^[0-9]+ stor(y|ies)\. Top stories: /);
+      expect(json.months[0].summary).toMatch(/^[0-9]+ stor(y|ies)\. Latest: /);
     } finally {
       if (originalKey) {
         process.env.ANTHROPIC_API_KEY = originalKey;
@@ -94,7 +94,7 @@ describe('export-monthly-recap CLI — Environment Variable Handling', () => {
       });
 
       const json = JSON.parse(output);
-      expect(json.months[0].summary).toMatch(/^[0-9]+ stor(y|ies)\. Top stories: /);
+      expect(json.months[0].summary).toMatch(/^[0-9]+ stor(y|ies)\. Latest: /);
       expect(json.months[0].items).toBeDefined();
       expect(Array.isArray(json.months[0].items)).toBe(true);
     } finally {
@@ -130,7 +130,7 @@ describe('export-monthly-recap CLI — Environment Variable Handling', () => {
 
       const json = JSON.parse(output);
       expect(json.months).toBeDefined();
-      expect(json.months[0].summary).toMatch(/^[0-9]+ stor(y|ies)\. Top stories: /);
+      expect(json.months[0].summary).toMatch(/^[0-9]+ stor(y|ies)\. Latest: /);
       // Fallback: articles should still be exported
       expect(json.months[0].items).toBeDefined();
     } finally {

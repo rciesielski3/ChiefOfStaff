@@ -1,5 +1,5 @@
 import { fetchRSS } from '../business-logic/rss-fetch';
-import { normalizeArticle } from '../business-logic/normalize-article';
+import { normalizeArticles } from '../business-logic/normalize-article';
 import { Article } from '../business-logic/normalize-article';
 import { exportQANews } from '../business-logic/export-qa-news';
 import { QA_NEWS_FEEDS } from './qa-news-feeds';
@@ -26,7 +26,7 @@ export async function generateQANewsExport(): Promise<string> {
       console.error(`  Fetching ${feed.name}...`);
       const rawArticles = await fetchRSS(feed.url, feed.name);
 
-      const normalized = rawArticles.map(raw => normalizeArticle(raw));
+      const normalized = normalizeArticles(rawArticles);
 
       allArticles.push(...normalized);
     } catch (error) {
