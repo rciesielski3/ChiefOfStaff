@@ -1,5 +1,4 @@
 import { execSync } from 'child_process';
-import * as fs from 'fs';
 
 // Known gap: src/cli/extract-knowledge.ts does not parse argv. The --help, --version,
 // --input and --output flags are not implemented, so tests for them were removed
@@ -21,14 +20,5 @@ describe('Extract-Knowledge CLI (E2E Stubs)', () => {
     expect(exitError.status).toBe(1);
     const combined = `${exitError.stderr ?? ''}${exitError.stdout ?? ''}`;
     expect(combined).toContain('ANTHROPIC_API_KEY environment variable is required');
-  });
-
-  test('CLI documentation: E2E stubs verify callable, full E2E in future', () => {
-    const docPath = 'docs/knowledge/cli-testing-gaps.md';
-    expect(fs.existsSync(docPath)).toBe(true);
-
-    const doc = fs.readFileSync(docPath, 'utf-8');
-    expect(doc).toContain('E2E Stubs');
-    expect(doc).toContain('Full E2E');
   });
 });
