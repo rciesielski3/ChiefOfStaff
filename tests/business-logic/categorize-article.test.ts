@@ -183,3 +183,56 @@ describe('source matching uses whole words', () => {
     expect(primaryQANewsCategory(article)).toBe('ai');
   });
 });
+
+describe('expanded category keywords', () => {
+  const mockArticle = (title: string, summary: string, source: string): Article => ({
+    id: 'test-keywords-1',
+    title,
+    summary,
+    url: 'https://example.com/keywords-test',
+    source,
+    category: 'news',
+    publishedAt: new Date().toISOString(),
+    tags: []
+  });
+
+  it('maps a new test-automation keyword (selenium) to test-automation', () => {
+    const article = mockArticle('Selenium grid tips', 'Notes on running browsers in parallel', 'Some Source');
+    expect(primaryQANewsCategory(article)).toBe('test-automation');
+  });
+
+  it('maps a new test-automation keyword (mocking) to test-automation', () => {
+    const article = mockArticle('SDK Mocking', 'Stubbing network calls in unit tests', 'Some Source');
+    expect(primaryQANewsCategory(article)).toBe('test-automation');
+  });
+
+  it('maps a new qa-practice keyword (abuse case) to qa-practice', () => {
+    const article = mockArticle('Abuse Case', 'Describing misuse scenarios for a feature', 'Some Source');
+    expect(primaryQANewsCategory(article)).toBe('qa-practice');
+  });
+
+  it('maps a new qa-practice keyword (quality metrics) to qa-practice', () => {
+    const article = mockArticle('Quality Metrics', 'Measuring a team over time', 'Some Source');
+    expect(primaryQANewsCategory(article)).toBe('qa-practice');
+  });
+
+  it('maps a new tooling keyword (git) to tooling', () => {
+    const article = mockArticle('Git branching for small teams', 'A short guide', 'Some Source');
+    expect(primaryQANewsCategory(article)).toBe('tooling');
+  });
+
+  it('maps a new ai keyword (agents) to ai', () => {
+    const article = mockArticle('Tools built for coding agents', 'A short guide', 'Some Source');
+    expect(primaryQANewsCategory(article)).toBe('ai');
+  });
+
+  it('keeps a generic title with no category terms in engineering', () => {
+    const article = mockArticle('Team rituals for a healthy workplace', 'Notes on meetings and rest', 'Some Source');
+    expect(primaryQANewsCategory(article)).toBe('engineering');
+  });
+
+  it('does not match a generic word that merely contains a new keyword', () => {
+    const article = mockArticle('Quality of life tips for commuters', 'Small habits for a calmer day', 'Some Source');
+    expect(primaryQANewsCategory(article)).toBe('engineering');
+  });
+});
