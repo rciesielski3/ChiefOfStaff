@@ -5,7 +5,9 @@
         "test", "jest", "vitest", "cypress", "playwright", "e2e",
         "unit test", "testing framework", "test suite", "test runner",
         "mocha", "ava", "tap", "jasmine", "qunit", "webdriver",
-        "puppeteer", "testcafe", "nightwatch", "codeceptjs"
+        "puppeteer", "testcafe", "nightwatch", "codeceptjs",
+        "test automation", "selenium", "flaky", "mutation testing",
+        "property-based", "contract testing", "fuzzing", "k6", "mocking"
       ],
       "sourceMatches": ["Jest", "Vitest", "Cypress", "Playwright"]
     },
@@ -14,7 +16,9 @@
         "qa", "quality assurance", "testing", "security", "vulnerability",
         "owasp", "penetration", "best practice", "standard", "compliance",
         "bug", "defect", "regression", "test case", "manual testing",
-        "accessibility", "wcag", "a11y", "performance testing"
+        "accessibility", "wcag", "a11y", "performance testing",
+        "quality metrics", "quality indicators", "tester", "testers",
+        "testability", "attack vector", "abuse case", "responsible disclosure"
       ],
       "sourceMatches": ["OWASP", "QA", "Security", "Sauce Labs"]
     },
@@ -23,7 +27,7 @@
         "tool", "framework", "library", "build", "webpack", "vite",
         "config", "lint", "prettier", "eslint", "release", "version",
         "package", "dependency", "npm", "yarn", "pnpm", "plugin",
-        "extension", "integration", "cli", "api", "sdk"
+        "extension", "integration", "cli", "api", "sdk", "git"
       ],
       "sourceMatches": ["Release", "Github", "Tools"]
     },
@@ -41,7 +45,7 @@
         "ai", "artificial intelligence", "llm", "large language model",
         "machine learning", "neural", "gpt", "claude", "model",
         "embedding", "generative", "nlp", "deep learning", "transformer",
-        "fine-tune", "prompt", "agent", "reasoning", "hallucination"
+        "fine-tune", "prompt", "agent", "agents", "reasoning", "hallucination"
       ],
       "sourceMatches": ["Anthropic", "OpenAI", "AI", "LLM"]
     }
