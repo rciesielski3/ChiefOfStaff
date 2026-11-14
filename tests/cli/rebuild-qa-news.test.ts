@@ -1,33 +1,23 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { REPO_ROOT, RSS_STUB, TS_NODE_BIN, useTempProjectRoot } from '../helpers/temp-project-root';
+
+// Runs the real CLI against a temp project root (CHIEF_OF_STAFF_ROOT) with RSS
+// fetching stubbed, so the test needs no network and never writes repo files.
+function runRebuild(args: string[] = []): string {
+  return execFileSync(
+    TS_NODE_BIN,
+    ['-r', RSS_STUB, path.join(REPO_ROOT, 'src/cli/rebuild-qa-news.ts'), ...args],
+    { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], cwd: REPO_ROOT, env: process.env, timeout: 60000 }
+  );
+}
 
 describe('rebuild-qa-news CLI — Integration Tests', () => {
-  const projectRoot = process.cwd();
-
-  beforeEach(() => {
-    // Ensure export directory exists for tests
-    const exportDir = path.join(projectRoot, 'qa-news/data');
-    if (!fs.existsSync(exportDir)) {
-      fs.mkdirSync(exportDir, { recursive: true });
-    }
-  });
-
-  afterEach(() => {
-    // Clean up test artifacts if needed
-    // We keep the files since they're useful for manual inspection
-  });
+  const projectRoot = useTempProjectRoot();
 
   it('should run successfully with --verbose flag and output progress messages', () => {
-    const output = execSync(
-      'npx ts-node src/cli/rebuild-qa-news.ts --verbose',
-      {
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-        cwd: projectRoot,
-        timeout: 30000  // 30 second timeout
-      }
-    );
+    const output = runRebuild(['--verbose']);
 
     // Verify output contains progress messages
     expect(output).toContain('[Rebuild QA News]');
@@ -51,20 +41,12 @@ describe('rebuild-qa-news CLI — Integration Tests', () => {
 
   it('should regenerate all export files (latest.json, weekly.json, monthly.json)', () => {
     // Run rebuild
-    execSync(
-      'npx ts-node src/cli/rebuild-qa-news.ts',
-      {
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-        cwd: projectRoot,
-        timeout: 30000  // 30 second timeout
-      }
-    );
+    runRebuild();
 
     // Verify all three export files were created
-    const latestPath = path.join(projectRoot, 'qa-news/data/latest-news.json');
-    const weeklyPath = path.join(projectRoot, 'qa-news/data/weekly-highlights.json');
-    const monthlyPath = path.join(projectRoot, 'qa-news/data/monthly-recap.json');
+    const latestPath = path.join(projectRoot(), 'qa-news/data/latest-news.json');
+    const weeklyPath = path.join(projectRoot(), 'qa-news/data/weekly-highlights.json');
+    const monthlyPath = path.join(projectRoot(), 'qa-news/data/monthly-recap.json');
 
     expect(fs.existsSync(latestPath)).toBe(true);
     expect(fs.existsSync(weeklyPath)).toBe(true);

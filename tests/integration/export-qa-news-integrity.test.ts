@@ -1,8 +1,12 @@
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { useTempProjectRoot } from '../helpers/temp-project-root';
 
 describe('export-qa-news — Data Integrity', () => {
+  // Each suite gets its own temp copy of the data; the CLI reads and writes there.
+  useTempProjectRoot();
+
   it('should produce valid JSON structure even with empty summaries', () => {
     const env = { ...process.env };
     delete env.ANTHROPIC_API_KEY;

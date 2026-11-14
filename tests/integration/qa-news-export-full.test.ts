@@ -14,8 +14,12 @@
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { useTempProjectRoot } from '../helpers/temp-project-root';
 
 describe('QA-News Full Export Integration', () => {
+  // Each suite gets its own temp copy of the data; the CLI reads and writes there.
+  const outputRoot = useTempProjectRoot();
+
   const projectRoot = path.resolve(__dirname, '../../');
 
   /**
@@ -29,13 +33,14 @@ describe('QA-News Full Export Integration', () => {
    */
   test('all three exports produce valid JSON with correct structure', () => {
     // === LATEST NEWS ===
-    const latestPath = path.join(projectRoot, 'qa-news/data/latest-news.json');
+    const latestPath = path.join(outputRoot(), 'qa-news/data/latest-news.json');
 
     try {
       execSync(
         'npx ts-node src/cli/export-latest-news.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe'] // Suppress stderr
         }
@@ -84,6 +89,7 @@ describe('QA-News Full Export Integration', () => {
         'npx ts-node src/cli/export-weekly-highlights.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']
         }
@@ -129,6 +135,7 @@ describe('QA-News Full Export Integration', () => {
         'npx ts-node src/cli/export-monthly-recap.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']
         }
@@ -183,6 +190,7 @@ describe('QA-News Full Export Integration', () => {
         'npx ts-node src/cli/export-weekly-highlights.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']
         }
@@ -201,6 +209,7 @@ describe('QA-News Full Export Integration', () => {
         'npx ts-node src/cli/export-monthly-recap.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']
         }
@@ -240,13 +249,14 @@ describe('QA-News Full Export Integration', () => {
    */
   test('exports are deterministic (same input = same output)', () => {
     // Run latest export twice
-    const latestPath = path.join(projectRoot, 'qa-news/data/latest-news.json');
+    const latestPath = path.join(outputRoot(), 'qa-news/data/latest-news.json');
 
     try {
       execSync(
         'npx ts-node src/cli/export-latest-news.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']
         }
@@ -268,6 +278,7 @@ describe('QA-News Full Export Integration', () => {
         'npx ts-node src/cli/export-latest-news.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']
         }
@@ -303,6 +314,7 @@ describe('QA-News Full Export Integration', () => {
         'npx ts-node src/cli/export-weekly-highlights.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']
         }
@@ -320,6 +332,7 @@ describe('QA-News Full Export Integration', () => {
         'npx ts-node src/cli/export-weekly-highlights.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']
         }
@@ -364,6 +377,7 @@ describe('QA-News Full Export Integration', () => {
         'npx ts-node src/cli/export-monthly-recap.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']
         }
@@ -381,6 +395,7 @@ describe('QA-News Full Export Integration', () => {
         'npx ts-node src/cli/export-monthly-recap.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']
         }
@@ -427,13 +442,14 @@ describe('QA-News Full Export Integration', () => {
    */
   test('data volumes are reasonable and within constraints', () => {
     // === LATEST VOLUME ===
-    const latestPath = path.join(projectRoot, 'qa-news/data/latest-news.json');
+    const latestPath = path.join(outputRoot(), 'qa-news/data/latest-news.json');
 
     try {
       execSync(
         'npx ts-node src/cli/export-latest-news.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']
         }
@@ -462,6 +478,7 @@ describe('QA-News Full Export Integration', () => {
         'npx ts-node src/cli/export-monthly-recap.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']
         }
@@ -492,6 +509,7 @@ describe('QA-News Full Export Integration', () => {
         'npx ts-node src/cli/export-weekly-highlights.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']
         }

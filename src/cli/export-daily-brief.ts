@@ -2,6 +2,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { resolveProjectRoot } from './project-root';
 import { exportDailyBrief, writeDailyBrief, writePublicDailyBrief } from '../business-logic/export-daily-brief';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { primaryQANewsCategory } from '../business-logic/categorize-article';
@@ -34,7 +35,7 @@ async function main(): Promise<void> {
     logStructured('WORKFLOW_START', { timestamp: startTime });
 
     // Resolve paths relative to project root
-    const projectRoot = path.resolve(__dirname, '../..');
+    const projectRoot = resolveProjectRoot();
     const storeFilePath = path.join(projectRoot, 'data/canonical_articles.ndjson');
     const outputPath = path.join(projectRoot, 'qa-news/data/daily-brief.json');
 

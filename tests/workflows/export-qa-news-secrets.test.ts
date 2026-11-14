@@ -1,6 +1,10 @@
 import { execSync } from 'child_process';
+import { useTempProjectRoot } from '../helpers/temp-project-root';
 
 describe('Workflow Integration — Secret Passing (Finding 1)', () => {
+  // Each suite gets its own temp copy of the data; the CLI reads and writes there.
+  useTempProjectRoot();
+
   it('scenario: GitHub Actions WITH secret key → summaries generation ATTEMPTED', () => {
     // This scenario validates that ANTHROPIC_API_KEY is passed and summaries are attempted
     // When the API key is present, the CLI logs "SUMMARIES_ENABLED" and attempts generation
