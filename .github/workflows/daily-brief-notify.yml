@@ -1,126 +1,126 @@
 name: Daily Brief Monitoring & Alerts
 
+# Freshness monitor. Failure alerts for Daily Brief / Export runs are handled
+# by notify.yml (workflow_run). This workflow catches what notify.yml cannot:
+#   A. Daily Brief silently did not run (no successful run in 26h)
+#   B. The published QA-News site data is stale (public/latest.json > 30h old)
+#   C. data/canonical_articles.ndjson is empty or contains invalid JSON lines
+# A failing condition re-alerts on every scheduled run (every 6h) until fixed.
+
 permissions:
   actions: read
   contents: read
 
 on:
-  workflow_run:
-    workflows: ['Daily Brief']
-    types: [completed]
   schedule:
-    # Check workflow health every 6 hours
     - cron: '0 */6 * * *'
-  workflow_dispatch:  # Manual trigger for testing
+  workflow_dispatch:
 
 jobs:
-  check-workflow-health:
+  freshness:
     runs-on: ubuntu-latest
-    steps:
-      - name: Check Daily Brief Status
-        id: check
-        run: |
-          # Get the latest Daily Brief workflow run
-          LATEST_RUN=$(gh run list --repo rciesielski3/ChiefOfStaff --workflow=daily-brief.yml --limit=1 --json conclusion,createdAt,status)
-          echo "Latest run: $LATEST_RUN"
-
-          # Extract conclusion and status
-          CONCLUSION=$(echo "$LATEST_RUN" | jq -r '.[0].conclusion // "unknown"')
-          STATUS=$(echo "$LATEST_RUN" | jq -r '.[0].status // "unknown"')
-          CREATED=$(echo "$LATEST_RUN" | jq -r '.[0].createdAt // "unknown"')
-
-          echo "conclusion=$CONCLUSION" >> $GITHUB_OUTPUT
-          echo "status=$STATUS" >> $GITHUB_OUTPUT
-          echo "created=$CREATED" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Alert on Workflow Failure
-        if: steps.check.outputs.conclusion == 'failure'
-        continue-on-error: true
-        run: |
-          echo "⚠️ Daily Brief workflow failed!"
-          echo "Status: ${{ steps.check.outputs.conclusion }}"
-          echo "Last run: ${{ steps.check.outputs.created }}"
-
-          # Send Telegram notification if secrets are available
-          if [ -z "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] || [ -z "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
-            echo "⏭️ Skipping Telegram notification (secrets not configured)"
-            exit 0
-          fi
-
-          RESPONSE=$(curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-            -d text="🚨 *Production Alert*: Daily Brief workflow failed%0AStatus: ${{ steps.check.outputs.conclusion }}%0ATime: ${{ steps.check.outputs.created }}" \
-            -d parse_mode="Markdown")
-
-          if echo "$RESPONSE" | jq -e '.ok == true' >/dev/null 2>&1; then
-            echo "✅ Telegram alert sent successfully"
-          else
-            ERROR_MSG=$(echo "$RESPONSE" | jq -r '.description // "Unknown error"')
-            echo "⚠️ Telegram alert failed: $ERROR_MSG" >&2
-          fi
-
-      - name: Alert on Workflow Timeout
-        if: steps.check.outputs.status == 'queued' || steps.check.outputs.status == 'in_progress'
-        run: |
-          echo "⏱️ Daily Brief workflow is taking longer than expected"
-          echo "Status: ${{ steps.check.outputs.status }}"
-          echo "Created: ${{ steps.check.outputs.created }}"
-
-      - name: Confirm Workflow Success
-        if: steps.check.outputs.conclusion == 'success'
-        run: |
-          echo "✅ Daily Brief workflow completed successfully"
-          echo "Last run: ${{ steps.check.outputs.created }}"
-
-  check-data-quality:
-    runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'schedule'
     steps:
       - uses: actions/checkout@v4
-        if: always()
 
-      - name: Validate canonical articles file
-        if: always()
+      - name: Run freshness checks
+        id: checks
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          MAX_BRIEF_AGE_HOURS: '26'
+          MAX_SITE_AGE_HOURS: '30'
+          NDJSON_FILE: data/canonical_articles.ndjson
         run: |
-          if [ ! -f "data/canonical_articles.ndjson" ]; then
-            echo "❌ canonical_articles.ndjson not found"
-            exit 1
-          fi
+          FAILURES=""
+          NOW=$(date -u +%s)
 
-          # Check file is not empty
-          if [ ! -s "data/canonical_articles.ndjson" ]; then
-            echo "❌ canonical_articles.ndjson is empty"
-            exit 1
-          fi
+          # Convert an ISO-8601 timestamp (optional fractional seconds) to epoch seconds
+          to_epoch() {
+            jq -rn --arg t "$1" '$t | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601' 2>/dev/null
+          }
 
-          # Validate NDJSON format (each line is valid JSON)
-          LINE_COUNT=$(wc -l < data/canonical_articles.ndjson)
-          VALID_COUNT=$(cat data/canonical_articles.ndjson | jq -e . >/dev/null 2>&1 && echo "0" || wc -l < data/canonical_articles.ndjson)
-
-          echo "✅ Data quality check passed"
-          echo "   - File exists and contains data"
-          echo "   - Line count: $LINE_COUNT"
-
-      - name: Alert on Data Quality Issue
-        if: failure()
-        continue-on-error: true
-        run: |
-          echo "🚨 Data quality issue detected"
-          if [ -z "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] || [ -z "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
-            echo "⏭️ Skipping Telegram notification (secrets not configured)"
-            exit 0
-          fi
-
-          RESPONSE=$(curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-            -d text="🚨 *Data Quality Alert*: canonical_articles.ndjson validation failed" \
-            -d parse_mode="Markdown")
-
-          if echo "$RESPONSE" | jq -e '.ok == true' >/dev/null 2>&1; then
-            echo "✅ Data quality alert sent via Telegram"
+          # Check A: last successful Daily Brief run
+          LAST_OK=$(gh run list --repo "$REPO" --workflow=daily-brief.yml --status success --limit 1 \
+            --json updatedAt --jq '.[0].updatedAt // empty' || true)
+          LAST_OK_EPOCH=$(to_epoch "$LAST_OK")
+          if [ -z "$LAST_OK_EPOCH" ]; then
+            FAILURES="${FAILURES}- Daily Brief: no successful run found\n"
           else
-            ERROR=$(echo "$RESPONSE" | jq -r '.description // "Unknown error"')
-            echo "⚠️ Telegram error: $ERROR" >&2
+            AGE_H=$(( (NOW - LAST_OK_EPOCH) / 3600 ))
+            echo "Check A: last successful Daily Brief at $LAST_OK (${AGE_H}h ago)"
+            if [ "$AGE_H" -ge "$MAX_BRIEF_AGE_HOURS" ]; then
+              FAILURES="${FAILURES}- Daily Brief: last success ${AGE_H}h ago (limit ${MAX_BRIEF_AGE_HOURS}h)\n"
+            fi
           fi
+
+          # Check B: published site data freshness (updatedAt written at export time,
+          # falling back to the last commit touching the file)
+          SITE_TS=$(gh api repos/rciesielski3/qa-news/contents/public/latest.json --jq '.content' 2>/dev/null \
+            | base64 -d 2>/dev/null | jq -r '.updatedAt // empty' 2>/dev/null || true)
+          SITE_SRC="updatedAt"
+          if [ -z "$(to_epoch "$SITE_TS")" ]; then
+            SITE_TS=$(gh api "repos/rciesielski3/qa-news/commits?path=public/latest.json&per_page=1" \
+              --jq '.[0].commit.committer.date // empty' 2>/dev/null || true)
+            SITE_SRC="last commit"
+          fi
+          SITE_EPOCH=$(to_epoch "$SITE_TS")
+          if [ -z "$SITE_EPOCH" ]; then
+            FAILURES="${FAILURES}- QA-News site: could not read public/latest.json timestamp\n"
+          else
+            AGE_H=$(( (NOW - SITE_EPOCH) / 3600 ))
+            echo "Check B: qa-news public/latest.json $SITE_SRC $SITE_TS (${AGE_H}h ago)"
+            if [ "$AGE_H" -ge "$MAX_SITE_AGE_HOURS" ]; then
+              FAILURES="${FAILURES}- QA-News site data: ${AGE_H}h old (limit ${MAX_SITE_AGE_HOURS}h)\n"
+            fi
+          fi
+
+          # Check C: NDJSON file non-empty and every line parses as JSON
+          if [ ! -s "$NDJSON_FILE" ]; then
+            FAILURES="${FAILURES}- ${NDJSON_FILE}: missing or empty\n"
+          else
+            TOTAL=$(wc -l < "$NDJSON_FILE" | tr -d ' ')
+            BAD=0
+            while IFS= read -r line || [ -n "$line" ]; do
+              [ -z "$line" ] && continue
+              printf '%s' "$line" | jq -e . >/dev/null 2>&1 || BAD=$((BAD + 1))
+            done < "$NDJSON_FILE"
+            echo "Check C: $NDJSON_FILE has $TOTAL lines, $BAD invalid"
+            if [ "$BAD" -gt 0 ]; then
+              FAILURES="${FAILURES}- ${NDJSON_FILE}: ${BAD} invalid JSON line(s)\n"
+            fi
+          fi
+
+          if [ -n "$FAILURES" ]; then
+            printf 'Failed checks:\n%b' "$FAILURES"
+            {
+              echo "failures<<EOF"
+              printf '%b' "$FAILURES"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "All freshness checks passed"
+          fi
+
+      - name: Send Telegram alert
+        if: steps.checks.outputs.failures != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          FAILURES: ${{ steps.checks.outputs.failures }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "Skipping Telegram notification (secrets not configured)"
+          else
+            TEXT=$(printf 'ChiefOfStaff freshness alert\n%s\n%s' "$FAILURES" "$RUN_URL")
+            RESPONSE=$(curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+              --data-urlencode "text=${TEXT}")
+            if echo "$RESPONSE" | jq -e '.ok == true' >/dev/null 2>&1; then
+              echo "Telegram alert sent"
+            else
+              echo "Telegram alert failed: $(echo "$RESPONSE" | jq -r '.description // "Unknown error"')" >&2
+            fi
+          fi
+          echo "::error::Freshness checks failed"
+          exit 1
