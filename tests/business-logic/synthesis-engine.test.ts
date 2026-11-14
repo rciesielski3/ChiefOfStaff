@@ -141,7 +141,7 @@ describe('SynthesisEngine', () => {
       expect(lowBestPractice.length).toBe(0);
     });
 
-    it('should set evolutionStage to ESTABLISHED when avgConfidence > 0.90', () => {
+    it('should set evolutionStage to mature when avgConfidence > 0.90', () => {
       // Create patterns with very high confidence
       const patterns = [
         InsightFactory.create({
@@ -174,12 +174,12 @@ describe('SynthesisEngine', () => {
 
       const insights = synthesisEngine.synthesizeInsights(patterns, facts);
 
-      // Should create BEST_PRACTICE with ESTABLISHED stage
+      // Should create BEST_PRACTICE with mature stage (documented lifecycle: new, growth, mature, declining, archived)
       const bestPractice = insights.find(i => i.type === InsightType.BEST_PRACTICE);
       expect(bestPractice).toBeDefined();
       if (bestPractice) {
         expect(bestPractice.confidence).toBeCloseTo(0.93, 1);
-        expect(bestPractice.evolutionStage).toBe('ESTABLISHED');
+        expect(bestPractice.evolutionStage).toBe('mature');
       }
     });
 
