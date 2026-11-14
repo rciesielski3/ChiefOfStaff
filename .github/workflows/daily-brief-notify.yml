@@ -36,7 +36,7 @@ jobs:
 
           # Convert an ISO-8601 timestamp (optional fractional seconds) to epoch seconds
           to_epoch() {
-            jq -rn --arg t "$1" '$t | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601' 2>/dev/null
+            jq -rn --arg t "$1" '$t | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601' 2>/dev/null || true
           }
 
           # Check A: last successful Daily Brief run
