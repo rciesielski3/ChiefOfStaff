@@ -14,7 +14,7 @@ describe('Workflow Integration — Secret Passing (Finding 1)', () => {
       let stderr = '';
       try {
         execSync(
-          'npx ts-node src/cli/export-weekly-highlights.ts',
+          'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
           {
             encoding: 'utf-8',
             stdio: ['pipe', 'pipe', 'pipe'],
@@ -28,7 +28,7 @@ describe('Workflow Integration — Secret Passing (Finding 1)', () => {
       let weeklyOutput = '';
       try {
         weeklyOutput = execSync(
-          'npx ts-node src/cli/export-weekly-highlights.ts 2>/dev/null',
+          'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts 2>/dev/null',
           { encoding: 'utf-8', env }
         );
       } catch (e: any) {
@@ -60,7 +60,7 @@ describe('Workflow Integration — Secret Passing (Finding 1)', () => {
       let stderr = '';
       try {
         execSync(
-          'npx ts-node src/cli/export-weekly-highlights.ts',
+          'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
           {
             encoding: 'utf-8',
             stdio: ['pipe', 'pipe', 'pipe'],
@@ -74,7 +74,7 @@ describe('Workflow Integration — Secret Passing (Finding 1)', () => {
       let weeklyOutput = '';
       try {
         weeklyOutput = execSync(
-          'npx ts-node src/cli/export-weekly-highlights.ts 2>/dev/null',
+          'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts 2>/dev/null',
           { encoding: 'utf-8', env }
         );
       } catch (e: any) {
@@ -110,7 +110,7 @@ describe('Workflow Integration — Secret Passing (Finding 1)', () => {
       let stderr = '';
       try {
         execSync(
-          'npx ts-node src/cli/export-weekly-highlights.ts',
+          'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
           {
             encoding: 'utf-8',
             stdio: ['pipe', 'pipe', 'pipe'],
@@ -124,7 +124,7 @@ describe('Workflow Integration — Secret Passing (Finding 1)', () => {
       let weeklyOutput = '';
       try {
         weeklyOutput = execSync(
-          'npx ts-node src/cli/export-weekly-highlights.ts 2>/dev/null',
+          'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts 2>/dev/null',
           { encoding: 'utf-8', env }
         );
       } catch (e: any) {

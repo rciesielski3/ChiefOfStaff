@@ -10,7 +10,7 @@ describe('export-qa-news CLI — Exit Codes', () => {
   it('should exit with code 0 on successful export', () => {
     try {
       const output = execSync(
-        'npx ts-node src/cli/export-weekly-highlights.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
         {
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe'],
@@ -34,7 +34,7 @@ describe('export-qa-news CLI — Exit Codes', () => {
 
     let exitCode: number | undefined;
     try {
-      execSync('npx ts-node src/cli/export-weekly-highlights.ts', {
+      execSync('npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts', {
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe'],
         env: process.env

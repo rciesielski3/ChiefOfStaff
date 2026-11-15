@@ -86,7 +86,7 @@ describe('QA-News Full Export Integration', () => {
     let weeklyOutput: string;
     try {
       weeklyOutput = execSync(
-        'npx ts-node src/cli/export-weekly-highlights.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
         {
           cwd: projectRoot,
           env: process.env,
@@ -132,7 +132,7 @@ describe('QA-News Full Export Integration', () => {
     let monthlyOutput: string;
     try {
       monthlyOutput = execSync(
-        'npx ts-node src/cli/export-monthly-recap.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-monthly-recap.ts',
         {
           cwd: projectRoot,
           env: process.env,
@@ -187,7 +187,7 @@ describe('QA-News Full Export Integration', () => {
 
     try {
       weeklyOutput = execSync(
-        'npx ts-node src/cli/export-weekly-highlights.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
         {
           cwd: projectRoot,
           env: process.env,
@@ -206,7 +206,7 @@ describe('QA-News Full Export Integration', () => {
 
     try {
       monthlyOutput = execSync(
-        'npx ts-node src/cli/export-monthly-recap.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-monthly-recap.ts',
         {
           cwd: projectRoot,
           env: process.env,
@@ -311,7 +311,7 @@ describe('QA-News Full Export Integration', () => {
 
     try {
       weekly1 = execSync(
-        'npx ts-node src/cli/export-weekly-highlights.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
         {
           cwd: projectRoot,
           env: process.env,
@@ -329,7 +329,7 @@ describe('QA-News Full Export Integration', () => {
 
     try {
       weekly2 = execSync(
-        'npx ts-node src/cli/export-weekly-highlights.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
         {
           cwd: projectRoot,
           env: process.env,
@@ -374,7 +374,7 @@ describe('QA-News Full Export Integration', () => {
 
     try {
       monthly1 = execSync(
-        'npx ts-node src/cli/export-monthly-recap.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-monthly-recap.ts',
         {
           cwd: projectRoot,
           env: process.env,
@@ -392,7 +392,7 @@ describe('QA-News Full Export Integration', () => {
 
     try {
       monthly2 = execSync(
-        'npx ts-node src/cli/export-monthly-recap.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-monthly-recap.ts',
         {
           cwd: projectRoot,
           env: process.env,
@@ -475,7 +475,7 @@ describe('QA-News Full Export Integration', () => {
 
     try {
       monthlyOutput = execSync(
-        'npx ts-node src/cli/export-monthly-recap.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-monthly-recap.ts',
         {
           cwd: projectRoot,
           env: process.env,
@@ -506,7 +506,7 @@ describe('QA-News Full Export Integration', () => {
 
     try {
       weeklyOutput = execSync(
-        'npx ts-node src/cli/export-weekly-highlights.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
         {
           cwd: projectRoot,
           env: process.env,

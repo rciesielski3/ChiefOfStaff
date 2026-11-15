@@ -12,7 +12,7 @@ describe('export-qa-news — Data Integrity', () => {
     delete env.ANTHROPIC_API_KEY;
 
     const output = execSync(
-      'npx ts-node src/cli/export-weekly-highlights.ts',
+      'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
       { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], env }
     );
 
@@ -34,13 +34,13 @@ describe('export-qa-news — Data Integrity', () => {
     const env = { ...process.env, ANTHROPIC_API_KEY: 'test-key' };
 
     const weeklyOutput = execSync(
-      'npx ts-node src/cli/export-weekly-highlights.ts',
+      'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
       { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], env }
     );
     const weeklyJson = JSON.parse(weeklyOutput);
 
     const monthlyOutput = execSync(
-      'npx ts-node src/cli/export-monthly-recap.ts',
+      'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-monthly-recap.ts',
       { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], env }
     );
     const monthlyJson = JSON.parse(monthlyOutput);
@@ -58,7 +58,7 @@ describe('export-qa-news — Data Integrity', () => {
     delete env.ANTHROPIC_API_KEY;
 
     const weeklyOutput = execSync(
-      'npx ts-node src/cli/export-weekly-highlights.ts',
+      'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
       { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], env }
     );
     const weeklyJson = JSON.parse(weeklyOutput);
@@ -85,7 +85,7 @@ describe('export-qa-news — Data Integrity', () => {
     delete env.ANTHROPIC_API_KEY;
 
     const output = execSync(
-      'npx ts-node src/cli/export-weekly-highlights.ts',
+      'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
       { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], env }
     );
 
