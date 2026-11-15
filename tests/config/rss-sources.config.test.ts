@@ -49,6 +49,10 @@ describe('RSS Sources Configuration', () => {
       expect(enabled.every(s => (s as any).enabled !== false)).toBe(true);
     });
 
+    it('should not fetch LogiGear Blog (Cloudflare returns 403 to the fetcher)', () => {
+      expect(getEnabledSources().some(s => s.name === 'LogiGear Blog')).toBe(false);
+    });
+
     it('should filter out disabled sources', () => {
       // Create a test array with mixed enabled/disabled sources
       const testSources: (RSSSourceConfig & { enabled?: boolean })[] = [
