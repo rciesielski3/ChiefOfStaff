@@ -1,8 +1,11 @@
 import {
   computeSourceHealth,
+  FeedCheck,
   formatSourceHealthReport,
   SourceHealthArticle,
+  summarizeFeedItems,
 } from '../../src/business-logic/source-health';
+import { RETENTION_DAYS } from '../../src/business-logic/article-store';
 
 const NOW = new Date('2026-11-14T12:00:00.000Z');
 
@@ -139,9 +142,74 @@ describe('formatSourceHealthReport', () => {
     );
   });
 
-  it('shows "never" for a zero source with no articles at all', () => {
+  it('without fetch data, explains a zero source with no stored articles via store retention', () => {
     const report = computeSourceHealth(['Ghost'], [], NOW);
+    const text = formatSourceHealthReport(report);
 
-    expect(formatSourceHealthReport(report)).toContain('⚠️ 0 Ghost (last article: never)');
+    expect(text).toContain(
+      `⚠️ 0 Ghost (no articles in last ${RETENTION_DAYS} days, store retention)`
+    );
+    expect(text).not.toContain('never');
+  });
+
+  describe('with live feed checks', () => {
+    const report = computeSourceHealth(
+      ['Busy', 'Quiet', 'Blocked', 'Empty', 'Unchecked'],
+      [
+        article('Busy', '2026-11-13T00:00:00Z'),
+        article('Quiet', '2026-10-20T00:00:00Z'),
+      ],
+      NOW
+    );
+    const checks = new Map<string, FeedCheck>([
+      ['Quiet', { ok: true, items: 10, newest: '2026-10-05T08:00:00.000Z' }],
+      ['Blocked', { ok: false, error: 'Status code 403' }],
+      ['Empty', { ok: true, items: 0 }],
+    ]);
+
+    it('distinguishes quiet, failed and empty feeds', () => {
+      expect(formatSourceHealthReport(report, checks)).toBe(
+        [
+          'Source health: 2026-11-07 to 2026-11-14 (7 days)',
+          '',
+          '1 Busy',
+          '❌ 0 Blocked (fetch failed: Status code 403)',
+          '⚠️ 0 Empty (feed OK but empty, 0 items)',
+          '⚠️ 0 Quiet (feed OK, newest item 2026-10-05)',
+          `⚠️ 0 Unchecked (no articles in last ${RETENTION_DAYS} days, store retention)`,
+          '',
+          'Total: 1 articles from 5 sources (4 with zero, 1 fetch failed)',
+        ].join('\n')
+      );
+    });
+
+    it('keeps the error on one short line', () => {
+      const long = new Map<string, FeedCheck>([
+        ['Blocked', { ok: false, error: 'Line one\n' + 'x'.repeat(300) }],
+      ]);
+      const row = formatSourceHealthReport(report, long)
+        .split('\n')
+        .find((line) => line.includes('Blocked'))!;
+
+      expect(row.startsWith('❌ 0 Blocked (fetch failed: Line one x')).toBe(true);
+      expect(row.length).toBeLessThan(140);
+      expect(row.endsWith('…)')).toBe(true);
+    });
+  });
+});
+
+describe('summarizeFeedItems', () => {
+  it('reports item count and the newest valid date', () => {
+    expect(
+      summarizeFeedItems([
+        { pubDate: 'Sun, 05 Oct 2026 08:00:00 GMT' },
+        { pubDate: '2026-09-01T00:00:00Z' },
+        { pubDate: 'garbage' },
+      ])
+    ).toEqual({ ok: true, items: 3, newest: '2026-10-05T08:00:00.000Z' });
+  });
+
+  it('reports an empty feed without a newest date', () => {
+    expect(summarizeFeedItems([])).toEqual({ ok: true, items: 0 });
   });
 });
