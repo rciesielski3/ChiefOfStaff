@@ -50,6 +50,8 @@ export const RSS_SOURCES: RSSSourceConfig[] = [
   {
     name: 'LogiGear Blog',
     url: 'https://www.logigear.com/blogs/feed.xml',
+    // Cloudflare answers the fetcher with 403 (every daily-brief run since it was added).
+    enabled: false,
   },
   {
     name: 'Vitest Releases',
