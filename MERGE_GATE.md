@@ -23,7 +23,7 @@ Required settings:
 
 ### Automated Workflow Behavior
 
-**export-qa-news.yml** and **update-qa-news.yml** workflows:
+**export-qa-news.yml** workflow:
 
 1. **Create PR** — Branch protection requires this
 2. **Queue for auto-merge** — Uses `gh pr merge --squash --auto`
@@ -47,7 +47,7 @@ This is enforced at the GitHub level, not just by process.
 
 ## How to Approve Automation PRs
 
-Automation PRs (created by export-qa-news or update-qa-news workflows) need manual approval:
+Automation PRs (created by the export-qa-news workflow) need manual approval:
 
 1. Go to the PR on GitHub
 2. Click **"Approve"** (review tab)
@@ -114,7 +114,6 @@ Should return protection rules. If HTTP 404, branch protection is not configured
 
 - **CLAUDE.md** — Project-level merge gate rule (process policy)
 - **.github/workflows/export-qa-news.yml** — Auto-merge workflow (export-qa-news)
-- **.github/workflows/update-qa-news.yml** — Auto-merge workflow (update-qa-news)
 
 ## Last Updated
 
