@@ -25,6 +25,9 @@ export interface ArticleStore {
   dedupAndMerge(newArticles: Article[]): Promise<Article[]>;
 }
 
+/** Articles published more than this many days ago are dropped from the store. */
+export const RETENTION_DAYS = 30;
+
 /**
  * NDJSON-based article store with deduplication and file locking for concurrency
  *
@@ -35,7 +38,6 @@ export interface ArticleStore {
  */
 export class NdJsonArticleStore implements ArticleStore {
   private readonly LOCK_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
-  private readonly RETENTION_DAYS = 30;
   private lockRelease: (() => Promise<void>) | null = null;
 
   constructor(private filePath: string) {}
@@ -131,7 +133,7 @@ export class NdJsonArticleStore implements ArticleStore {
       const publishedAt = new Date(article.publishedAt);
       const ageMs = now.getTime() - publishedAt.getTime();
       const ageDays = ageMs / (1000 * 60 * 60 * 24);
-      return ageDays <= this.RETENTION_DAYS;
+      return ageDays <= RETENTION_DAYS;
     });
 
     // Sort by published date (newest first)
