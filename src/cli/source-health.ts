@@ -3,23 +3,29 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { getEnabledSources } from '../config/rss-sources.config';
+import { fetchRSS, filterExcludedPaths } from '../business-logic/rss-fetch';
 import {
   computeSourceHealth,
+  FeedCheck,
   formatSourceHealthReport,
   SourceHealthArticle,
+  summarizeFeedItems,
 } from '../business-logic/source-health';
+import { resolveProjectRoot } from './project-root';
 
 /**
  * CLI: Report per-source article yield over a recent window.
  *
- * Usage: npx ts-node src/cli/source-health.ts [--days N] [--now ISO]
+ * Usage: npx ts-node src/cli/source-health.ts [--days N] [--now ISO] [--no-fetch]
  *
  * Reads data/canonical_articles.ndjson and prints a plain-text report to
- * stdout (warnings go to stderr). Exits 1 if the file cannot be read, 2 on
- * invalid flags.
+ * stdout (warnings go to stderr). Sources with zero articles in the window
+ * are fetched live, so a quiet feed can be told from a broken one; --no-fetch
+ * skips that (offline use). A failed fetch is reported, not fatal: exits 0.
+ * Exits 1 if the store file cannot be read, 2 on invalid flags.
  */
 
-function parseArgs(): { days: number; now: Date } {
+function parseArgs(): { days: number; now: Date; fetch: boolean } {
   const args = process.argv.slice(2);
   const valueOf = (flag: string): string | undefined => {
     const index = args.indexOf(flag);
@@ -40,13 +46,32 @@ function parseArgs(): { days: number; now: Date } {
     process.exit(2);
   }
 
-  return { days, now };
+  return { days, now, fetch: !args.includes('--no-fetch') };
+}
+
+/** Live-fetch each source (in parallel); failures become FeedCheck data. */
+async function checkFeeds(names: string[]): Promise<Map<string, FeedCheck>> {
+  const sources = getEnabledSources().filter((s) => names.includes(s.name));
+  const checks = await Promise.all(
+    sources.map(async (source): Promise<[string, FeedCheck]> => {
+      try {
+        const items = filterExcludedPaths(
+          await fetchRSS(source.url, source.name),
+          source.excludePathPrefixes
+        );
+        return [source.name, summarizeFeedItems(items)];
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return [source.name, { ok: false, error: message }];
+      }
+    })
+  );
+  return new Map(checks);
 }
 
 async function main(): Promise<void> {
-  const { days, now } = parseArgs();
-  const projectRoot = path.resolve(__dirname, '../..');
-  const storeFilePath = path.join(projectRoot, 'data/canonical_articles.ndjson');
+  const { days, now, fetch } = parseArgs();
+  const storeFilePath = path.join(resolveProjectRoot(), 'data/canonical_articles.ndjson');
 
   let content: string;
   try {
@@ -75,7 +100,9 @@ async function main(): Promise<void> {
 
   const enabled = getEnabledSources().map((s) => s.name);
   const report = computeSourceHealth(enabled, articles, now, days);
-  console.log(formatSourceHealthReport(report));
+  const zeroSources = report.sources.filter((s) => s.count === 0).map((s) => s.source);
+  const feedChecks = fetch && zeroSources.length > 0 ? await checkFeeds(zeroSources) : new Map();
+  console.log(formatSourceHealthReport(report, feedChecks));
 }
 
 main();

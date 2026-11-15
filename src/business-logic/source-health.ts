@@ -5,7 +5,13 @@
  * weekly report so dead feeds can be spotted and disabled in the config.
  *
  * Articles from sources that are not in the enabled list are ignored.
+ *
+ * The store only keeps RETENTION_DAYS of articles, so a quiet feed can have no
+ * stored articles at all. The CLI live-fetches those feeds and passes the
+ * outcome in as FeedCheck data, so a quiet feed can be told from a broken one.
  */
+
+import { RETENTION_DAYS } from './article-store';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -30,6 +36,13 @@ export interface SourceHealthReport {
   sources: SourceHealthEntry[];
   total: number;
 }
+
+/** Outcome of a live fetch of one feed. */
+export type FeedCheck =
+  | { ok: true; items: number; newest?: string }
+  | { ok: false; error: string };
+
+const MAX_ERROR_LENGTH = 80;
 
 function parseTime(value: string | undefined): number | null {
   if (!value) return null;
@@ -77,25 +90,63 @@ export function computeSourceHealth(
   };
 }
 
+/** Summarize fetched feed items into a successful FeedCheck. */
+export function summarizeFeedItems(items: { pubDate: string }[]): FeedCheck {
+  let newest: number | null = null;
+  for (const { pubDate } of items) {
+    const time = parseTime(pubDate);
+    if (time !== null && (newest === null || time > newest)) newest = time;
+  }
+  return newest === null
+    ? { ok: true, items: items.length }
+    : { ok: true, items: items.length, newest: new Date(newest).toISOString() };
+}
+
 function day(iso: string): string {
   return iso.slice(0, 10);
 }
 
-/** Concise plain-text report suitable for a Telegram message. */
-export function formatSourceHealthReport(report: SourceHealthReport): string {
-  const zeroCount = report.sources.filter((s) => s.count === 0).length;
+function shortError(error: string): string {
+  const oneLine = error.replace(/\s+/g, ' ').trim();
+  return oneLine.length > MAX_ERROR_LENGTH
+    ? oneLine.slice(0, MAX_ERROR_LENGTH - 1) + '…'
+    : oneLine;
+}
+
+function zeroRow(entry: SourceHealthEntry, check: FeedCheck | undefined): string {
+  const name = entry.source;
+  if (check && !check.ok) return `❌ 0 ${name} (fetch failed: ${shortError(check.error)})`;
+  if (check && check.newest) return `⚠️ 0 ${name} (feed OK, newest item ${day(check.newest)})`;
+  if (check) return `⚠️ 0 ${name} (feed OK but empty, ${check.items} items)`;
+  if (entry.lastPublishedAt) return `⚠️ 0 ${name} (last article: ${day(entry.lastPublishedAt)})`;
+  return `⚠️ 0 ${name} (no articles in last ${RETENTION_DAYS} days, store retention)`;
+}
+
+/**
+ * Concise plain-text report suitable for a Telegram message.
+ *
+ * `feedChecks` holds live-fetch outcomes for zero-count sources (keyed by
+ * source name). Sources without an entry fall back to what the store knows.
+ */
+export function formatSourceHealthReport(
+  report: SourceHealthReport,
+  feedChecks: Map<string, FeedCheck> = new Map()
+): string {
+  const zero = report.sources.filter((s) => s.count === 0);
+  const failed = zero.filter((s) => feedChecks.get(s.source)?.ok === false).length;
 
   const rows = report.sources.map((s) =>
-    s.count > 0
-      ? `${s.count} ${s.source}`
-      : `⚠️ 0 ${s.source} (last article: ${s.lastPublishedAt ? day(s.lastPublishedAt) : 'never'})`
+    s.count > 0 ? `${s.count} ${s.source}` : zeroRow(s, feedChecks.get(s.source))
   );
+
+  const summary =
+    failed > 0 ? `${zero.length} with zero, ${failed} fetch failed` : `${zero.length} with zero`;
 
   return [
     `Source health: ${day(report.windowStart)} to ${day(report.windowEnd)} (${report.windowDays} days)`,
     '',
     ...rows,
     '',
-    `Total: ${report.total} articles from ${report.sources.length} sources (${zeroCount} with zero)`,
+    `Total: ${report.total} articles from ${report.sources.length} sources (${summary})`,
   ].join('\n');
 }
