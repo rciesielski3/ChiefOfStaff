@@ -15,7 +15,7 @@ describe('QA-News Export Pipeline (E2E)', () => {
   test('weekly CLI is callable and produces valid JSON', () => {
     try {
       const output = execSync(
-        'npx ts-node src/cli/export-weekly-highlights.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
         {
           cwd: projectRoot,
           env: process.env,
@@ -58,7 +58,7 @@ describe('QA-News Export Pipeline (E2E)', () => {
   test('monthly CLI is callable and produces valid JSON', () => {
     try {
       const output = execSync(
-        'npx ts-node src/cli/export-monthly-recap.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-monthly-recap.ts',
         {
           cwd: projectRoot,
           env: process.env,
@@ -113,7 +113,7 @@ describe('QA-News Export Pipeline (E2E)', () => {
 
       // Run weekly and monthly CLIs which output JSON to stdout
       const weeklyOutput = execSync(
-        'npx ts-node src/cli/export-weekly-highlights.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
         {
           cwd: projectRoot,
           env: process.env,
@@ -123,7 +123,7 @@ describe('QA-News Export Pipeline (E2E)', () => {
       );
 
       const monthlyOutput = execSync(
-        'npx ts-node src/cli/export-monthly-recap.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-monthly-recap.ts',
         {
           cwd: projectRoot,
           env: process.env,
@@ -169,7 +169,7 @@ describe('QA-News Export Pipeline (E2E)', () => {
     // Test weekly
     try {
       execSync(
-        'npx ts-node src/cli/export-weekly-highlights.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
         { cwd: projectRoot, env: process.env, stdio: 'pipe' }
       );
       expect(true).toBe(true);  // Success case
@@ -180,7 +180,7 @@ describe('QA-News Export Pipeline (E2E)', () => {
     // Test monthly
     try {
       execSync(
-        'npx ts-node src/cli/export-monthly-recap.ts',
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-monthly-recap.ts',
         { cwd: projectRoot, env: process.env, stdio: 'pipe' }
       );
       expect(true).toBe(true);  // Success case

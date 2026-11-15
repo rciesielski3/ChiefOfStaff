@@ -10,7 +10,7 @@ describe('export-weekly-highlights CLI — Environment Variable Handling', () =>
     process.env.ANTHROPIC_API_KEY = 'test-key-for-unit-tests';
 
     try {
-      const output = execSync('npx ts-node src/cli/export-weekly-highlights.ts', {
+      const output = execSync('npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts', {
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env, ANTHROPIC_API_KEY: 'test-key-for-unit-tests' }
@@ -35,7 +35,7 @@ describe('export-weekly-highlights CLI — Environment Variable Handling', () =>
     delete process.env.ANTHROPIC_API_KEY;
 
     try {
-      const output = execSync('npx ts-node src/cli/export-weekly-highlights.ts', {
+      const output = execSync('npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts', {
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env }
@@ -57,7 +57,7 @@ describe('export-weekly-highlights CLI — Environment Variable Handling', () =>
     delete process.env.ANTHROPIC_API_KEY;
 
     try {
-      const output = execSync('npx ts-node src/cli/export-weekly-highlights.ts', {
+      const output = execSync('npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts', {
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env }
@@ -79,7 +79,7 @@ describe('export-weekly-highlights CLI — Environment Variable Handling', () =>
     delete process.env.ANTHROPIC_API_KEY;
 
     try {
-      const output = execSync('npx ts-node src/cli/export-weekly-highlights.ts', {
+      const output = execSync('npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts', {
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env }
@@ -97,7 +97,7 @@ describe('export-weekly-highlights CLI — Environment Variable Handling', () =>
   });
 
   it('scenario: CLI invoked with secret key generates output', () => {
-    const output = execSync('npx ts-node src/cli/export-weekly-highlights.ts', {
+    const output = execSync('npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts', {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, ANTHROPIC_API_KEY: 'test-key-for-scenario' }
@@ -114,7 +114,7 @@ describe('export-weekly-highlights CLI — Environment Variable Handling', () =>
     delete env.ANTHROPIC_API_KEY;
 
     try {
-      const output = execSync('npx ts-node src/cli/export-weekly-highlights.ts', {
+      const output = execSync('npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts', {
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe'],
         env
