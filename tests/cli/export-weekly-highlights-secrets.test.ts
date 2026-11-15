@@ -1,17 +1,9 @@
 import { execSync } from 'child_process';
-import * as path from 'path';
+import { useTempProjectRoot } from '../helpers/temp-project-root';
 
 describe('export-weekly-highlights CLI — Environment Variable Handling', () => {
-  const dataDir = path.join(process.cwd(), 'data');
-  const outputFile = path.join(process.cwd(), 'qa-news/data/weekly-highlights.json');
-
-  beforeEach(() => {
-    // Ensure test data exists
-    const testDataPath = path.join(dataDir, 'qa-news-latest.ndjson');
-    if (!require('fs').existsSync(testDataPath)) {
-      require('fs').writeFileSync(testDataPath, '');
-    }
-  });
+  // Each suite gets its own temp copy of the data; the CLI reads and writes there.
+  useTempProjectRoot();
 
   it('should generate summaries when ANTHROPIC_API_KEY is set', () => {
     const originalKey = process.env.ANTHROPIC_API_KEY;

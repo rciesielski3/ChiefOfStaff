@@ -71,7 +71,7 @@ export class SynthesisEngine {
    * Creates BEST_PRACTICE insights when:
    * - patterns.length >= 2
    * - avgConfidence > 0.85
-   * Sets evolutionStage to ESTABLISHED if avgConfidence > 0.90
+   * Sets evolutionStage to 'mature' if avgConfidence > 0.90, else 'growth'
    * @returns Array of BEST_PRACTICE insights
    */
   private synthesizeBestPractice(): Insight[] {

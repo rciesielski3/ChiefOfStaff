@@ -1,8 +1,12 @@
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { useTempProjectRoot } from '../helpers/temp-project-root';
 
 describe('QA-News Export Pipeline (E2E)', () => {
+  // Each suite gets its own temp copy of the data; the CLI reads and writes there.
+  useTempProjectRoot();
+
   const projectRoot = path.resolve(__dirname, '../../');
 
   /**
@@ -14,6 +18,7 @@ describe('QA-News Export Pipeline (E2E)', () => {
         'npx ts-node src/cli/export-weekly-highlights.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']  // Capture stdout and stderr separately
         }
@@ -56,6 +61,7 @@ describe('QA-News Export Pipeline (E2E)', () => {
         'npx ts-node src/cli/export-monthly-recap.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']  // Capture stdout and stderr separately
         }
@@ -100,6 +106,7 @@ describe('QA-News Export Pipeline (E2E)', () => {
         'npx ts-node src/cli/export-latest-news.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           stdio: ['pipe', 'pipe', 'pipe']
         }
       );
@@ -109,6 +116,7 @@ describe('QA-News Export Pipeline (E2E)', () => {
         'npx ts-node src/cli/export-weekly-highlights.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']
         }
@@ -118,6 +126,7 @@ describe('QA-News Export Pipeline (E2E)', () => {
         'npx ts-node src/cli/export-monthly-recap.ts',
         {
           cwd: projectRoot,
+          env: process.env,
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe']
         }
@@ -150,7 +159,7 @@ describe('QA-News Export Pipeline (E2E)', () => {
     try {
       execSync(
         'npx ts-node src/cli/export-latest-news.ts',
-        { cwd: projectRoot, stdio: 'pipe' }
+        { cwd: projectRoot, env: process.env, stdio: 'pipe' }
       );
       expect(true).toBe(true);  // Success case
     } catch (error: any) {
@@ -161,7 +170,7 @@ describe('QA-News Export Pipeline (E2E)', () => {
     try {
       execSync(
         'npx ts-node src/cli/export-weekly-highlights.ts',
-        { cwd: projectRoot, stdio: 'pipe' }
+        { cwd: projectRoot, env: process.env, stdio: 'pipe' }
       );
       expect(true).toBe(true);  // Success case
     } catch (error: any) {
@@ -172,7 +181,7 @@ describe('QA-News Export Pipeline (E2E)', () => {
     try {
       execSync(
         'npx ts-node src/cli/export-monthly-recap.ts',
-        { cwd: projectRoot, stdio: 'pipe' }
+        { cwd: projectRoot, env: process.env, stdio: 'pipe' }
       );
       expect(true).toBe(true);  // Success case
     } catch (error: any) {

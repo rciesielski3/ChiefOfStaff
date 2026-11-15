@@ -10,6 +10,7 @@ import { NdJsonArticleStore } from '../business-logic/article-store';
 import { AtomicFileWriter } from '../business-logic/atomic-file-writer';
 import { getEnabledSources } from '../config/rss-sources.config';
 import * as path from 'path';
+import { resolveProjectRoot } from './project-root';
 import * as fs from 'fs/promises';
 import { primaryQANewsCategory } from '../business-logic/categorize-article';
 
@@ -164,7 +165,7 @@ async function main(): Promise<void> {
     }
     logStructured('EXPORT_START', { articleCount: scoredArticles.length });
 
-    const projectRoot = path.resolve(__dirname, '../..');
+    const projectRoot = resolveProjectRoot();
     const latestExport = await exportLatestNews(
       new NdJsonArticleStore(path.join(projectRoot, 'data/canonical_articles.ndjson')),
       50
@@ -207,7 +208,7 @@ async function main(): Promise<void> {
     };
 
     // Write public copy for deployed site
-    await writePublicLatestNews('qa-news/public/latest.json', mappedLatestExport);
+    await writePublicLatestNews(path.join(projectRoot, 'qa-news/public/latest.json'), mappedLatestExport);
 
     const dataDir = path.join(projectRoot, 'qa-news/data');
     const latestPath = path.join(dataDir, 'latest-news.json');

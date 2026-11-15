@@ -1,16 +1,21 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { REPO_ROOT, RSS_STUB, TS_NODE_BIN, useTempProjectRoot } from '../helpers/temp-project-root';
+
+// CLIs run with cwd set to a temp project root holding copies of the data files,
+// so the real data/ files are never modified. daily-brief runs with RSS stubbed.
+const cli = (name: string) => path.join(REPO_ROOT, 'src/cli', name);
 
 describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
-  const projectRoot = path.resolve(__dirname, '../..');
-  const knowledgeFactsPath = path.join(projectRoot, 'data/knowledge_facts.ndjson');
-  const insightsPath = path.join(projectRoot, 'data/insights.ndjson');
+  const projectRoot = useTempProjectRoot(['canonical_articles.ndjson', 'knowledge_facts.ndjson']);
+  const knowledgeFactsPath = () => path.join(projectRoot(), 'data/knowledge_facts.ndjson');
+  const insightsPath = () => path.join(projectRoot(), 'data/insights.ndjson');
 
   // Clean up insights file before each test
   beforeEach(() => {
-    if (fs.existsSync(insightsPath)) {
-      fs.unlinkSync(insightsPath);
+    if (fs.existsSync(insightsPath())) {
+      fs.unlinkSync(insightsPath());
     }
   });
 
@@ -22,13 +27,14 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
     try {
       let output = '';
       try {
-        output = execSync(
-          'npx ts-node src/cli/generate-insights.ts',
+        output = execFileSync(
+          TS_NODE_BIN,
+          [cli('generate-insights.ts')],
           {
             encoding: 'utf-8',
             stdio: ['pipe', 'pipe', 'pipe'],
             env,
-            cwd: projectRoot
+            cwd: projectRoot()
           }
         );
       } catch (e: any) {
@@ -52,19 +58,20 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
 
     try {
       // Ensure insights file doesn't exist
-      if (fs.existsSync(insightsPath)) {
-        fs.unlinkSync(insightsPath);
+      if (fs.existsSync(insightsPath())) {
+        fs.unlinkSync(insightsPath());
       }
 
       let output = '';
       try {
-        output = execSync(
-          'npx ts-node src/cli/generate-insights.ts',
+        output = execFileSync(
+          TS_NODE_BIN,
+          [cli('generate-insights.ts')],
           {
             encoding: 'utf-8',
             stdio: ['pipe', 'pipe', 'pipe'],
             env,
-            cwd: projectRoot
+            cwd: projectRoot()
           }
         );
       } catch (e: any) {
@@ -78,8 +85,8 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
 
       // If insights were generated, file should exist or be mentioned
       // If no facts, should indicate skipped or 0 insights
-      if (fs.existsSync(knowledgeFactsPath)) {
-        const facts = fs.readFileSync(knowledgeFactsPath, 'utf-8').split('\n').filter(l => l.trim());
+      if (fs.existsSync(knowledgeFactsPath())) {
+        const facts = fs.readFileSync(knowledgeFactsPath(), 'utf-8').split('\n').filter(l => l.trim());
         if (facts.length === 0) {
           expect(output).toContain('no facts');
         }
@@ -98,13 +105,14 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
       // Run the pipeline
       let output = '';
       try {
-        output = execSync(
-          'npx ts-node src/cli/generate-insights.ts',
+        output = execFileSync(
+          TS_NODE_BIN,
+          [cli('generate-insights.ts')],
           {
             encoding: 'utf-8',
             stdio: ['pipe', 'pipe', 'pipe'],
             env,
-            cwd: projectRoot
+            cwd: projectRoot()
           }
         );
       } catch (e: any) {
@@ -112,8 +120,8 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
       }
 
       // If insights file was created, validate it contains valid NDJSON
-      if (fs.existsSync(insightsPath)) {
-        const content = fs.readFileSync(insightsPath, 'utf-8');
+      if (fs.existsSync(insightsPath())) {
+        const content = fs.readFileSync(insightsPath(), 'utf-8');
         const lines = content.split('\n').filter(line => line.trim());
 
         // Each line should be valid JSON
@@ -148,13 +156,14 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
       let exitCode = 0;
 
       try {
-        output = execSync(
-          'npx ts-node src/cli/generate-insights.ts',
+        output = execFileSync(
+          TS_NODE_BIN,
+          [cli('generate-insights.ts')],
           {
             encoding: 'utf-8',
             stdio: ['pipe', 'pipe', 'pipe'],
             env,
-            cwd: projectRoot
+            cwd: projectRoot()
           }
         );
       } catch (e: any) {
@@ -194,13 +203,14 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
 
       try {
         // Run daily brief first
-        dailyBriefOutput = execSync(
-          'npx ts-node src/cli/daily-brief.ts',
+        dailyBriefOutput = execFileSync(
+          TS_NODE_BIN,
+          ['-r', RSS_STUB, cli('daily-brief.ts')],  // RSS stubbed: no network
           {
             encoding: 'utf-8',
             stdio: ['pipe', 'pipe', 'pipe'],
             env,
-            cwd: projectRoot
+            cwd: projectRoot()
           }
         );
       } catch (e: any) {
@@ -209,13 +219,14 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
 
       try {
         // Then run insights generation
-        insightsOutput = execSync(
-          'npx ts-node src/cli/generate-insights.ts',
+        insightsOutput = execFileSync(
+          TS_NODE_BIN,
+          [cli('generate-insights.ts')],
           {
             encoding: 'utf-8',
             stdio: ['pipe', 'pipe', 'pipe'],
             env,
-            cwd: projectRoot
+            cwd: projectRoot()
           }
         );
       } catch (e: any) {
@@ -236,15 +247,15 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
 
       // Verify data flows from daily-brief to insights
       // Daily brief should persist articles to canonical_articles.ndjson
-      const articlesPath = path.join(projectRoot, 'data/canonical_articles.ndjson');
+      const articlesPath = path.join(projectRoot(), 'data/canonical_articles.ndjson');
       if (fs.existsSync(articlesPath)) {
         const articles = fs.readFileSync(articlesPath, 'utf-8').split('\n').filter(l => l.trim());
         expect(articles.length).toBeGreaterThanOrEqual(0);
       }
 
       // Insights should be stored if facts were extracted
-      if (fs.existsSync(insightsPath)) {
-        const insights = fs.readFileSync(insightsPath, 'utf-8').split('\n').filter(l => l.trim());
+      if (fs.existsSync(insightsPath())) {
+        const insights = fs.readFileSync(insightsPath(), 'utf-8').split('\n').filter(l => l.trim());
         // Having insights is good, but not required if no facts were extracted
         if (insights.length > 0) {
           expect(insights.length).toBeGreaterThan(0);
