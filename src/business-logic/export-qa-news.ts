@@ -1,5 +1,5 @@
 import { Article, resolveArticleId } from './normalize-article';
-import { primaryQANewsCategory } from './categorize-article';
+import { primaryQANewsCategory, qaNewsTags } from './categorize-article';
 
 /**
  * Article format for QA News
@@ -45,7 +45,7 @@ export function articleToQANews(article: Article): QANewsArticle {
     source: article.source,
     category: primaryCategory,
     publishedAt: article.publishedAt,
-    tags: article.tags || []
+    tags: qaNewsTags(article)
   };
 }
 

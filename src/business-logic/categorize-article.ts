@@ -1,5 +1,9 @@
 import { Article } from './normalize-article';
 import categoryConfig from '../config/qa-news-categories.json';
+import { isReleaseSource, RELEASE_TAG } from '../config/rss-sources.config';
+
+/** QA-News category for tool releases (items from GitHub releases feeds). */
+const RELEASE_CATEGORY = 'tooling';
 
 interface CategoryRules {
   keywords: string[];
@@ -78,6 +82,7 @@ export function categorizeForQANews(article: Article): string[] {
  * Pick one display category for an article (used for UI filtering)
  *
  * Rule order:
+ * 0. Items from a GitHub releases feed are always tooling.
  * 1. Keyword hits in title, summary and tags. The category with the most hits
  *    wins; ties go to config order.
  * 2. Only when no keyword hits, an exact whole-word source key (e.g. "Jest",
@@ -89,6 +94,10 @@ export function categorizeForQANews(article: Article): string[] {
  * @returns Single category ID
  */
 export function primaryQANewsCategory(article: Article): string {
+  if (isReleaseSource(article.source)) {
+    return RELEASE_CATEGORY;
+  }
+
   const text = contentText(article);
   const config = categoryConfig as any;
 
@@ -116,4 +125,21 @@ export function primaryQANewsCategory(article: Article): string {
   }
 
   return config.defaults.fallbackCategory;
+}
+
+/**
+ * Tags for QA-News display. The `release` tag marks tool releases only: it is
+ * added to items from a GitHub releases feed and removed from everything else
+ * (older stored articles got it from any text containing "release").
+ */
+export function qaNewsTags(article: Article): string[] {
+  const tags = (article.tags ?? []).filter(tag => tag !== RELEASE_TAG);
+  return isReleaseSource(article.source) ? [...tags, RELEASE_TAG] : tags;
+}
+
+/**
+ * Article with the QA-News display category and tags applied.
+ */
+export function withQANewsDisplayFields<T extends Article>(article: T): T {
+  return { ...article, category: primaryQANewsCategory(article), tags: qaNewsTags(article) };
 }

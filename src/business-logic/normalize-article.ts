@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import { RawArticle } from './rss-fetch';
+import { isReleaseSource, RELEASE_TAG } from '../config/rss-sources.config';
 
 /**
  * Normalized article ready for scoring and display
@@ -166,7 +167,10 @@ export function normalizeArticle(raw: RawArticle): Article {
   const publishedAt = new Date(publishedMs).toISOString();
 
   // Extract tags: look for common technical terms in title
+  // The release tag marks items from a GitHub releases feed, not any text
+  // that mentions a release.
   const tags = extractTags(raw.title, raw.content);
+  if (isReleaseSource(raw.source)) tags.push(RELEASE_TAG);
 
   return {
     id,
@@ -231,7 +235,6 @@ function extractTags(title: string, content: string): string[] {
     'sql',
     'performance',
     'security',
-    'release',
     'update',
     'feature',
     'bug',

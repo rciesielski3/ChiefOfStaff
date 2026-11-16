@@ -6,7 +6,7 @@ import { resolveProjectRoot } from './project-root';
 import { exportWeeklyHighlightsWithSummaries, WeeklyHighlightsExport } from '../business-logic/export-weekly-highlights';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { SummaryGenerator } from '../business-logic/summary-generator';
-import { primaryQANewsCategory } from '../business-logic/categorize-article';
+import { withQANewsDisplayFields } from '../business-logic/categorize-article';
 
 /**
  * CLI: Export weekly highlights to QA News data directory
@@ -108,10 +108,7 @@ async function main(): Promise<void> {
       ...weeklyExport,
       weeks: weeklyExport.weeks.map((week) => ({
         ...week,
-        items: week.items.map((article) => ({
-          ...article,
-          category: primaryQANewsCategory(article)
-        }))
+        items: week.items.map(withQANewsDisplayFields)
       }))
     };
 

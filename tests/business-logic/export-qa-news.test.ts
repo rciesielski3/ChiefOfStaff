@@ -65,7 +65,7 @@ describe('exportQANews', () => {
     expect(result.title).toBe('Playwright 2.0 Released');
     expect(result.url).toBe('https://playwright.dev/release/2.0');
     expect(result.source).toBe('Playwright');
-    expect(result.tags).toEqual(['test', 'automation']);
+    expect(result.tags).toEqual(['test', 'automation', 'release']); // Playwright is a releases feed
     expect(typeof result.category).toBe('string');
     expect(result.category.length).toBeGreaterThan(0);
   });

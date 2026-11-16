@@ -5,7 +5,7 @@ import * as path from 'path';
 import { resolveProjectRoot } from './project-root';
 import { exportLatestNews, LatestNewsExport, writePublicLatestNews } from '../business-logic/export-latest-news';
 import { NdJsonArticleStore } from '../business-logic/article-store';
-import { primaryQANewsCategory } from '../business-logic/categorize-article';
+import { withQANewsDisplayFields } from '../business-logic/categorize-article';
 
 /**
  * CLI: Export latest articles to QA News data directory
@@ -95,10 +95,7 @@ async function main(): Promise<void> {
     // Map article categories to QA-News valid categories
     const mappedData: LatestNewsExport = {
       ...latest,
-      items: latest.items.map((article) => ({
-        ...article,
-        category: primaryQANewsCategory(article)
-      }))
+      items: latest.items.map(withQANewsDisplayFields)
     };
 
     const dataPath = path.join(projectRoot, 'qa-news/data/latest-news.json');
