@@ -83,6 +83,12 @@ async function parseFeedWithTimeout(
     ]);
   } finally {
     clearTimeout(timer);
+    // Release every connection this attempt opened, also when it settled in
+    // time. rss-parser never reads or closes the response of a redirect
+    // (it follows the Location in a new request) or of a non-2xx status (it
+    // just rejects). With a keep-alive agent, the Node 19+ default, that
+    // connection stays open and keeps the process alive after the work is done.
+    controller.abort();
   }
 }
 
