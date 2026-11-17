@@ -15,6 +15,9 @@ export default tseslint.config(
       },
     },
     rules: {
+      // caughtErrors: 'none' — unused `catch (e)` bindings are tolerated (common in this codebase).
+      // Warning ratchet: `npm run lint` fails above --max-warnings (see package.json);
+      // lower that number as warnings are fixed, never raise it.
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/await-thenable': 'error',
       '@typescript-eslint/require-await': 'off',
