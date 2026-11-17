@@ -13,7 +13,7 @@
  */
 
 import * as fs from 'fs';
-import * as fsPromises from 'fs/promises';
+import * as path from 'path';
 import { KnowledgeFact } from '../business-logic/knowledge-types';
 import { extractAndEvolveKnowledge } from '../business-logic/knowledge-extraction';
 
@@ -149,7 +149,7 @@ async function main() {
       .map(r => JSON.stringify(r.fact));
 
     // Ensure output directory exists
-    const outputDir = require('path').dirname(outputPath);
+    const outputDir = path.dirname(outputPath);
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }

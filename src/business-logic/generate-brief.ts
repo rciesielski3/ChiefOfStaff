@@ -107,7 +107,7 @@ export function generatePlainTextBrief(markdownBrief: string): string {
   return markdownBrief
     .replace(/\*\*/g, '')           // Remove bold
     .replace(/#+\s/g, '')            // Remove heading markers
-    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Convert links to plain text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert links to plain text
     .replace(/`/g, '')               // Remove code markers
     .replace(/[\n\n]+/g, '\n')       // Normalize line breaks
     .trim();

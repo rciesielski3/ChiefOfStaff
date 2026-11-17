@@ -3,7 +3,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { resolveProjectRoot } from './project-root';
-import { exportMonthlyRecapWithSummaries, MonthlyRecapExport } from '../business-logic/export-monthly-recap';
+import { exportMonthlyRecapWithSummaries } from '../business-logic/export-monthly-recap';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { SummaryGenerator } from '../business-logic/summary-generator';
 import { withQANewsDisplayFields } from '../business-logic/categorize-article';

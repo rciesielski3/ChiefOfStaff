@@ -244,7 +244,7 @@ export class FactStore {
         },
       });
     } catch (error) {
-      throw new Error(`Failed to acquire lock on ${this.filePath}: ${error}`);
+      throw new Error(`Failed to acquire lock on ${this.filePath}: ${String(error)}`);
     }
   }
 
@@ -257,7 +257,7 @@ export class FactStore {
         await this.lockRelease();
         this.lockRelease = null;
       } catch (error) {
-        console.warn(`Failed to release lock: ${error}`);
+        console.warn(`Failed to release lock: ${String(error)}`);
       }
     }
   }

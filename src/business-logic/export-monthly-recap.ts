@@ -138,7 +138,7 @@ export async function exportMonthlyRecapWithSummaries(
         month.summary = buildDeterministicSummary(month.items);
       }
     } catch (error) {
-      console.warn(`Failed to generate summary for month ${month.monthOf}: ${error}`);
+      console.warn(`Failed to generate summary for month ${month.monthOf}: ${String(error)}`);
       month.summary = `Month of ${month.monthOf}: ${month.items.length} articles`;
     }
   }

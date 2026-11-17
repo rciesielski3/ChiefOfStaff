@@ -467,7 +467,7 @@ export class DomainClassifier {
    * - score >= 0.3: 0.50 confidence (medium-low)
    * - score < 0.3: 0.30 confidence (low/fallback)
    */
-  private scoreToConfidence(score: number, matches: number, hasTypeMatch: boolean): number {
+  private scoreToConfidence(score: number, _matches: number, _hasTypeMatch: boolean): number {
     if (score >= 0.9) {
       return 0.92;
     } else if (score >= 0.6) {

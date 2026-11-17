@@ -1,5 +1,4 @@
 import * as fs from 'fs/promises';
-import * as fsSync from 'fs';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import * as lockfile from 'proper-lockfile';
@@ -177,7 +176,7 @@ export class NdJsonArticleStore implements ArticleStore {
         },
       });
     } catch (error) {
-      throw new Error(`Failed to acquire lock on ${this.filePath}: ${error}`);
+      throw new Error(`Failed to acquire lock on ${this.filePath}: ${String(error)}`);
     }
   }
 
@@ -190,7 +189,7 @@ export class NdJsonArticleStore implements ArticleStore {
         await this.lockRelease();
         this.lockRelease = null;
       } catch (error) {
-        console.warn(`Failed to release lock: ${error}`);
+        console.warn(`Failed to release lock: ${String(error)}`);
       }
     }
   }

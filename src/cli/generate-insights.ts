@@ -17,9 +17,6 @@
  * - ANTHROPIC_API_KEY: Claude API key (required for embeddings)
  */
 
-import path from 'path';
-import * as fs from 'fs/promises';
-import * as fsSync from 'fs';
 import { FactStore } from '../business-logic/knowledge-store';
 import { PatternDetector } from '../business-logic/pattern-detector';
 import { SynthesisEngine } from '../business-logic/synthesis-engine';

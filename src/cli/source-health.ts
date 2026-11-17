@@ -105,4 +105,4 @@ async function main(): Promise<void> {
   console.log(formatSourceHealthReport(report, feedChecks));
 }
 
-main();
+void main();

@@ -494,7 +494,7 @@ export async function extractAndEvolveKnowledge(
       id: fact.id,
       article_id: fact.article_id,
       content: fact.content,
-      type: fact.type as any, // Safe cast after INSIGHT filter
+      type: fact.type, // Safe after INSIGHT filter
       confidence: fact.confidence,
       extracted_at: fact.extracted_at,
       sensitivity: 'PUBLIC', // Will be updated by sensitivity assessor

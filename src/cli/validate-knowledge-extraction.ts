@@ -32,9 +32,7 @@
  * - ANTHROPIC_API_KEY: Claude API key (required for extraction)
  */
 
-import path from 'path';
 import * as fs from 'fs/promises';
-import * as fsSync from 'fs';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { KnowledgeExtractionService } from '../business-logic/knowledge-extraction';
 import { FactStore } from '../business-logic/knowledge-store';

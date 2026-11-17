@@ -158,7 +158,7 @@ export async function exportWeeklyHighlightsWithSummaries(
         week.summary = buildDeterministicSummary(week.items);
       }
     } catch (error) {
-      console.warn(`Failed to generate summary for week ${week.weekOf}: ${error}`);
+      console.warn(`Failed to generate summary for week ${week.weekOf}: ${String(error)}`);
       week.summary = `Week of ${week.weekOf}: ${week.items.length} articles`;
     }
   }

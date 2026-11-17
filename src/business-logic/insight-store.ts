@@ -53,7 +53,7 @@ export class InsightStore {
    */
   async findByType(type: string): Promise<Insight[]> {
     const allInsights = await this.readAll();
-    return allInsights.filter(i => i.type === type);
+    return allInsights.filter(i => (i.type as string) === type);
   }
 
   /**

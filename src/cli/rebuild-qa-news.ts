@@ -7,7 +7,6 @@ import { exportLatestNews, writePublicLatestNews, LatestNewsExport } from '../bu
 import { exportWeeklyHighlights } from '../business-logic/export-weekly-highlights';
 import { exportMonthlyRecap } from '../business-logic/export-monthly-recap';
 import { NdJsonArticleStore } from '../business-logic/article-store';
-import { AtomicFileWriter } from '../business-logic/atomic-file-writer';
 import { getEnabledSources } from '../config/rss-sources.config';
 import * as path from 'path';
 import { resolveProjectRoot } from './project-root';
