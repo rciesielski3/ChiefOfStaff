@@ -18,13 +18,32 @@ export interface LatestNewsExport {
 }
 
 /**
+ * Keep one article per story. Some feeds publish the same story twice (InfoQ
+ * with a different tracking URL or title case), and the store can hold the
+ * same URL under an old and a new ID. A story is identified by its source
+ * plus its title, trimmed and lowercased; the source keeps different
+ * projects' releases with the same version title ("v1.8.3") apart.
+ * Expects newest-first input and keeps the first (newest) of each story.
+ */
+function dropRepeatedStories(articles: Article[]): Article[] {
+  const seen = new Set<string>();
+  return articles.filter(article => {
+    const key = `${article.source}\u0000${article.title.trim().toLowerCase()}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/**
  * Export latest articles from store as JSON for QA News
  *
  * Algorithm:
  * 1. Read all articles from store
  * 2. Sort by publishedAt (newest first)
- * 3. Keep the newest `limit` articles; without a limit keep all of them
- * 4. Return with metadata (export date/time)
+ * 3. Drop repeated stories (same source + title), keeping the newest
+ * 4. Keep the newest `limit` articles; without a limit keep all of them
+ * 5. Return with metadata (export date/time)
  *
  * QA-News derives its today / week / month views from this one export, so
  * the default is the whole store (the store keeps 30 days, RETENTION_DAYS).
@@ -45,7 +64,8 @@ export async function exportLatestNews(
     return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
   });
 
-  const latest = limit === undefined ? sorted : sorted.slice(0, limit);
+  const unique = dropRepeatedStories(sorted);
+  const latest = limit === undefined ? unique : unique.slice(0, limit);
 
   // Generate export metadata
   const now = new Date();

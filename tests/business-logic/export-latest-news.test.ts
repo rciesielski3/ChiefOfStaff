@@ -34,9 +34,10 @@ describe('exportLatestNews', () => {
    * Helper to create a test article with optional overrides
    */
   function createArticle(overrides?: Partial<Article>): Article {
+    const unique = `${Date.now()}-${Math.random()}`;
     return {
-      id: `article-${Date.now()}-${Math.random()}`,
-      title: 'Test Article',
+      id: `article-${unique}`,
+      title: `Test Article ${unique}`,
       summary: 'A test article summary',
       url: 'https://example.com/test',
       source: 'Test Source',
@@ -273,6 +274,20 @@ describe('exportLatestNews', () => {
 
     expect(result.items.length).toBe(0);
     // CLI will detect this and fail with process.exit(1) to prevent silent empty exports
+  });
+
+  it('drops repeated stories: same source and same title ignoring case, keeps the newest', async () => {
+    const store = new MockArticleStore([
+      createArticleWithDate(3, { id: 'old', source: 'InfoQ', title: 'Yelp Combines Native and Server-Driven UI for Its App', url: 'https://infoq.com/a?x=1' }),
+      createArticleWithDate(1, { id: 'new', source: 'InfoQ', title: 'Yelp combines native and server-driven UI for its app ', url: 'https://infoq.com/a?x=2' }),
+      createArticleWithDate(2, { id: 'other-source', source: 'Cloudflare', title: 'Yelp Combines Native and Server-Driven UI for Its App', url: 'https://cf.com/a' }),
+      createArticleWithDate(1, { id: 'k6', source: 'Grafana k6 Releases', title: 'v1.8.3', url: 'https://github.com/k6/v1.8.3' }),
+      createArticleWithDate(1, { id: 'vitest', source: 'Vitest Releases', title: 'v1.8.3', url: 'https://github.com/vitest/v1.8.3' })
+    ]);
+
+    const result = await exportLatestNews(store);
+
+    expect(result.items.map(a => a.id).sort()).toEqual(['k6', 'new', 'other-source', 'vitest']);
   });
 });
 
