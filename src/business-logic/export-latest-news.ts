@@ -23,16 +23,19 @@ export interface LatestNewsExport {
  * Algorithm:
  * 1. Read all articles from store
  * 2. Sort by publishedAt (newest first)
- * 3. Slice to top N articles (default 50)
+ * 3. Keep the newest `limit` articles; without a limit keep all of them
  * 4. Return with metadata (export date/time)
  *
+ * QA-News derives its today / week / month views from this one export, so
+ * the default is the whole store (the store keeps 30 days, RETENTION_DAYS).
+ *
  * @param store - Article store to read from
- * @param limit - Number of articles to export (default: 50)
+ * @param limit - Maximum number of articles to export (default: all)
  * @returns Export object with metadata and articles
  */
 export async function exportLatestNews(
   store: ArticleStore,
-  limit: number = 50
+  limit?: number
 ): Promise<LatestNewsExport> {
   // Read all articles from store
   const articles = await store.read();
@@ -42,8 +45,7 @@ export async function exportLatestNews(
     return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
   });
 
-  // Take top N articles
-  const latest = sorted.slice(0, limit);
+  const latest = limit === undefined ? sorted : sorted.slice(0, limit);
 
   // Generate export metadata
   const now = new Date();

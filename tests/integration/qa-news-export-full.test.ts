@@ -27,7 +27,7 @@ describe('QA-News Full Export Integration', () => {
    *
    * Runs each export CLI and verifies:
    * - JSON is valid (parses without error)
-   * - Latest has .date, .updatedAt, .items (array, >0, <=50)
+   * - Latest has .date, .updatedAt, .items (array, >0)
    * - Weekly has .weeks (array), weeks[0] has .weekOf, .summary, .items
    * - Monthly has .months (array), months[0] has .monthOf, .summary, .items
    */
@@ -67,8 +67,6 @@ describe('QA-News Full Export Integration', () => {
 
     // If store has articles, verify constraints
     if (latest.items.length > 0) {
-      expect(latest.items.length).toBeLessThanOrEqual(50);
-
       // Verify date format (ISO string)
       expect(typeof latest.date).toBe('string');
       expect(typeof latest.updatedAt).toBe('string');
@@ -436,7 +434,7 @@ describe('QA-News Full Export Integration', () => {
    * Test 4 (Bonus): Data volumes are reasonable
    *
    * Verifies:
-   * - Latest has <= 50 articles
+   * - Latest is not empty
    * - Monthly has <= 30 articles per month
    * - Weekly has a reasonable distribution (generally 10-15+ articles per week)
    */
@@ -466,8 +464,6 @@ describe('QA-News Full Export Integration', () => {
     const latestContent = fs.readFileSync(latestPath, 'utf-8');
     const latest = JSON.parse(latestContent);
 
-    // Latest should have <= 50 articles (by design)
-    expect(latest.items.length).toBeLessThanOrEqual(50);
     expect(latest.items.length).toBeGreaterThan(0);
 
     // === MONTHLY VOLUME ===

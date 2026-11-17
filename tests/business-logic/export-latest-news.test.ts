@@ -95,7 +95,7 @@ describe('exportLatestNews', () => {
     expect(result.items[2].id).toBe('oldest');
   });
 
-  it('should respect limit parameter (default 50)', async () => {
+  it('exports every stored article by default (store keeps 30 days)', async () => {
     const articles = Array.from({ length: 100 }, (_, i) =>
       createArticleWithDate(i, { id: `article-${i}` })
     );
@@ -103,7 +103,10 @@ describe('exportLatestNews', () => {
 
     const result = await exportLatestNews(store);
 
-    expect(result.items).toHaveLength(50);
+    // QA-News filters today / week / month from this one file, so it must
+    // hold the whole retention window, not only the newest few days.
+    expect(result.items).toHaveLength(100);
+    expect(result.items[0].id).toBe('article-0');
   });
 
   it('should export all articles when limit > store size', async () => {
