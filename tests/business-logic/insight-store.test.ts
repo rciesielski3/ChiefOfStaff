@@ -50,12 +50,13 @@ describe('InsightStore', () => {
         id: 'insight-002',
         type: InsightType.SYNTHESIS,
         title: 'Kubernetes Best Practices Convergence',
-        summary: 'Best practices across sources are converging on similar resource management patterns.',
+        summary:
+          'Best practices across sources are converging on similar resource management patterns.',
         relatedFactIds: ['fact-004', 'fact-005'],
         domains: ['infrastructure'],
         tags: ['kubernetes', 'best-practices', 'standards'],
         supportingEvidence: ['Resource management patterns converging'],
-        confidence: 0.90,
+        confidence: 0.9,
         evolutionStage: 'mature',
         metadata: {},
         createdAt: new Date(),
@@ -117,7 +118,7 @@ describe('InsightStore', () => {
           domains: ['health'],
           tags: ['health', 'synthesis'],
           supportingEvidence: ['Supporting fact 2'],
-          confidence: 0.90,
+          confidence: 0.9,
           evolutionStage: 'mature',
           metadata: {},
           createdAt: new Date(),
@@ -132,7 +133,7 @@ describe('InsightStore', () => {
           domains: ['technology'],
           tags: ['benchmark', 'best-practices'],
           supportingEvidence: ['Supporting fact 3'],
-          confidence: 0.80,
+          confidence: 0.8,
           evolutionStage: 'growth',
           metadata: {},
           createdAt: new Date(),
@@ -146,7 +147,7 @@ describe('InsightStore', () => {
 
       const techInsights = await store.findByDomain('technology');
       expect(techInsights).toHaveLength(2);
-      expect(techInsights.every(i => i.domains.includes('technology'))).toBe(true);
+      expect(techInsights.every((i) => i.domains.includes('technology'))).toBe(true);
 
       const healthInsights = await store.findByDomain('health');
       expect(healthInsights).toHaveLength(1);
@@ -182,7 +183,7 @@ describe('InsightStore', () => {
       await store.add(originalInsight);
 
       // Small delay to ensure timestamp difference
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Update the insight
       const update = {
@@ -200,15 +201,17 @@ describe('InsightStore', () => {
       expect(updatedInsight!.confidence).toBe(0.95);
       expect(updatedInsight!.relatedFactIds).toEqual(['fact-001', 'fact-002', 'fact-003']);
       // Note: Dates are serialized to ISO strings in JSON, so convert for comparison
-      const createdAtString = typeof updatedInsight!.createdAt === 'string'
-        ? updatedInsight!.createdAt
-        : (updatedInsight!.createdAt as unknown as Date).toISOString();
+      const createdAtString =
+        typeof updatedInsight!.createdAt === 'string'
+          ? updatedInsight!.createdAt
+          : (updatedInsight!.createdAt as unknown as Date).toISOString();
       const expectedCreatedAtString = createdAtTime.toISOString();
       expect(createdAtString).toBe(expectedCreatedAtString); // Unchanged
       expect(updatedInsight!.updatedAt).toBeDefined();
-      const updatedAtTime = typeof updatedInsight!.updatedAt === 'string'
-        ? new Date(updatedInsight!.updatedAt).getTime()
-        : (updatedInsight!.updatedAt as unknown as Date).getTime();
+      const updatedAtTime =
+        typeof updatedInsight!.updatedAt === 'string'
+          ? new Date(updatedInsight!.updatedAt).getTime()
+          : (updatedInsight!.updatedAt as unknown as Date).getTime();
       expect(updatedAtTime).toBeGreaterThan(createdAtTime.getTime());
 
       // Verify update persisted
@@ -247,7 +250,7 @@ describe('InsightStore', () => {
           domains: ['health'],
           tags: ['second'],
           supportingEvidence: ['Evidence 2'],
-          confidence: 0.90,
+          confidence: 0.9,
           evolutionStage: 'mature',
           metadata: {},
           createdAt: new Date(),

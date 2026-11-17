@@ -25,7 +25,7 @@ describe('EmbeddingsService', () => {
     service.embedFact(fact2);
 
     const related = service.similaritySearch('f1', 10);
-    const f2Match = related.find(r => r.related_fact_id === 'f2');
+    const f2Match = related.find((r) => r.related_fact_id === 'f2');
 
     expect(f2Match).toBeDefined();
     expect(f2Match!.similarity_score).toBeGreaterThan(0.8);
@@ -39,7 +39,7 @@ describe('EmbeddingsService', () => {
     service.embedFact(fact2);
 
     const related = service.similaritySearch('f1', 10);
-    const f2Match = related.find(r => r.related_fact_id === 'f2');
+    const f2Match = related.find((r) => r.related_fact_id === 'f2');
 
     expect(f2Match).toBeUndefined(); // Not in top 10 results
   });

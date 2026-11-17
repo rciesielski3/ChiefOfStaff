@@ -43,7 +43,8 @@ describe('M6.4 Insight Pipeline — End-to-End Validation', () => {
       {
         id: 'fact-1',
         article_id: 'article-1',
-        content: 'Playwright speeds up E2E test execution by 3x compared to traditional methods in test automation',
+        content:
+          'Playwright speeds up E2E test execution by 3x compared to traditional methods in test automation',
         type: 'BENCHMARK',
         domain: 'testing',
         confidence: 0.92,
@@ -55,7 +56,8 @@ describe('M6.4 Insight Pipeline — End-to-End Validation', () => {
       {
         id: 'fact-2',
         article_id: 'article-2',
-        content: 'Cypress also provides 3x speedup for frontend tests when testing web applications',
+        content:
+          'Cypress also provides 3x speedup for frontend tests when testing web applications',
         type: 'BENCHMARK',
         domain: 'testing',
         confidence: 0.88,
@@ -75,11 +77,11 @@ describe('M6.4 Insight Pipeline — End-to-End Validation', () => {
         extracted_at: '2026-07-22T12:00:00Z',
         version: 1,
         status: 'active',
-      }
+      },
     ];
 
     // Embed facts for pattern detection
-    facts.forEach(fact => {
+    facts.forEach((fact) => {
       embeddingsService.embedFact({
         id: fact.id,
         content: fact.content,
@@ -117,16 +119,16 @@ describe('M6.4 Insight Pipeline — End-to-End Validation', () => {
         content: 'Test automation reduces QA time significantly in modern development workflows',
         type: 'TECHNIQUE',
         domain: 'testing',
-        confidence: 0.90,
+        confidence: 0.9,
         extraction_method: 'claude',
         extracted_at: '2026-07-22T10:00:00Z',
         version: 1,
         status: 'active',
-      }
+      },
     ];
 
     // Embed facts
-    facts.forEach(fact => {
+    facts.forEach((fact) => {
       embeddingsService.embedFact({
         id: fact.id,
         content: fact.content,
@@ -143,7 +145,7 @@ describe('M6.4 Insight Pipeline — End-to-End Validation', () => {
         InsightType.RELATIONSHIP,
         InsightType.SYNTHESIS,
         InsightType.TREND,
-        InsightType.ANOMALY
+        InsightType.ANOMALY,
       ]).toContain(insight.type);
       expect(insight.confidence).toBeGreaterThanOrEqual(0);
       expect(insight.confidence).toBeLessThanOrEqual(1);
@@ -209,7 +211,9 @@ describe('M6.4 Insight Pipeline — Real Data Validation', () => {
       }
     }
 
-    console.log(`Extraction: ${extractionSuccesses} successes, ${extractionErrors} errors, ${allFacts.length} total facts`);
+    console.log(
+      `Extraction: ${extractionSuccesses} successes, ${extractionErrors} errors, ${allFacts.length} total facts`,
+    );
 
     // Graceful handling if no facts extracted (expected in validation context)
     if (allFacts.length === 0) {
@@ -222,7 +226,7 @@ describe('M6.4 Insight Pipeline — Real Data Validation', () => {
     const detector = new PatternDetector(embeddingsService);
 
     // Embed facts for pattern detection
-    allFacts.forEach(fact => {
+    allFacts.forEach((fact) => {
       embeddingsService.embedFact({
         id: fact.id,
         content: fact.content,
@@ -263,7 +267,7 @@ describe('M6.4 Insight Pipeline — Real Data Validation', () => {
         InsightType.BEST_PRACTICE,
         InsightType.RELATIONSHIP,
         InsightType.TREND,
-        InsightType.ANOMALY
+        InsightType.ANOMALY,
       ]).toContain(insight.type);
       expect(insight.confidence).toBeGreaterThanOrEqual(0);
       expect(insight.confidence).toBeLessThanOrEqual(1);
@@ -303,17 +307,11 @@ describe('M6.4 Insight Pipeline — Real Data Validation', () => {
     console.log('Validation Metrics:');
     console.log(`  Total Insights: ${validationResult.metrics.total_count}`);
     console.log(`  By Type: ${JSON.stringify(validationResult.metrics.by_type)}`);
+    console.log(`  Mean Confidence: ${validationResult.metrics.confidence_mean.toFixed(2)}`);
+    console.log(`  Min Confidence: ${validationResult.metrics.confidence_min.toFixed(2)}`);
+    console.log(`  Max Confidence: ${validationResult.metrics.confidence_max.toFixed(2)}`);
     console.log(
-      `  Mean Confidence: ${validationResult.metrics.confidence_mean.toFixed(2)}`
-    );
-    console.log(
-      `  Min Confidence: ${validationResult.metrics.confidence_min.toFixed(2)}`
-    );
-    console.log(
-      `  Max Confidence: ${validationResult.metrics.confidence_max.toFixed(2)}`
-    );
-    console.log(
-      `  Facts per Insight: ${validationResult.metrics.facts_per_insight_mean.toFixed(2)}`
+      `  Facts per Insight: ${validationResult.metrics.facts_per_insight_mean.toFixed(2)}`,
     );
     console.log(`  No Hallucinations: ${validationResult.metrics.no_hallucinations}`);
     console.log(`  All Valid Types: ${validationResult.metrics.all_valid_types}`);
@@ -328,7 +326,9 @@ describe('M6.4 Insight Pipeline — Real Data Validation', () => {
     // Cleanup
     fs.rmSync(tempDir, { recursive: true });
 
-    console.log(`Full pipeline: ${articles.length} articles → ${allFacts.length} facts → ${patterns.length} patterns → ${insights.length} insights ✓`);
+    console.log(
+      `Full pipeline: ${articles.length} articles → ${allFacts.length} facts → ${patterns.length} patterns → ${insights.length} insights ✓`,
+    );
   });
 });
 
@@ -340,7 +340,8 @@ describe('M6.4 Insight Pipeline — Real Output Validation', () => {
       {
         id: 'fact-testing-1',
         article_id: 'article-test-1',
-        content: 'Playwright enables parallel test execution for faster CI/CD pipelines in testing scenarios',
+        content:
+          'Playwright enables parallel test execution for faster CI/CD pipelines in testing scenarios',
         type: 'BENCHMARK',
         domain: 'testing',
         confidence: 0.91,
@@ -353,7 +354,8 @@ describe('M6.4 Insight Pipeline — Real Output Validation', () => {
       {
         id: 'fact-qa-1',
         article_id: 'article-qa-1',
-        content: 'QA teams report 75% reduction in manual testing effort with automated test frameworks',
+        content:
+          'QA teams report 75% reduction in manual testing effort with automated test frameworks',
         type: 'BENCHMARK',
         domain: 'qa',
         confidence: 0.89,
@@ -366,7 +368,8 @@ describe('M6.4 Insight Pipeline — Real Output Validation', () => {
       {
         id: 'fact-devops-1',
         article_id: 'article-devops-1',
-        content: 'Continuous integration pipelines using automated testing reduce deployment failures by 60%',
+        content:
+          'Continuous integration pipelines using automated testing reduce deployment failures by 60%',
         type: 'BENCHMARK',
         domain: 'devops',
         confidence: 0.87,
@@ -379,7 +382,8 @@ describe('M6.4 Insight Pipeline — Real Output Validation', () => {
       {
         id: 'fact-devops-2',
         article_id: 'article-devops-2',
-        content: 'Infrastructure-as-code testing enables reliable deployment automation across environments',
+        content:
+          'Infrastructure-as-code testing enables reliable deployment automation across environments',
         type: 'TECHNIQUE',
         domain: 'devops',
         confidence: 0.85,
@@ -387,7 +391,7 @@ describe('M6.4 Insight Pipeline — Real Output Validation', () => {
         extracted_at: '2026-07-22T10:45:00Z',
         version: 1,
         status: 'active',
-      }
+      },
     ];
 
     // Setup embeddings and detector
@@ -396,7 +400,7 @@ describe('M6.4 Insight Pipeline — Real Output Validation', () => {
     const synthesizer = new SynthesisEngine();
 
     // Embed facts for pattern detection
-    facts.forEach(fact => {
+    facts.forEach((fact) => {
       embeddingsService.embedFact({
         id: fact.id,
         content: fact.content,
@@ -420,7 +424,11 @@ describe('M6.4 Insight Pipeline — Real Output Validation', () => {
     expect(result.metrics.no_hallucinations).toBe(true);
 
     // Log results for verification
-    console.log(`Multi-domain validation: ${facts.length} facts (testing, qa, devops) → ${patterns.length} patterns → ${insights.length} insights`);
-    console.log(`Validation: passed=${result.passed}, confidence_mean=${result.metrics.confidence_mean.toFixed(2)}, no_hallucinations=${result.metrics.no_hallucinations}`);
+    console.log(
+      `Multi-domain validation: ${facts.length} facts (testing, qa, devops) → ${patterns.length} patterns → ${insights.length} insights`,
+    );
+    console.log(
+      `Validation: passed=${result.passed}, confidence_mean=${result.metrics.confidence_mean.toFixed(2)}, no_hallucinations=${result.metrics.no_hallucinations}`,
+    );
   });
 });

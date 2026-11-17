@@ -41,7 +41,7 @@ describe('knowledge extraction service integration', () => {
       source: 'Tech News',
       category: 'technology',
       publishedAt: '2026-07-20T10:00:00Z',
-      tags: ['kubernetes', 'containers', 'devops']
+      tags: ['kubernetes', 'containers', 'devops'],
     },
     {
       id: 'article_002',
@@ -51,15 +51,16 @@ describe('knowledge extraction service integration', () => {
       source: 'Dev Journal',
       category: 'technology',
       publishedAt: '2026-07-19T14:30:00Z',
-      tags: ['docker', 'containers']
-    }
+      tags: ['docker', 'containers'],
+    },
   ];
 
   const sampleFacts: KnowledgeFact[] = [
     {
       id: 'fact_001',
       article_id: 'article_001',
-      content: 'Kubernetes is a container orchestration platform that automates deployment and management',
+      content:
+        'Kubernetes is a container orchestration platform that automates deployment and management',
       type: 'DEFINITION',
       confidence: 0.95,
       extraction_method: 'claude',
@@ -88,7 +89,7 @@ describe('knowledge extraction service integration', () => {
       extracted_at: new Date().toISOString(),
       version: 1,
       status: 'active',
-    }
+    },
   ];
 
   beforeEach(async () => {
@@ -99,7 +100,7 @@ describe('knowledge extraction service integration', () => {
     cacheFile = path.join(testDir, 'cache.json');
 
     // Write sample articles to file
-    const articlesContent = sampleArticles.map(a => JSON.stringify(a)).join('\n') + '\n';
+    const articlesContent = sampleArticles.map((a) => JSON.stringify(a)).join('\n') + '\n';
     await fs.writeFile(articlesFile, articlesContent, 'utf-8');
   });
 
@@ -181,11 +182,17 @@ describe('knowledge extraction service integration', () => {
 
     it('should log extraction metrics correctly', async () => {
       const mockExtractionService = {
-        extractFacts: jest.fn(async (req: any) => ({
-          article_id: req.article_id,
-          facts: req.article_id === 'article_001' ? sampleFacts.slice(0, 2) : sampleFacts.slice(2, 3),
-          extraction_time_ms: 500,
-        } as FactExtractionBatch)),
+        extractFacts: jest.fn(
+          async (req: any) =>
+            ({
+              article_id: req.article_id,
+              facts:
+                req.article_id === 'article_001'
+                  ? sampleFacts.slice(0, 2)
+                  : sampleFacts.slice(2, 3),
+              extraction_time_ms: 500,
+            }) as FactExtractionBatch,
+        ),
         loadCacheSnapshots: jest.fn(async () => {}),
         saveCacheSnapshots: jest.fn(async () => {}),
       };
@@ -213,11 +220,12 @@ describe('knowledge extraction service integration', () => {
   describe('error handling: malformed JSON articles', () => {
     it('should skip malformed article JSON and continue', async () => {
       // Write malformed JSON to articles file
-      const content = [
-        JSON.stringify(sampleArticles[0]),
-        '{invalid json',
-        JSON.stringify(sampleArticles[1])
-      ].join('\n') + '\n';
+      const content =
+        [
+          JSON.stringify(sampleArticles[0]),
+          '{invalid json',
+          JSON.stringify(sampleArticles[1]),
+        ].join('\n') + '\n';
       await fs.writeFile(articlesFile, content, 'utf-8');
 
       const articleStore = new NdJsonArticleStore(articlesFile);
@@ -300,12 +308,12 @@ describe('knowledge extraction service integration', () => {
       const cacheData = {
         domain_classifier: {
           cache_version: 1,
-          entries: 42
+          entries: 42,
         },
         domain_fallback: {
           cache_version: 1,
-          entries: 15
-        }
+          entries: 15,
+        },
       };
 
       // Write cache file
@@ -323,12 +331,12 @@ describe('knowledge extraction service integration', () => {
       const cacheData = {
         domain_classifier: {
           cache_version: 1,
-          entries: 35
+          entries: 35,
         },
         domain_fallback: {
           cache_version: 1,
-          entries: 12
-        }
+          entries: 12,
+        },
       };
 
       // Write cache data
@@ -444,7 +452,7 @@ describe('knowledge extraction service integration', () => {
       // Mock services
       const mockExtractionService = {
         extractFacts: jest.fn(async (req: any) => {
-          const facts = sampleFacts.filter(f => f.article_id === req.article_id);
+          const facts = sampleFacts.filter((f) => f.article_id === req.article_id);
           return {
             article_id: req.article_id,
             facts,

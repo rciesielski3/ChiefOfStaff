@@ -24,7 +24,7 @@ describe('M6.3 Evolution Integration', () => {
     // Clean up test data
     if (fs.existsSync(testDataDir)) {
       const files = fs.readdirSync(testDataDir);
-      files.forEach(file => {
+      files.forEach((file) => {
         fs.unlinkSync(path.join(testDataDir, file));
       });
       fs.rmdirSync(testDataDir);
@@ -60,7 +60,7 @@ describe('M6.3 Evolution Integration', () => {
         article_id: 'a3',
         content: 'Docker provides container isolation',
         type: 'DEFINITION',
-        confidence: 0.90,
+        confidence: 0.9,
         extraction_method: 'claude',
         extracted_at: new Date().toISOString(),
         version: 1,
@@ -72,7 +72,7 @@ describe('M6.3 Evolution Integration', () => {
 
     // Verify evolution results
     expect(results.length).toBe(testFacts.length);
-    expect(results.some(r => r.action === 'new')).toBe(true);
+    expect(results.some((r) => r.action === 'new')).toBe(true);
   });
 
   test('facts stored with versions and sensitivity', async () => {
@@ -93,13 +93,11 @@ describe('M6.3 Evolution Integration', () => {
     const results = await extractAndEvolveKnowledge(testFacts);
 
     // Verify evolved facts have required fields
-    results.forEach(result => {
+    results.forEach((result) => {
       if (result.fact) {
         expect(result.fact).toHaveProperty('sensitivity');
         expect(result.fact).toHaveProperty('version');
-        expect(['PUBLIC', 'PRIVATE', 'UNCERTAIN']).toContain(
-          result.fact.sensitivity
-        );
+        expect(['PUBLIC', 'PRIVATE', 'UNCERTAIN']).toContain(result.fact.sensitivity);
         expect(typeof result.fact.version).toBe('number');
       }
     });
@@ -123,7 +121,7 @@ describe('M6.3 Evolution Integration', () => {
     const results = await extractAndEvolveKnowledge(testFacts);
 
     // Find the fact in results
-    const piiResult = results.find(r => r.fact?.id === 'fact_pii_001');
+    const piiResult = results.find((r) => r.fact?.id === 'fact_pii_001');
     expect(piiResult).toBeDefined();
 
     if (piiResult?.fact) {
@@ -149,10 +147,8 @@ describe('M6.3 Evolution Integration', () => {
     const results = await extractAndEvolveKnowledge(testFacts);
 
     // Verify action types are valid
-    results.forEach(result => {
-      expect(['deduplicate', 'version', 'relate', 'new']).toContain(
-        result.action
-      );
+    results.forEach((result) => {
+      expect(['deduplicate', 'version', 'relate', 'new']).toContain(result.action);
     });
   });
 });

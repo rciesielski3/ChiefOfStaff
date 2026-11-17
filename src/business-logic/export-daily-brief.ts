@@ -41,7 +41,7 @@ export interface DailyBriefExport {
 export async function exportDailyBrief(
   store: ArticleStore,
   limit: number = 10,
-  sourceCount: number = 0
+  sourceCount: number = 0,
 ): Promise<DailyBriefExport> {
   // Read all articles from store
   const articles = await store.read();
@@ -62,10 +62,11 @@ export async function exportDailyBrief(
   const updatedAt = now.toISOString(); // Full ISO timestamp
 
   // Generate a simple lede based on top article categories
-  const categories = [...new Set(topArticles.map(a => a.category))];
-  const lede = categories.length > 0
-    ? `Daily brief highlighting ${categories.slice(0, 2).join(' and ')} topics`
-    : 'Daily brief of top stories';
+  const categories = [...new Set(topArticles.map((a) => a.category))];
+  const lede =
+    categories.length > 0
+      ? `Daily brief highlighting ${categories.slice(0, 2).join(' and ')} topics`
+      : 'Daily brief of top stories';
 
   return {
     date,
@@ -73,7 +74,7 @@ export async function exportDailyBrief(
     sourcesScanned: sourceCount,
     storiesSelected: topArticles.length,
     lede,
-    items: topArticles.map(withResolvedId)
+    items: topArticles.map(withResolvedId),
   };
 }
 
@@ -83,10 +84,7 @@ export async function exportDailyBrief(
  * @param data - Export data to write
  * @param filePath - Path to write JSON file
  */
-export async function writeDailyBrief(
-  data: DailyBriefExport,
-  filePath: string
-): Promise<void> {
+export async function writeDailyBrief(data: DailyBriefExport, filePath: string): Promise<void> {
   const dir = dirname(filePath);
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(filePath, JSON.stringify(data, null, 2));
@@ -95,13 +93,15 @@ export async function writeDailyBrief(
 /**
  * Transform daily brief to public format with 'articles' key
  */
-export function transformDailyBriefToPublic(
-  data: DailyBriefExport
-): { date: string; updatedAt: string; articles: typeof data.items } {
+export function transformDailyBriefToPublic(data: DailyBriefExport): {
+  date: string;
+  updatedAt: string;
+  articles: typeof data.items;
+} {
   return {
     date: data.date,
     updatedAt: data.updatedAt,
-    articles: data.items
+    articles: data.items,
   };
 }
 
@@ -110,7 +110,7 @@ export function transformDailyBriefToPublic(
  */
 export async function writePublicDailyBrief(
   filePath: string,
-  data: DailyBriefExport
+  data: DailyBriefExport,
 ): Promise<void> {
   const publicData = transformDailyBriefToPublic(data);
   const dir = dirname(filePath);

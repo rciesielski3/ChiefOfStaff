@@ -21,69 +21,69 @@ export const QA_NEWS_FEEDS: QANewsFeedSource[] = [
   {
     url: 'https://github.com/vitest-dev/vitest/releases.atom',
     name: 'Vitest Releases',
-    categories: ['test-automation', 'tooling']
+    categories: ['test-automation', 'tooling'],
   },
   {
     url: 'https://github.com/jestjs/jest/releases.atom',
     name: 'Jest Releases',
-    categories: ['test-automation', 'tooling']
+    categories: ['test-automation', 'tooling'],
   },
   {
     url: 'https://github.com/playwright-dev/playwright/releases.atom',
     name: 'Playwright Releases',
-    categories: ['test-automation', 'tooling']
+    categories: ['test-automation', 'tooling'],
   },
   {
     url: 'https://github.com/cypress-io/cypress/releases.atom',
     name: 'Cypress Releases',
-    categories: ['test-automation', 'tooling']
+    categories: ['test-automation', 'tooling'],
   },
 
   // QA Practices & Security
   {
     url: 'https://owasp.org/feed.xml',
     name: 'OWASP',
-    categories: ['qa-practice', 'engineering']
+    categories: ['qa-practice', 'engineering'],
   },
   {
     url: 'https://www.saucelabs.com/blog/feed',
     name: 'Sauce Labs Blog',
-    categories: ['test-automation', 'qa-practice']
+    categories: ['test-automation', 'qa-practice'],
   },
 
   // Engineering @ Scale (testing practices)
   {
     url: 'https://stripe.com/blog/feed.xml',
     name: 'Stripe Blog',
-    categories: ['engineering', 'test-automation']
+    categories: ['engineering', 'test-automation'],
   },
   {
     url: 'https://github.blog/engineering.atom',
     name: 'GitHub Engineering',
-    categories: ['engineering', 'tooling']
+    categories: ['engineering', 'tooling'],
   },
   {
     url: 'https://vercel.com/blog/feed.xml',
     name: 'Vercel Blog',
-    categories: ['engineering', 'tooling']
+    categories: ['engineering', 'tooling'],
   },
 
   // AI & LLM Testing
   {
     url: 'https://www.anthropic.com/feed.xml',
     name: 'Anthropic',
-    categories: ['ai', 'qa-practice']
+    categories: ['ai', 'qa-practice'],
   },
   {
     url: 'https://openai.com/news/rss.xml',
     name: 'OpenAI',
-    categories: ['ai', 'qa-practice']
+    categories: ['ai', 'qa-practice'],
   },
 
   // General Tech
   {
     url: 'https://lobste.rs/rss',
     name: 'Lobsters',
-    categories: ['engineering', 'tooling', 'test-automation']
-  }
+    categories: ['engineering', 'tooling', 'test-automation'],
+  },
 ];

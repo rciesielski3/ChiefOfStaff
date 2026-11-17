@@ -52,20 +52,24 @@ describe('File Locking - Concurrent Access', () => {
       const store = new NdJsonArticleStore(storePath);
 
       // Create articles for each process
-      const articles = Array.from({ length: 5 }, (_, i) => ({
-        id: `article-${i}`,
-        title: `Article ${i}`,
-        url: `https://example.com/${i}`,
-        source: 'test-source',
-        category: 'tech',
-        tags: [],
-        publishedAt: new Date().toISOString(),
-        summary: `Summary ${i}`,
-      } as Article));
+      const articles = Array.from(
+        { length: 5 },
+        (_, i) =>
+          ({
+            id: `article-${i}`,
+            title: `Article ${i}`,
+            url: `https://example.com/${i}`,
+            source: 'test-source',
+            category: 'tech',
+            tags: [],
+            publishedAt: new Date().toISOString(),
+            summary: `Summary ${i}`,
+          }) as Article,
+      );
 
       // Write articles concurrently
       const promises = articles.map((article, index) => {
-        return store.write([article]).catch(err => {
+        return store.write([article]).catch((err) => {
           console.error(`Write ${index} failed:`, err);
           throw err;
         });
@@ -140,26 +144,28 @@ describe('File Locking - Concurrent Access', () => {
       const storePath = path.join(tempDir, 'articles-no-stale-locks.ndjson');
       const store = new NdJsonArticleStore(storePath);
 
-      const articles = [{
-        id: 'test-article',
-        title: 'Test',
-        url: 'https://example.com',
-        source: 'test',
-        category: 'tech',
-        tags: [],
-        publishedAt: new Date().toISOString(),
-        summary: 'Test',
-      } as Article];
+      const articles = [
+        {
+          id: 'test-article',
+          title: 'Test',
+          url: 'https://example.com',
+          source: 'test',
+          category: 'tech',
+          tags: [],
+          publishedAt: new Date().toISOString(),
+          summary: 'Test',
+        } as Article,
+      ];
 
       // Write articles
       await store.write(articles);
 
       // Give file locking time to clean up
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Check that no lock files exist
       const files = await fs.readdir(tempDir);
-      const lockFiles = files.filter(f => f.endsWith('.lock'));
+      const lockFiles = files.filter((f) => f.endsWith('.lock'));
 
       expect(lockFiles).toHaveLength(0);
     });
@@ -168,16 +174,18 @@ describe('File Locking - Concurrent Access', () => {
       const storePath = path.join(tempDir, 'articles-lock-speed.ndjson');
       const store = new NdJsonArticleStore(storePath);
 
-      const articles = [{
-        id: 'speed-test',
-        title: 'Speed Test',
-        url: 'https://example.com',
-        source: 'test',
-        category: 'tech',
-        tags: [],
-        publishedAt: new Date().toISOString(),
-        summary: 'Test',
-      } as Article];
+      const articles = [
+        {
+          id: 'speed-test',
+          title: 'Speed Test',
+          url: 'https://example.com',
+          source: 'test',
+          category: 'tech',
+          tags: [],
+          publishedAt: new Date().toISOString(),
+          summary: 'Test',
+        } as Article,
+      ];
 
       const startTime = performance.now();
       await store.write(articles);
@@ -192,21 +200,25 @@ describe('File Locking - Concurrent Access', () => {
       const storePath = path.join(tempDir, 'facts-concurrent.ndjson');
       const store = new FactStore(storePath);
 
-      const facts = Array.from({ length: 5 }, (_, i) => ({
-        id: `fact-${i}`,
-        article_id: `article-${i}`,
-        type: 'DEFINITION' as const,
-        content: `Fact ${i}`,
-        confidence: 0.9,
-        extraction_method: 'claude' as const,
-        extracted_at: new Date().toISOString(),
-        version: 1,
-        status: 'active' as const,
-      } as KnowledgeFact));
+      const facts = Array.from(
+        { length: 5 },
+        (_, i) =>
+          ({
+            id: `fact-${i}`,
+            article_id: `article-${i}`,
+            type: 'DEFINITION' as const,
+            content: `Fact ${i}`,
+            confidence: 0.9,
+            extraction_method: 'claude' as const,
+            extracted_at: new Date().toISOString(),
+            version: 1,
+            status: 'active' as const,
+          }) as KnowledgeFact,
+      );
 
       // Append facts concurrently
       const promises = facts.map((fact, index) => {
-        return store.append([fact]).catch(err => {
+        return store.append([fact]).catch((err) => {
           console.error(`Append ${index} failed:`, err);
           throw err;
         });
@@ -260,9 +272,11 @@ describe('File Locking - Concurrent Access', () => {
 
       // Final count should be exactly 1 (only first write succeeds fully)
       const stored = await store.readAll();
-      expect(stored).toContainEqual(expect.objectContaining({
-        content: baseFact.content,
-      }));
+      expect(stored).toContainEqual(
+        expect.objectContaining({
+          content: baseFact.content,
+        }),
+      );
     }, 30000);
 
     it('should maintain consistency across concurrent reads and writes', async () => {
@@ -287,17 +301,21 @@ describe('File Locking - Concurrent Access', () => {
       // Concurrent reads and writes
       const promises = [
         store.readAll(),
-        store.append([{
-          ...initialFact,
-          id: 'fact-new-1',
-          content: 'New fact 1',
-        }]),
+        store.append([
+          {
+            ...initialFact,
+            id: 'fact-new-1',
+            content: 'New fact 1',
+          },
+        ]),
         store.readAll(),
-        store.append([{
-          ...initialFact,
-          id: 'fact-new-2',
-          content: 'New fact 2',
-        }]),
+        store.append([
+          {
+            ...initialFact,
+            id: 'fact-new-2',
+            content: 'New fact 2',
+          },
+        ]),
         store.readAll(),
       ];
 
@@ -331,11 +349,11 @@ describe('File Locking - Concurrent Access', () => {
       await store.append([fact]);
 
       // Give file locking time to clean up
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Check that no lock files exist
       const files = await fs.readdir(tempDir);
-      const lockFiles = files.filter(f => f.endsWith('.lock'));
+      const lockFiles = files.filter((f) => f.endsWith('.lock'));
 
       expect(lockFiles).toHaveLength(0);
     });
@@ -349,33 +367,41 @@ describe('File Locking - Concurrent Access', () => {
       const articleStore = new NdJsonArticleStore(articlePath);
       const factStore = new FactStore(factsPath);
 
-      const articles = Array.from({ length: 3 }, (_, i) => ({
-        id: `article-${i}`,
-        title: `Article ${i}`,
-        url: `https://example.com/${i}`,
-        source: 'test',
-        category: 'tech',
-        tags: [],
-        publishedAt: new Date().toISOString(),
-        summary: `Summary ${i}`,
-      } as Article));
+      const articles = Array.from(
+        { length: 3 },
+        (_, i) =>
+          ({
+            id: `article-${i}`,
+            title: `Article ${i}`,
+            url: `https://example.com/${i}`,
+            source: 'test',
+            category: 'tech',
+            tags: [],
+            publishedAt: new Date().toISOString(),
+            summary: `Summary ${i}`,
+          }) as Article,
+      );
 
-      const facts = Array.from({ length: 3 }, (_, i) => ({
-        id: `fact-${i}`,
-        article_id: `article-${i}`,
-        type: 'DEFINITION' as const,
-        content: `Fact ${i}`,
-        confidence: 0.9,
-        extraction_method: 'claude' as const,
-        extracted_at: new Date().toISOString(),
-        version: 1,
-        status: 'active' as const,
-      } as KnowledgeFact));
+      const facts = Array.from(
+        { length: 3 },
+        (_, i) =>
+          ({
+            id: `fact-${i}`,
+            article_id: `article-${i}`,
+            type: 'DEFINITION' as const,
+            content: `Fact ${i}`,
+            confidence: 0.9,
+            extraction_method: 'claude' as const,
+            extracted_at: new Date().toISOString(),
+            version: 1,
+            status: 'active' as const,
+          }) as KnowledgeFact,
+      );
 
       // Mixed operations
       const promises = [
-        ...articles.map(a => articleStore.write([a])),
-        ...facts.map(f => factStore.append([f])),
+        ...articles.map((a) => articleStore.write([a])),
+        ...facts.map((f) => factStore.append([f])),
       ];
 
       await Promise.all(promises);

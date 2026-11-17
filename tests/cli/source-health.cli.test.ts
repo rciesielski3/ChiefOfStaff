@@ -35,7 +35,7 @@ describe('source-health CLI', () => {
 
     expect(out).toContain(`1 ${busy}`);
     expect(out).toContain(
-      `⚠️ 0 ${quiet} (no articles in last ${RETENTION_DAYS} days, store retention)`
+      `⚠️ 0 ${quiet} (no articles in last ${RETENTION_DAYS} days, store retention)`,
     );
     expect(out).not.toContain('never');
   });

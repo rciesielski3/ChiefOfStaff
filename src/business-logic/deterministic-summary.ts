@@ -24,7 +24,7 @@ export function buildDeterministicSummary(items: Article[]): string {
   }
 
   const count = items.length;
-  const topTitles = items.slice(0, MAX_TOP_TITLES).map(a => a.title);
+  const topTitles = items.slice(0, MAX_TOP_TITLES).map((a) => a.title);
 
   // Use the same QA-News category labels the export writes to items
   const categoryCounts = new Map<string, number>();

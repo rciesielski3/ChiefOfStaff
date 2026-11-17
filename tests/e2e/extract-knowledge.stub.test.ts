@@ -11,7 +11,11 @@ describe('Extract-Knowledge CLI (E2E Stubs)', () => {
 
     let exitError: any;
     try {
-      execSync('npx ts-node src/cli/extract-knowledge.ts', { encoding: 'utf-8', env, stdio: 'pipe' });
+      execSync('npx ts-node src/cli/extract-knowledge.ts', {
+        encoding: 'utf-8',
+        env,
+        stdio: 'pipe',
+      });
     } catch (error: any) {
       exitError = error;
     }

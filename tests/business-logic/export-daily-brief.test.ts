@@ -40,7 +40,7 @@ function createArticle(overrides?: Partial<Article>): Article {
     publishedAt: new Date().toISOString(),
     tags: ['test'],
     score: 50,
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -58,7 +58,7 @@ describe('export-daily-brief', () => {
     id: 'test-1',
     title: 'Article from today',
     publishedAt: new Date(today.getTime() + 3600000).toISOString(), // 1 hour after midnight today
-    score: 40
+    score: 40,
   });
 
   // Scores are deliberately ordered opposite to publish dates so a sort by score
@@ -68,7 +68,7 @@ describe('export-daily-brief', () => {
     title: 'Article from yesterday',
     publishedAt: new Date(yesterday.getTime() + 3600000).toISOString(),
     category: 'ai',
-    score: 90
+    score: 90,
   });
 
   const mockArticleHighScore = createArticle({
@@ -76,14 +76,18 @@ describe('export-daily-brief', () => {
     title: 'Latest article today',
     publishedAt: new Date(today.getTime() + 7200000).toISOString(), // 2 hours after midnight today
     category: 'engineering',
-    score: 10
+    score: 10,
   });
 
   // The publish-date filter was removed on purpose (commit 8fbd72d, "export latest articles
   // instead of filtering by publish date"). The export now takes the newest N articles
   // regardless of which day they were published.
   test('exports top articles by publish time with no publish-date filter', async () => {
-    const store = new MockArticleStore([mockArticleToday, mockArticleYesterday, mockArticleHighScore]);
+    const store = new MockArticleStore([
+      mockArticleToday,
+      mockArticleYesterday,
+      mockArticleHighScore,
+    ]);
     const result = await exportDailyBrief(store, 10);
 
     expect(result.items).toHaveLength(3); // Yesterday's article is included
@@ -137,7 +141,7 @@ describe('export-daily-brief', () => {
     const invalidArticle = createArticle({
       id: 'test-invalid',
       title: 'Invalid date',
-      publishedAt: 'not-a-date'
+      publishedAt: 'not-a-date',
     });
 
     const store = new MockArticleStore([invalidArticle, mockArticleToday]);
@@ -146,7 +150,7 @@ describe('export-daily-brief', () => {
     // No date filter, so both are exported. The sort comparator returns NaN for the
     // unparseable date, which is treated as equal, so the stable sort keeps input order.
     expect(result.items).toHaveLength(2);
-    expect(result.items.map(a => a.id)).toEqual(['test-invalid', 'test-1']);
+    expect(result.items.map((a) => a.id)).toEqual(['test-invalid', 'test-1']);
   });
 
   test('sets updatedAt to current timestamp', async () => {

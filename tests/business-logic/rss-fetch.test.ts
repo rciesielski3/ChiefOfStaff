@@ -5,7 +5,7 @@ import {
   RawArticle,
   DEFAULT_FEED_TIMEOUT_MS,
   DEFAULT_MAX_ATTEMPTS,
-  filterExcludedPaths
+  filterExcludedPaths,
 } from '../../src/business-logic/rss-fetch';
 import Parser from 'rss-parser';
 
@@ -27,26 +27,24 @@ describe('fetchRSS', () => {
         title: 'Article 1',
         pubDate: '2026-07-14T10:00:00Z',
         contentSnippet: 'This is article 1 content',
-        description: 'Article 1 description'
+        description: 'Article 1 description',
       },
       {
         link: 'https://example.com/article-2',
         title: 'Article 2',
         pubDate: '2026-07-13T10:00:00Z',
         contentSnippet: 'This is article 2 content',
-        description: 'Article 2 description'
-      }
+        description: 'Article 2 description',
+      },
     ];
 
     const mockParserInstance = {
       parseURL: jest.fn().mockResolvedValue({
-        items: mockFeedItems
-      })
+        items: mockFeedItems,
+      }),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     const result = await fetchRSS(mockSourceUrl, mockSourceName);
 
@@ -62,19 +60,17 @@ describe('fetchRSS', () => {
         link: 'https://example.com/article-1',
         title: 'Article with encoded content',
         pubDate: '2026-07-14T10:00:00Z',
-        content: 'This is encoded content'
-      }
+        content: 'This is encoded content',
+      },
     ];
 
     const mockParserInstance = {
       parseURL: jest.fn().mockResolvedValue({
-        items: mockFeedItems
-      })
+        items: mockFeedItems,
+      }),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     const result = await fetchRSS(mockSourceUrl, mockSourceName);
 
@@ -88,19 +84,17 @@ describe('fetchRSS', () => {
         link: 'https://example.com/article-1',
         title: 'Article with snippet',
         pubDate: '2026-07-14T10:00:00Z',
-        contentSnippet: 'This is the snippet'
-      }
+        contentSnippet: 'This is the snippet',
+      },
     ];
 
     const mockParserInstance = {
       parseURL: jest.fn().mockResolvedValue({
-        items: mockFeedItems
-      })
+        items: mockFeedItems,
+      }),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     const result = await fetchRSS(mockSourceUrl, mockSourceName);
 
@@ -114,19 +108,17 @@ describe('fetchRSS', () => {
         link: 'https://example.com/article-1',
         title: 'Article with description',
         pubDate: '2026-07-14T10:00:00Z',
-        description: 'This is the description'
-      }
+        description: 'This is the description',
+      },
     ];
 
     const mockParserInstance = {
       parseURL: jest.fn().mockResolvedValue({
-        items: mockFeedItems
-      })
+        items: mockFeedItems,
+      }),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     const result = await fetchRSS(mockSourceUrl, mockSourceName);
 
@@ -139,19 +131,17 @@ describe('fetchRSS', () => {
       {
         title: 'Article without link',
         pubDate: '2026-07-14T10:00:00Z',
-        contentSnippet: 'Some content'
-      }
+        contentSnippet: 'Some content',
+      },
     ];
 
     const mockParserInstance = {
       parseURL: jest.fn().mockResolvedValue({
-        items: mockFeedItems
-      })
+        items: mockFeedItems,
+      }),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     const result = await fetchRSS(mockSourceUrl, mockSourceName);
 
@@ -164,19 +154,17 @@ describe('fetchRSS', () => {
       {
         link: 'https://example.com/article-1',
         pubDate: '2026-07-14T10:00:00Z',
-        contentSnippet: 'Some content'
-      }
+        contentSnippet: 'Some content',
+      },
     ];
 
     const mockParserInstance = {
       parseURL: jest.fn().mockResolvedValue({
-        items: mockFeedItems
-      })
+        items: mockFeedItems,
+      }),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     const result = await fetchRSS(mockSourceUrl, mockSourceName);
 
@@ -189,25 +177,23 @@ describe('fetchRSS', () => {
       {
         link: 'https://example.com/article-1',
         title: 'Article without pubDate',
-        contentSnippet: 'Some content'
+        contentSnippet: 'Some content',
       },
       {
         link: 'https://example.com/article-2',
         title: 'Dated article',
         pubDate: '2026-07-14T10:00:00Z',
-        contentSnippet: 'Some content'
-      }
+        contentSnippet: 'Some content',
+      },
     ];
 
     const mockParserInstance = {
       parseURL: jest.fn().mockResolvedValue({
-        items: mockFeedItems
-      })
+        items: mockFeedItems,
+      }),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     const result = await fetchRSS(mockSourceUrl, mockSourceName);
 
@@ -223,15 +209,13 @@ describe('fetchRSS', () => {
           {
             link: 'https://example.com/article-1',
             title: 'ISO dated',
-            isoDate: '2026-07-13T08:00:00.000Z'
-          }
-        ]
-      })
+            isoDate: '2026-07-13T08:00:00.000Z',
+          },
+        ],
+      }),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     const result = await fetchRSS(mockSourceUrl, mockSourceName);
 
@@ -242,13 +226,11 @@ describe('fetchRSS', () => {
   it('should handle feed with no items', async () => {
     const mockParserInstance = {
       parseURL: jest.fn().mockResolvedValue({
-        items: []
-      })
+        items: [],
+      }),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     const result = await fetchRSS(mockSourceUrl, mockSourceName);
 
@@ -258,13 +240,11 @@ describe('fetchRSS', () => {
   it('should handle feed with null items', async () => {
     const mockParserInstance = {
       parseURL: jest.fn().mockResolvedValue({
-        items: null
-      })
+        items: null,
+      }),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     const result = await fetchRSS(mockSourceUrl, mockSourceName);
 
@@ -274,13 +254,11 @@ describe('fetchRSS', () => {
   it('should handle feed with undefined items', async () => {
     const mockParserInstance = {
       parseURL: jest.fn().mockResolvedValue({
-        items: undefined
-      })
+        items: undefined,
+      }),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     const result = await fetchRSS(mockSourceUrl, mockSourceName);
 
@@ -291,32 +269,24 @@ describe('fetchRSS', () => {
     const mockError = new Error('Failed to parse feed');
 
     const mockParserInstance = {
-      parseURL: jest.fn().mockRejectedValue(mockError)
+      parseURL: jest.fn().mockRejectedValue(mockError),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
-    await expect(fetchRSS(mockSourceUrl, mockSourceName)).rejects.toThrow(
-      'Failed to parse feed'
-    );
+    await expect(fetchRSS(mockSourceUrl, mockSourceName)).rejects.toThrow('Failed to parse feed');
   });
 
   it('should throw error on network timeout', async () => {
     const mockError = new Error('Network timeout');
 
     const mockParserInstance = {
-      parseURL: jest.fn().mockRejectedValue(mockError)
+      parseURL: jest.fn().mockRejectedValue(mockError),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
-    await expect(fetchRSS(mockSourceUrl, mockSourceName)).rejects.toThrow(
-      'Network timeout'
-    );
+    await expect(fetchRSS(mockSourceUrl, mockSourceName)).rejects.toThrow('Network timeout');
   });
 
   it('should assign source name to all articles', async () => {
@@ -325,29 +295,27 @@ describe('fetchRSS', () => {
         link: 'https://example.com/article-1',
         title: 'Article 1',
         pubDate: '2026-07-14T10:00:00Z',
-        contentSnippet: 'Content 1'
+        contentSnippet: 'Content 1',
       },
       {
         link: 'https://example.com/article-2',
         title: 'Article 2',
         pubDate: '2026-07-13T10:00:00Z',
-        contentSnippet: 'Content 2'
-      }
+        contentSnippet: 'Content 2',
+      },
     ];
 
     const mockParserInstance = {
       parseURL: jest.fn().mockResolvedValue({
-        items: mockFeedItems
-      })
+        items: mockFeedItems,
+      }),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     const result = await fetchRSS(mockSourceUrl, mockSourceName);
 
-    result.forEach(article => {
+    result.forEach((article) => {
       expect(article.source).toBe(mockSourceName);
     });
   });
@@ -360,19 +328,17 @@ describe('fetchRSS', () => {
         pubDate: '2026-07-14T10:00:00Z',
         description: 'Description text',
         contentSnippet: 'Snippet text',
-        content: 'Full encoded content'
-      }
+        content: 'Full encoded content',
+      },
     ];
 
     const mockParserInstance = {
       parseURL: jest.fn().mockResolvedValue({
-        items: mockFeedItems
-      })
+        items: mockFeedItems,
+      }),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     const result = await fetchRSS(mockSourceUrl, mockSourceName);
 
@@ -386,41 +352,36 @@ describe('fetchRSS', () => {
 
   it('should timeout if parser hangs beyond timeout duration', async () => {
     const mockParserInstance = {
-      parseURL: jest.fn().mockImplementation(
-        () => new Promise(resolve => setTimeout(resolve, 5000))
-      )
+      parseURL: jest
+        .fn()
+        .mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 5000))),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     await expect(fetchRSS(mockSourceUrl, mockSourceName, 100)).rejects.toThrow(
-      'RSS feed timed out after 100ms'
+      'RSS feed timed out after 100ms',
     );
   });
 
   it('should retry on timeout and eventually succeed if feed recovers', async () => {
     const mockParserInstance = {
-      parseURL: jest.fn()
-        .mockImplementationOnce(
-          () => new Promise(resolve => setTimeout(resolve, 5000))
-        )
+      parseURL: jest
+        .fn()
+        .mockImplementationOnce(() => new Promise((resolve) => setTimeout(resolve, 5000)))
         .mockResolvedValueOnce({
           items: [
             {
               link: 'https://example.com/article-1',
               title: 'Recovered Article',
               pubDate: '2026-07-14T10:00:00Z',
-              contentSnippet: 'Content after recovery'
-            }
-          ]
-        })
+              contentSnippet: 'Content after recovery',
+            },
+          ],
+        }),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     const result = await fetchRSS(mockSourceUrl, mockSourceName, 50);
 
@@ -430,14 +391,12 @@ describe('fetchRSS', () => {
 
   it('should respect custom timeout value', async () => {
     const mockParserInstance = {
-      parseURL: jest.fn().mockImplementation(
-        () => new Promise(resolve => setTimeout(resolve, 200))
-      )
+      parseURL: jest
+        .fn()
+        .mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 200))),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     await expect(fetchRSS(mockSourceUrl, mockSourceName, 100)).rejects.toThrow();
   });
@@ -445,20 +404,21 @@ describe('fetchRSS', () => {
   it('aborts the underlying HTTP request when the timeout fires', async () => {
     let capturedSignal: AbortSignal | undefined;
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      (options: any) => {
-        capturedSignal = options.requestOptions.signal;
-        return {
-          parseURL: jest.fn().mockImplementation(
-            () => new Promise(() => { /* never settles, like a stalled socket */ })
-          )
-        } as any;
-      }
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation((options: any) => {
+      capturedSignal = options.requestOptions.signal;
+      return {
+        parseURL: jest.fn().mockImplementation(
+          () =>
+            new Promise(() => {
+              /* never settles, like a stalled socket */
+            }),
+        ),
+      } as any;
+    });
 
-    await expect(
-      fetchRSS(mockSourceUrl, mockSourceName, 50)
-    ).rejects.toThrow('RSS feed timed out after 50ms');
+    await expect(fetchRSS(mockSourceUrl, mockSourceName, 50)).rejects.toThrow(
+      'RSS feed timed out after 50ms',
+    );
 
     expect(capturedSignal?.aborted).toBe(true);
   });
@@ -467,9 +427,10 @@ describe('fetchRSS', () => {
     jest.useFakeTimers();
     try {
       (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-        () => ({
-          parseURL: jest.fn().mockResolvedValue({ items: [] })
-        }) as any
+        () =>
+          ({
+            parseURL: jest.fn().mockResolvedValue({ items: [] }),
+          }) as any,
       );
 
       await fetchRSS(mockSourceUrl, mockSourceName, 30000);
@@ -486,20 +447,19 @@ describe('fetchRSS', () => {
         link: 'https://example.com/article-1',
         title: 'Article 1',
         pubDate: '2026-07-14T10:00:00Z',
-        contentSnippet: 'Recovered content'
-      }
+        contentSnippet: 'Recovered content',
+      },
     ];
 
-    const mockParseURL = jest.fn()
+    const mockParseURL = jest
+      .fn()
       .mockRejectedValueOnce(new Error('ECONNRESET'))
       .mockRejectedValueOnce(new Error('ETIMEDOUT'))
       .mockResolvedValueOnce({ items: mockFeedItems });
 
     const mockParserInstance = { parseURL: mockParseURL };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     const result = await fetchRSS(mockSourceUrl, mockSourceName);
 
@@ -514,12 +474,10 @@ describe('fetchRSS', () => {
 
     const mockParserInstance = { parseURL: mockParseURL };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     await expect(fetchRSS(mockSourceUrl, mockSourceName)).rejects.toThrow(
-      'Persistent network failure'
+      'Persistent network failure',
     );
     expect(mockParseURL).toHaveBeenCalledTimes(3);
   });
@@ -546,9 +504,7 @@ describe('fetchAllSources', () => {
 
     const mockParserInstance = { parseURL: mockParseURL };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     return mockParseURL;
   }
@@ -562,16 +518,16 @@ describe('fetchAllSources', () => {
               link: 'https://good.example.com/article-1',
               title: 'Good Article',
               pubDate: '2026-07-14T10:00:00Z',
-              contentSnippet: 'Content'
-            }
-          ]
+              contentSnippet: 'Content',
+            },
+          ],
         }),
-      'https://bad.example.com/feed.xml': () => Promise.reject(new Error('Status code 406'))
+      'https://bad.example.com/feed.xml': () => Promise.reject(new Error('Status code 406')),
     });
 
     const result = await fetchAllSources([
       { url: 'https://good.example.com/feed.xml', name: 'Good Source' },
-      { url: 'https://bad.example.com/feed.xml', name: 'Bad Source' }
+      { url: 'https://bad.example.com/feed.xml', name: 'Bad Source' },
     ]);
 
     // The bad source is skipped, not fatal — the good source's articles
@@ -582,8 +538,8 @@ describe('fetchAllSources', () => {
     expect(result.successCount).toBe(1);
     expect(result.failureCount).toBe(1);
 
-    const goodResult = result.results.find(r => r.source === 'Good Source');
-    const badResult = result.results.find(r => r.source === 'Bad Source');
+    const goodResult = result.results.find((r) => r.source === 'Good Source');
+    const badResult = result.results.find((r) => r.source === 'Bad Source');
 
     expect(goodResult).toEqual({ source: 'Good Source', success: true, count: 1 });
     expect(badResult?.success).toBe(false);
@@ -602,18 +558,18 @@ describe('fetchAllSources', () => {
               link: 'https://ok.example.com/article-1',
               title: 'OK Article',
               pubDate: '2026-07-14T10:00:00Z',
-              contentSnippet: 'Content'
-            }
-          ]
+              contentSnippet: 'Content',
+            },
+          ],
         }),
       'https://forbidden.example.com/feed.xml': () => Promise.reject(new Error('Status code 406')),
-      'https://timeout.example.com/feed.xml': () => Promise.reject(new Error('Network timeout'))
+      'https://timeout.example.com/feed.xml': () => Promise.reject(new Error('Network timeout')),
     });
 
     const result = await fetchAllSources([
       { url: 'https://ok.example.com/feed.xml', name: 'OK Source' },
       { url: 'https://forbidden.example.com/feed.xml', name: 'Forbidden Source' },
-      { url: 'https://timeout.example.com/feed.xml', name: 'Timeout Source' }
+      { url: 'https://timeout.example.com/feed.xml', name: 'Timeout Source' },
     ]);
 
     expect(result.successCount).toBe(1);
@@ -621,8 +577,8 @@ describe('fetchAllSources', () => {
     expect(result.articles).toHaveLength(1);
     expect(result.results).toHaveLength(3);
 
-    const forbidden = result.results.find(r => r.source === 'Forbidden Source');
-    const timeout = result.results.find(r => r.source === 'Timeout Source');
+    const forbidden = result.results.find((r) => r.source === 'Forbidden Source');
+    const timeout = result.results.find((r) => r.source === 'Timeout Source');
     expect(forbidden?.error).toContain('Status code 406');
     expect(timeout?.error).toContain('Network timeout');
   }, 15000);
@@ -630,18 +586,18 @@ describe('fetchAllSources', () => {
   it('returns an empty article list without throwing when every source fails', async () => {
     mockParseURLPerSource({
       'https://down-1.example.com/feed.xml': () => Promise.reject(new Error('Status code 500')),
-      'https://down-2.example.com/feed.xml': () => Promise.reject(new Error('ECONNRESET'))
+      'https://down-2.example.com/feed.xml': () => Promise.reject(new Error('ECONNRESET')),
     });
 
     const result = await fetchAllSources([
       { url: 'https://down-1.example.com/feed.xml', name: 'Down Source 1' },
-      { url: 'https://down-2.example.com/feed.xml', name: 'Down Source 2' }
+      { url: 'https://down-2.example.com/feed.xml', name: 'Down Source 2' },
     ]);
 
     expect(result.articles).toEqual([]);
     expect(result.successCount).toBe(0);
     expect(result.failureCount).toBe(2);
-    expect(result.results.every(r => !r.success)).toBe(true);
+    expect(result.results.every((r) => !r.success)).toBe(true);
   }, 15000);
 
   it('returns an empty results array when given no sources', async () => {
@@ -665,7 +621,8 @@ describe('fetchWithRetry', () => {
   });
 
   it('should retry on failure and succeed once the operation recovers', async () => {
-    const fn = jest.fn()
+    const fn = jest
+      .fn()
       .mockRejectedValueOnce(new Error('fail 1'))
       .mockRejectedValueOnce(new Error('fail 2'))
       .mockResolvedValueOnce('recovered');
@@ -680,7 +637,8 @@ describe('fetchWithRetry', () => {
     const error1 = new Error('fail 1');
     const error2 = new Error('fail 2');
     const error3 = new Error('final failure');
-    const fn = jest.fn()
+    const fn = jest
+      .fn()
       .mockRejectedValueOnce(error1)
       .mockRejectedValueOnce(error2)
       .mockRejectedValueOnce(error3);
@@ -692,9 +650,9 @@ describe('fetchWithRetry', () => {
   it('should respect a custom maxAttempts value', async () => {
     const fn = jest.fn().mockRejectedValue(new Error('always fails'));
 
-    await expect(
-      fetchWithRetry(fn, { maxAttempts: 5, baseDelayMs: 1 })
-    ).rejects.toThrow('always fails');
+    await expect(fetchWithRetry(fn, { maxAttempts: 5, baseDelayMs: 1 })).rejects.toThrow(
+      'always fails',
+    );
     expect(fn).toHaveBeenCalledTimes(5);
   });
 
@@ -708,7 +666,8 @@ describe('fetchWithRetry', () => {
   it('should apply exponential backoff delays between attempts', async () => {
     jest.useFakeTimers();
     try {
-      const fn = jest.fn()
+      const fn = jest
+        .fn()
         .mockRejectedValueOnce(new Error('fail 1'))
         .mockRejectedValueOnce(new Error('fail 2'))
         .mockResolvedValueOnce('done');
@@ -746,14 +705,15 @@ describe('per-feed time budget', () => {
     jest.useFakeTimers();
     try {
       const parseURL = jest.fn().mockImplementation(
-        () => new Promise(() => { /* never settles */ })
+        () =>
+          new Promise(() => {
+            /* never settles */
+          }),
       );
-      (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-        () => ({ parseURL }) as any
-      );
+      (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => ({ parseURL }) as any);
 
       let rejected = false;
-      const promise = fetchRSS('https://example.com/feed.xml', 'Stalled Feed').catch(error => {
+      const promise = fetchRSS('https://example.com/feed.xml', 'Stalled Feed').catch((error) => {
         rejected = true;
         return error;
       });
@@ -781,14 +741,19 @@ describe('filterExcludedPaths', () => {
     { link: 'https://www.ministryoftesting.com/jobs/engineering-manager-keyloop' },
     { link: 'https://www.ministryoftesting.com/newsletter/sign-up' },
     { link: 'https://www.ministryoftesting.com/moments/a-real-post' },
-    { link: 'not a url' }
+    { link: 'not a url' },
   ];
 
   it('drops items whose path starts with an excluded prefix', () => {
-    const kept = filterExcludedPaths(items, ['/glossary/', '/software-testing-glossary/', '/jobs/', '/newsletter/']);
-    expect(kept.map(i => i.link)).toEqual([
+    const kept = filterExcludedPaths(items, [
+      '/glossary/',
+      '/software-testing-glossary/',
+      '/jobs/',
+      '/newsletter/',
+    ]);
+    expect(kept.map((i) => i.link)).toEqual([
       'https://www.ministryoftesting.com/moments/a-real-post',
-      'not a url'
+      'not a url',
     ]);
   });
 
@@ -797,10 +762,7 @@ describe('filterExcludedPaths', () => {
   });
 
   it('matches on path only, not on a substring elsewhere in the URL', () => {
-    const kept = filterExcludedPaths(
-      [{ link: 'https://example.com/news/jobs/post' }],
-      ['/jobs/']
-    );
+    const kept = filterExcludedPaths([{ link: 'https://example.com/news/jobs/post' }], ['/jobs/']);
     expect(kept).toHaveLength(1);
   });
 });
@@ -817,39 +779,37 @@ describe('fetchAllSources excludePathPrefixes', () => {
           {
             link: 'https://www.ministryoftesting.com/glossary/feedback-model',
             title: 'Feedback Model',
-            pubDate: '2026-11-01T09:00:00Z'
+            pubDate: '2026-11-01T09:00:00Z',
           },
           {
             link: 'https://www.ministryoftesting.com/jobs/engineering-manager-keyloop',
             title: 'Engineering Manager',
-            pubDate: '2026-11-02T09:00:00Z'
+            pubDate: '2026-11-02T09:00:00Z',
           },
           {
             link: 'https://www.ministryoftesting.com/moments/real-news',
             title: 'Real news',
-            pubDate: '2026-11-03T09:00:00Z'
+            pubDate: '2026-11-03T09:00:00Z',
           },
           {
             link: 'https://www.ministryoftesting.com/moments/no-date',
-            title: 'No date'
-          }
-        ]
-      })
+            title: 'No date',
+          },
+        ],
+      }),
     };
 
-    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(
-      () => mockParserInstance as any
-    );
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
 
     const result = await fetchAllSources([
       {
         name: 'Ministry of Testing',
         url: 'https://www.ministryoftesting.com/contents/rss',
-        excludePathPrefixes: ['/glossary/', '/jobs/']
-      }
+        excludePathPrefixes: ['/glossary/', '/jobs/'],
+      },
     ]);
 
-    expect(result.articles.map(a => a.title)).toEqual(['Real news']);
+    expect(result.articles.map((a) => a.title)).toEqual(['Real news']);
     expect(result.articles[0].pubDate).toBe('2026-11-03T09:00:00Z');
   });
 });

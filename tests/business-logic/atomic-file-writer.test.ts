@@ -75,7 +75,7 @@ describe('AtomicFileWriter', () => {
 
       // List files in test directory - should not have any temp files
       const files = await fs.readdir(testDir);
-      const tempFiles = files.filter(f => f.endsWith('.tmp'));
+      const tempFiles = files.filter((f) => f.endsWith('.tmp'));
       expect(tempFiles.length).toBe(0);
     });
   });

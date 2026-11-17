@@ -57,7 +57,10 @@ export class EmbeddingsService {
     };
   }
 
-  similaritySearch(factId: string, topN: number = 5): { related_fact_id: string; similarity_score: number }[] {
+  similaritySearch(
+    factId: string,
+    topN: number = 5,
+  ): { related_fact_id: string; similarity_score: number }[] {
     const targetVector = this.cache[factId]?.vector;
     if (!targetVector) return [];
 
@@ -67,7 +70,7 @@ export class EmbeddingsService {
         related_fact_id: id,
         similarity_score: this.cosineSimilarity(targetVector, vector),
       }))
-      .filter(score => score.similarity_score > 0.35) // Filter out weak similarities
+      .filter((score) => score.similarity_score > 0.35) // Filter out weak similarities
       .sort((a, b) => b.similarity_score - a.similarity_score)
       .slice(0, topN);
 
@@ -76,7 +79,7 @@ export class EmbeddingsService {
 
   saveCacheToNDJSON(filePath: string): void {
     const lines = Object.entries(this.cache).map(([id, data]) =>
-      JSON.stringify({ fact_id: id, ...data })
+      JSON.stringify({ fact_id: id, ...data }),
     );
     fs.writeFileSync(filePath, lines.join('\n'));
   }
@@ -84,9 +87,9 @@ export class EmbeddingsService {
   loadCacheFromNDJSON(filePath: string): void {
     if (!fs.existsSync(filePath)) return;
     const content = fs.readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n').filter(l => l.trim());
+    const lines = content.split('\n').filter((l) => l.trim());
     this.cache = {};
-    lines.forEach(line => {
+    lines.forEach((line) => {
       const { fact_id, vector, content } = JSON.parse(line);
       this.cache[fact_id] = { vector, content };
     });
@@ -107,7 +110,10 @@ export class EmbeddingsService {
 
   private generateMockVector(content: string): number[] {
     // Extract significant words to create semantic-aware vectors
-    const words = content.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !this.isStopWord(w));
+    const words = content
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((w) => w.length > 2 && !this.isStopWord(w));
     const vector = Array(384).fill(0);
 
     if (words.length === 0) {
@@ -115,11 +121,11 @@ export class EmbeddingsService {
     }
 
     // Create a stable hash for each word and use it to determine vector dimensions
-    words.forEach(word => {
+    words.forEach((word) => {
       // Use a simple hash function that's consistent
       let wordHash = 0;
       for (let i = 0; i < word.length; i++) {
-        wordHash = ((wordHash << 5) - wordHash) + word.charCodeAt(i);
+        wordHash = (wordHash << 5) - wordHash + word.charCodeAt(i);
         wordHash = wordHash & wordHash; // Convert to 32-bit integer
       }
 
@@ -140,7 +146,7 @@ export class EmbeddingsService {
     // Normalize to unit length
     const magnitude = Math.sqrt(vector.reduce((sum, v) => sum + v * v, 0));
     if (magnitude > 0.01) {
-      return vector.map(v => v / magnitude);
+      return vector.map((v) => v / magnitude);
     }
 
     return Array(384).fill(1 / Math.sqrt(384));
@@ -148,11 +154,54 @@ export class EmbeddingsService {
 
   private isStopWord(word: string): boolean {
     const stopWords = new Set([
-      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-      'of', 'from', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been',
-      'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
-      'should', 'could', 'may', 'might', 'can', 'must', 'shall', 'this',
-      'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they'
+      'the',
+      'a',
+      'an',
+      'and',
+      'or',
+      'but',
+      'in',
+      'on',
+      'at',
+      'to',
+      'for',
+      'of',
+      'from',
+      'with',
+      'by',
+      'is',
+      'are',
+      'was',
+      'were',
+      'be',
+      'been',
+      'being',
+      'have',
+      'has',
+      'had',
+      'do',
+      'does',
+      'did',
+      'will',
+      'would',
+      'should',
+      'could',
+      'may',
+      'might',
+      'can',
+      'must',
+      'shall',
+      'this',
+      'that',
+      'these',
+      'those',
+      'i',
+      'you',
+      'he',
+      'she',
+      'it',
+      'we',
+      'they',
     ]);
     return stopWords.has(word);
   }

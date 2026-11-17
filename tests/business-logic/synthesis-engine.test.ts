@@ -47,7 +47,7 @@ describe('SynthesisEngine', () => {
           confidence: 0.88,
           extraction_method: 'claude',
           domain: 'infrastructure',
-          domain_confidence: 0.90,
+          domain_confidence: 0.9,
           keywords: ['Kubernetes', 'orchestration'],
           extracted_at: '2026-07-22T10:00:00Z',
           version: 1,
@@ -59,7 +59,7 @@ describe('SynthesisEngine', () => {
       const insights = synthesisEngine.synthesizeInsights([pattern1, pattern2], facts);
 
       // Should create BEST_PRACTICE insight
-      const bestPracticeInsights = insights.filter(i => i.type === InsightType.BEST_PRACTICE);
+      const bestPracticeInsights = insights.filter((i) => i.type === InsightType.BEST_PRACTICE);
       expect(bestPracticeInsights.length).toBeGreaterThanOrEqual(1);
 
       // BEST_PRACTICE should combine patterns
@@ -123,20 +123,23 @@ describe('SynthesisEngine', () => {
       const insights = synthesisEngine.synthesizeInsights(highConfidencePatterns, facts);
 
       // Should create BEST_PRACTICE for high-confidence group
-      const bestPracticeInsights = insights.filter(i => i.type === InsightType.BEST_PRACTICE);
+      const bestPracticeInsights = insights.filter((i) => i.type === InsightType.BEST_PRACTICE);
       expect(bestPracticeInsights.length).toBeGreaterThanOrEqual(1);
 
       // Verify best practice has high confidence (avg of 0.92 and 0.88 = 0.90)
       const bestPractice = bestPracticeInsights[0];
-      expect(bestPractice.confidence).toBeCloseTo(0.90, 1);
+      expect(bestPractice.confidence).toBeCloseTo(0.9, 1);
       expect(bestPractice.confidence).toBeGreaterThan(0.85);
 
       // Synthesize with low-confidence patterns
-      const lowConfidenceInsights = synthesisEngine.synthesizeInsights(lowConfidencePatterns, facts);
+      const lowConfidenceInsights = synthesisEngine.synthesizeInsights(
+        lowConfidencePatterns,
+        facts,
+      );
 
       // Should NOT create BEST_PRACTICE for low-confidence group (0.72 < 0.85)
       const lowBestPractice = lowConfidenceInsights.filter(
-        i => i.type === InsightType.BEST_PRACTICE
+        (i) => i.type === InsightType.BEST_PRACTICE,
       );
       expect(lowBestPractice.length).toBe(0);
     });
@@ -175,7 +178,7 @@ describe('SynthesisEngine', () => {
       const insights = synthesisEngine.synthesizeInsights(patterns, facts);
 
       // Should create BEST_PRACTICE with mature stage (documented lifecycle: new, growth, mature, declining, archived)
-      const bestPractice = insights.find(i => i.type === InsightType.BEST_PRACTICE);
+      const bestPractice = insights.find((i) => i.type === InsightType.BEST_PRACTICE);
       expect(bestPractice).toBeDefined();
       if (bestPractice) {
         expect(bestPractice.confidence).toBeCloseTo(0.93, 1);
@@ -217,7 +220,7 @@ describe('SynthesisEngine', () => {
       const insights = synthesisEngine.synthesizeInsights(patterns, facts);
 
       // Should create BEST_PRACTICE with growth stage
-      const bestPractice = insights.find(i => i.type === InsightType.BEST_PRACTICE);
+      const bestPractice = insights.find((i) => i.type === InsightType.BEST_PRACTICE);
       expect(bestPractice).toBeDefined();
       if (bestPractice) {
         expect(bestPractice.confidence).toBeCloseTo(0.86, 1);
@@ -249,7 +252,7 @@ describe('SynthesisEngine', () => {
       const insights = synthesisEngine.synthesizeInsights(patterns, facts);
 
       // Should create RELATIONSHIP insight
-      const relationshipInsights = insights.filter(i => i.type === InsightType.RELATIONSHIP);
+      const relationshipInsights = insights.filter((i) => i.type === InsightType.RELATIONSHIP);
       expect(relationshipInsights.length).toBeGreaterThanOrEqual(1);
 
       // RELATIONSHIP should span multiple domains
@@ -281,7 +284,7 @@ describe('SynthesisEngine', () => {
       const insights = synthesisEngine.synthesizeInsights(patterns, facts);
 
       // Should NOT create RELATIONSHIP for single-domain patterns
-      const relationshipInsights = insights.filter(i => i.type === InsightType.RELATIONSHIP);
+      const relationshipInsights = insights.filter((i) => i.type === InsightType.RELATIONSHIP);
       expect(relationshipInsights.length).toBe(0);
     });
 
@@ -319,7 +322,7 @@ describe('SynthesisEngine', () => {
       const insights = synthesisEngine.synthesizeInsights(patterns, facts);
 
       // Should group patterns with same theme/domains
-      const relationshipInsights = insights.filter(i => i.type === InsightType.RELATIONSHIP);
+      const relationshipInsights = insights.filter((i) => i.type === InsightType.RELATIONSHIP);
       expect(relationshipInsights.length).toBeGreaterThanOrEqual(1);
 
       // Relationship should have both domains
@@ -363,7 +366,7 @@ describe('SynthesisEngine', () => {
       const insights = synthesisEngine.synthesizeInsights(patterns, facts);
 
       // Both patterns should be grouped under similar theme
-      const bestPractices = insights.filter(i => i.type === InsightType.BEST_PRACTICE);
+      const bestPractices = insights.filter((i) => i.type === InsightType.BEST_PRACTICE);
       expect(bestPractices.length).toBeGreaterThanOrEqual(1);
 
       // The grouped best practice should reference both patterns
@@ -385,7 +388,7 @@ describe('SynthesisEngine', () => {
           type: InsightType.PATTERN,
           title: 'single pattern emerging',
           summary: 'Only one pattern.',
-          confidence: 0.90,
+          confidence: 0.9,
           relatedFactIds: ['fact-001'],
           domains: ['testing'],
           tags: [],
@@ -398,7 +401,7 @@ describe('SynthesisEngine', () => {
       const insights = synthesisEngine.synthesizeInsights(patterns, []);
 
       // Should NOT create BEST_PRACTICE for single pattern
-      const bestPractices = insights.filter(i => i.type === InsightType.BEST_PRACTICE);
+      const bestPractices = insights.filter((i) => i.type === InsightType.BEST_PRACTICE);
       expect(bestPractices.length).toBe(0);
     });
 
@@ -459,11 +462,11 @@ describe('SynthesisEngine', () => {
 
       // Kubernetes group should pass threshold (0.87 avg)
       // Testing group should fail threshold (0.83 avg < 0.85)
-      const bestPractices = insights.filter(i => i.type === InsightType.BEST_PRACTICE);
+      const bestPractices = insights.filter((i) => i.type === InsightType.BEST_PRACTICE);
       expect(bestPractices.length).toBeGreaterThanOrEqual(1);
 
       // Should have kubernetes best practice
-      const k8sBestPractice = bestPractices.find(bp => bp.title.includes('kubernetes'));
+      const k8sBestPractice = bestPractices.find((bp) => bp.title.includes('kubernetes'));
       expect(k8sBestPractice).toBeDefined();
     });
   });

@@ -12,9 +12,12 @@ describe('SummaryGenerator — Error Handling', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockCreate = jest.fn();
-    (Anthropic as jest.MockedClass<typeof Anthropic>).mockImplementation(() => ({
-      messages: { create: mockCreate }
-    } as any));
+    (Anthropic as jest.MockedClass<typeof Anthropic>).mockImplementation(
+      () =>
+        ({
+          messages: { create: mockCreate },
+        }) as any,
+    );
     generator = new SummaryGenerator(mockApiKey);
   });
 
@@ -31,8 +34,8 @@ describe('SummaryGenerator — Error Handling', () => {
         source: 'Test',
         category: 'test',
         publishedAt: '2026-07-22T10:00:00Z',
-        tags: []
-      }
+        tags: [],
+      },
     ];
 
     const result = await generator.generateSummary(articles);
@@ -53,8 +56,8 @@ describe('SummaryGenerator — Error Handling', () => {
         source: 'Test',
         category: 'test',
         publishedAt: '2026-07-22T10:00:00Z',
-        tags: []
-      }
+        tags: [],
+      },
     ];
 
     const result = await generator.generateSummary(articles);
@@ -63,7 +66,7 @@ describe('SummaryGenerator — Error Handling', () => {
 
   it('should return empty string when content array is empty', async () => {
     mockCreate.mockResolvedValue({
-      content: [] // Empty content array
+      content: [], // Empty content array
     });
 
     const articles: Article[] = [
@@ -75,8 +78,8 @@ describe('SummaryGenerator — Error Handling', () => {
         source: 'Test',
         category: 'test',
         publishedAt: '2026-07-22T10:00:00Z',
-        tags: []
-      }
+        tags: [],
+      },
     ];
 
     const result = await generator.generateSummary(articles);

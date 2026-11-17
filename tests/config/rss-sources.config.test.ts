@@ -9,27 +9,34 @@ describe('RSS Sources Configuration', () => {
 
     it('should have Ministry of Testing source', () => {
       const ministryOfTesting = RSS_SOURCES.find(
-        source => source.name.toLowerCase().includes('ministry') && source.name.toLowerCase().includes('testing')
+        (source) =>
+          source.name.toLowerCase().includes('ministry') &&
+          source.name.toLowerCase().includes('testing'),
       );
       expect(ministryOfTesting).toBeDefined();
       expect(ministryOfTesting?.url).toContain('ministryoftesting');
     });
 
     it('should exclude non-news Ministry of Testing paths', () => {
-      const ministryOfTesting = RSS_SOURCES.find(source => source.name === 'Ministry of Testing');
+      const ministryOfTesting = RSS_SOURCES.find((source) => source.name === 'Ministry of Testing');
       expect(ministryOfTesting?.excludePathPrefixes).toEqual(
-        expect.arrayContaining(['/glossary/', '/software-testing-glossary/', '/jobs/', '/newsletter/'])
+        expect.arrayContaining([
+          '/glossary/',
+          '/software-testing-glossary/',
+          '/jobs/',
+          '/newsletter/',
+        ]),
       );
     });
 
     it('should have OpenAI source', () => {
-      const openAI = RSS_SOURCES.find(source => source.name.toLowerCase().includes('openai'));
+      const openAI = RSS_SOURCES.find((source) => source.name.toLowerCase().includes('openai'));
       expect(openAI).toBeDefined();
       expect(openAI?.url).toContain('openai');
     });
 
     it('should have unique source names', () => {
-      const names = RSS_SOURCES.map(source => source.name);
+      const names = RSS_SOURCES.map((source) => source.name);
       expect(new Set(names).size).toBe(names.length);
     });
 
@@ -46,11 +53,11 @@ describe('RSS Sources Configuration', () => {
       const enabled = getEnabledSources();
       // All default sources should be returned if none are explicitly disabled
       expect(enabled.length).toBeGreaterThanOrEqual(8);
-      expect(enabled.every(s => (s as any).enabled !== false)).toBe(true);
+      expect(enabled.every((s) => (s as any).enabled !== false)).toBe(true);
     });
 
     it('should not fetch LogiGear Blog (Cloudflare returns 403 to the fetcher)', () => {
-      expect(getEnabledSources().some(s => s.name === 'LogiGear Blog')).toBe(false);
+      expect(getEnabledSources().some((s) => s.name === 'LogiGear Blog')).toBe(false);
     });
 
     it('should filter out disabled sources', () => {
@@ -62,12 +69,12 @@ describe('RSS Sources Configuration', () => {
       ];
 
       // Filter using the same logic as getEnabledSources
-      const filtered = testSources.filter(s => s.enabled !== false);
+      const filtered = testSources.filter((s) => s.enabled !== false);
 
       expect(filtered.length).toBe(2);
-      expect(filtered.some(s => s.name === 'Source 2')).toBe(false);
-      expect(filtered.some(s => s.name === 'Source 1')).toBe(true);
-      expect(filtered.some(s => s.name === 'Source 3')).toBe(true);
+      expect(filtered.some((s) => s.name === 'Source 2')).toBe(false);
+      expect(filtered.some((s) => s.name === 'Source 1')).toBe(true);
+      expect(filtered.some((s) => s.name === 'Source 3')).toBe(true);
     });
   });
 });

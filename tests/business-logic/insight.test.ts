@@ -22,7 +22,9 @@ describe('Insight Data Model', () => {
       expect(insight.id).toBeDefined();
       expect(insight.type).toBe(InsightType.PATTERN);
       expect(insight.title).toBe('Emerging Technology Adoption Pattern');
-      expect(insight.summary).toBe('Companies in fintech sector are adopting AI at 3x rate compared to 2024.');
+      expect(insight.summary).toBe(
+        'Companies in fintech sector are adopting AI at 3x rate compared to 2024.',
+      );
       expect(insight.confidence).toBe(0.87);
       expect(insight.relatedFactIds).toHaveLength(3);
       expect(insight.domains).toContain('fintech');

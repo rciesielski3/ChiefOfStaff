@@ -14,8 +14,8 @@ describe('export-qa-news CLI — Exit Codes', () => {
         {
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe'],
-          env: { ...process.env, ANTHROPIC_API_KEY: 'test-key' }
-        }
+          env: { ...process.env, ANTHROPIC_API_KEY: 'test-key' },
+        },
       );
       // No exception thrown = exit code was 0
       expect(output).toBeDefined();
@@ -34,11 +34,14 @@ describe('export-qa-news CLI — Exit Codes', () => {
 
     let exitCode: number | undefined;
     try {
-      execSync('npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts', {
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: process.env
-      });
+      execSync(
+        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
+        {
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+          env: process.env,
+        },
+      );
       exitCode = 0;
     } catch (error: any) {
       exitCode = error.status;

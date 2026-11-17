@@ -19,7 +19,8 @@ describe('PatternDetector', () => {
         {
           id: 'fact-001',
           article_id: 'article-001',
-          content: 'Companies are increasing AI adoption in their business processes to improve efficiency and reduce costs.',
+          content:
+            'Companies are increasing AI adoption in their business processes to improve efficiency and reduce costs.',
           type: 'PATTERN',
           confidence: 0.85,
           extraction_method: 'claude',
@@ -34,7 +35,8 @@ describe('PatternDetector', () => {
         {
           id: 'fact-002',
           article_id: 'article-002',
-          content: 'Enterprise organizations are rapidly deploying artificial intelligence tools to streamline operations and cut operational expenses.',
+          content:
+            'Enterprise organizations are rapidly deploying artificial intelligence tools to streamline operations and cut operational expenses.',
           type: 'PATTERN',
           confidence: 0.82,
           extraction_method: 'claude',
@@ -49,7 +51,8 @@ describe('PatternDetector', () => {
         {
           id: 'fact-003',
           article_id: 'article-003',
-          content: 'Tech companies are investing heavily in machine learning systems to automate routine business processes.',
+          content:
+            'Tech companies are investing heavily in machine learning systems to automate routine business processes.',
           type: 'PATTERN',
           confidence: 0.79,
           extraction_method: 'claude',
@@ -64,7 +67,7 @@ describe('PatternDetector', () => {
       ];
 
       // Embed facts
-      facts.forEach(fact => {
+      facts.forEach((fact) => {
         embeddingsService.embedFact({
           id: fact.id,
           content: fact.content,
@@ -77,7 +80,7 @@ describe('PatternDetector', () => {
       // Should detect at least one pattern with high confidence
       expect(insights.length).toBeGreaterThan(0);
       expect(insights[0].type).toBe(InsightType.PATTERN);
-      expect(insights[0].confidence).toBeGreaterThanOrEqual(0.70);
+      expect(insights[0].confidence).toBeGreaterThanOrEqual(0.7);
       expect(insights[0].relatedFactIds.length).toBeGreaterThanOrEqual(2);
       expect(insights[0].title).toBeDefined();
       expect(insights[0].title.length).toBeGreaterThan(0);
@@ -93,13 +96,14 @@ describe('PatternDetector', () => {
         {
           id: 'fact-001',
           article_id: 'article-001',
-          content: 'Kubernetes deployment patterns help teams manage containerized applications at scale. Kubernetes orchestration is essential for modern infrastructure and container management systems.',
+          content:
+            'Kubernetes deployment patterns help teams manage containerized applications at scale. Kubernetes orchestration is essential for modern infrastructure and container management systems.',
           type: 'TECHNIQUE',
           confidence: 0.88,
           extraction_method: 'claude',
           source_location: { section: 'body', paragraph: 1 },
           domain: 'infrastructure',
-          domain_confidence: 0.90,
+          domain_confidence: 0.9,
           keywords: ['Kubernetes', 'deployment', 'orchestration'],
           extracted_at: '2026-07-22T10:00:00Z',
           version: 1,
@@ -108,7 +112,8 @@ describe('PatternDetector', () => {
         {
           id: 'fact-002',
           article_id: 'article-002',
-          content: 'Kubernetes deployment patterns help teams manage containerized applications at scale. Kubernetes orchestration is critical for modern infrastructure and container management solutions.',
+          content:
+            'Kubernetes deployment patterns help teams manage containerized applications at scale. Kubernetes orchestration is critical for modern infrastructure and container management solutions.',
           type: 'TECHNIQUE',
           confidence: 0.86,
           extraction_method: 'claude',
@@ -123,7 +128,8 @@ describe('PatternDetector', () => {
         {
           id: 'fact-003',
           article_id: 'article-003',
-          content: 'Python is a popular programming language used for web development and data science projects.',
+          content:
+            'Python is a popular programming language used for web development and data science projects.',
           type: 'DEFINITION',
           confidence: 0.95,
           extraction_method: 'claude',
@@ -138,7 +144,7 @@ describe('PatternDetector', () => {
       ];
 
       // Embed facts
-      facts.forEach(fact => {
+      facts.forEach((fact) => {
         embeddingsService.embedFact({
           id: fact.id,
           content: fact.content,
@@ -151,11 +157,11 @@ describe('PatternDetector', () => {
       // Should detect multiple patterns - similar facts grouped, dissimilar separated
       expect(insights.length).toBeGreaterThanOrEqual(1);
       // At least one pattern should have 2 related facts (the similar Kubernetes facts)
-      const multiFactPattern = insights.find(insight => insight.relatedFactIds.length >= 2);
+      const multiFactPattern = insights.find((insight) => insight.relatedFactIds.length >= 2);
       expect(multiFactPattern).toBeDefined();
       if (multiFactPattern) {
         expect(multiFactPattern.relatedFactIds).toEqual(
-          expect.arrayContaining(['fact-001', 'fact-002'])
+          expect.arrayContaining(['fact-001', 'fact-002']),
         );
       }
     });
@@ -168,7 +174,8 @@ describe('PatternDetector', () => {
         {
           id: 'fact-001',
           article_id: 'article-001',
-          content: 'GraphQL is a query language for APIs that provides flexible data fetching and precise control over response payloads.',
+          content:
+            'GraphQL is a query language for APIs that provides flexible data fetching and precise control over response payloads.',
           type: 'DEFINITION',
           confidence: 0.95,
           extraction_method: 'claude',
@@ -183,13 +190,14 @@ describe('PatternDetector', () => {
         {
           id: 'fact-002',
           article_id: 'article-002',
-          content: 'GraphQL enables clients to request only the data fields they need, reducing over-fetching and improving API efficiency.',
+          content:
+            'GraphQL enables clients to request only the data fields they need, reducing over-fetching and improving API efficiency.',
           type: 'TECHNIQUE',
           confidence: 0.88,
           extraction_method: 'claude',
           source_location: { section: 'body', paragraph: 2 },
           domain: 'api-design',
-          domain_confidence: 0.90,
+          domain_confidence: 0.9,
           keywords: ['GraphQL', 'efficiency', 'data fetching'],
           extracted_at: '2026-07-22T11:00:00Z',
           version: 1,
@@ -198,7 +206,7 @@ describe('PatternDetector', () => {
       ];
 
       // Embed facts
-      facts.forEach(fact => {
+      facts.forEach((fact) => {
         embeddingsService.embedFact({
           id: fact.id,
           content: fact.content,
@@ -212,7 +220,7 @@ describe('PatternDetector', () => {
       expect(insights.length).toBeGreaterThan(0);
 
       // Pattern confidence should be derived from constituent facts
-      const patternInsight = insights.find(insight => insight.type === InsightType.PATTERN);
+      const patternInsight = insights.find((insight) => insight.type === InsightType.PATTERN);
       expect(patternInsight).toBeDefined();
       if (patternInsight) {
         // Confidence should be average of constituent fact confidences

@@ -1,5 +1,4 @@
 import * as fs from 'fs/promises';
-import * as fsSync from 'fs';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import * as lockfile from 'proper-lockfile';
@@ -88,9 +87,7 @@ export class NdJsonArticleStore implements ArticleStore {
     await this.acquireLock();
 
     try {
-      const content = articles
-        .map(article => JSON.stringify(article))
-        .join('\n');
+      const content = articles.map((article) => JSON.stringify(article)).join('\n');
 
       await fs.writeFile(this.filePath, content + (articles.length > 0 ? '\n' : ''), 'utf-8');
     } finally {
@@ -129,7 +126,7 @@ export class NdJsonArticleStore implements ArticleStore {
 
     // Filter to keep only articles from last 30 days
     const now = new Date();
-    const merged = Array.from(dedupMap.values()).filter(article => {
+    const merged = Array.from(dedupMap.values()).filter((article) => {
       const publishedAt = new Date(article.publishedAt);
       const ageMs = now.getTime() - publishedAt.getTime();
       const ageDays = ageMs / (1000 * 60 * 60 * 24);
@@ -177,7 +174,7 @@ export class NdJsonArticleStore implements ArticleStore {
         },
       });
     } catch (error) {
-      throw new Error(`Failed to acquire lock on ${this.filePath}: ${error}`);
+      throw new Error(`Failed to acquire lock on ${this.filePath}: ${String(error)}`);
     }
   }
 
@@ -190,7 +187,7 @@ export class NdJsonArticleStore implements ArticleStore {
         await this.lockRelease();
         this.lockRelease = null;
       } catch (error) {
-        console.warn(`Failed to release lock: ${error}`);
+        console.warn(`Failed to release lock: ${String(error)}`);
       }
     }
   }

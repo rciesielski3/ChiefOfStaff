@@ -102,7 +102,7 @@ export class FactStore {
    */
   async getByArticleId(articleId: string): Promise<KnowledgeFact[]> {
     const allFacts = await this.readAll();
-    return allFacts.filter(f => f.article_id === articleId);
+    return allFacts.filter((f) => f.article_id === articleId);
   }
 
   /**
@@ -110,7 +110,7 @@ export class FactStore {
    */
   async getByType(type: string): Promise<KnowledgeFact[]> {
     const allFacts = await this.readAll();
-    return allFacts.filter(f => f.type === type);
+    return allFacts.filter((f) => f.type === type);
   }
 
   /**
@@ -118,7 +118,7 @@ export class FactStore {
    */
   async getByMinConfidence(minConfidence: number): Promise<KnowledgeFact[]> {
     const allFacts = await this.readAll();
-    return allFacts.filter(f => f.confidence >= minConfidence);
+    return allFacts.filter((f) => f.confidence >= minConfidence);
   }
 
   /**
@@ -211,10 +211,7 @@ export class FactStore {
    * Generate normalized content hash for deduplication
    */
   private hashContent(content: string): string {
-    const normalized = content
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, ' ');
+    const normalized = content.toLowerCase().trim().replace(/\s+/g, ' ');
     return createHash('md5').update(normalized).digest('hex');
   }
 
@@ -244,7 +241,7 @@ export class FactStore {
         },
       });
     } catch (error) {
-      throw new Error(`Failed to acquire lock on ${this.filePath}: ${error}`);
+      throw new Error(`Failed to acquire lock on ${this.filePath}: ${String(error)}`);
     }
   }
 
@@ -257,7 +254,7 @@ export class FactStore {
         await this.lockRelease();
         this.lockRelease = null;
       } catch (error) {
-        console.warn(`Failed to release lock: ${error}`);
+        console.warn(`Failed to release lock: ${String(error)}`);
       }
     }
   }

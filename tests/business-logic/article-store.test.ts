@@ -48,7 +48,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-14T10:00:00Z',
-        tags: ['test']
+        tags: ['test'],
       };
 
       await fs.writeFile(testFile, JSON.stringify(article) + '\n', 'utf-8');
@@ -69,7 +69,7 @@ describe('NdJsonArticleStore', () => {
           source: 'Source A',
           category: 'news',
           publishedAt: '2026-07-14T10:00:00Z',
-          tags: []
+          tags: [],
         },
         {
           id: 'test-2',
@@ -79,11 +79,11 @@ describe('NdJsonArticleStore', () => {
           source: 'Source B',
           category: 'article',
           publishedAt: '2026-07-13T10:00:00Z',
-          tags: []
-        }
+          tags: [],
+        },
       ];
 
-      const content = articles.map(a => JSON.stringify(a)).join('\n') + '\n';
+      const content = articles.map((a) => JSON.stringify(a)).join('\n') + '\n';
       await fs.writeFile(testFile, content, 'utf-8');
       const store = new NdJsonArticleStore(testFile);
       const read = await store.read();
@@ -102,14 +102,12 @@ describe('NdJsonArticleStore', () => {
         source: 'Source A',
         category: 'news',
         publishedAt: '2026-07-14T10:00:00Z',
-        tags: []
+        tags: [],
       };
 
-      const content = [
-        JSON.stringify(validArticle),
-        '{invalid json}',
-        JSON.stringify(validArticle)
-      ].join('\n') + '\n';
+      const content =
+        [JSON.stringify(validArticle), '{invalid json}', JSON.stringify(validArticle)].join('\n') +
+        '\n';
 
       await fs.writeFile(testFile, content, 'utf-8');
       const store = new NdJsonArticleStore(testFile);
@@ -139,14 +137,14 @@ describe('NdJsonArticleStore', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-14T10:00:00Z',
-        tags: ['test']
+        tags: ['test'],
       };
 
       const store = new NdJsonArticleStore(testFile);
       await store.write([article]);
 
       const content = await fs.readFile(testFile, 'utf-8');
-      const lines = content.split('\n').filter(l => l.trim());
+      const lines = content.split('\n').filter((l) => l.trim());
       expect(lines).toHaveLength(1);
       expect(JSON.parse(lines[0])).toEqual(article);
     });
@@ -161,7 +159,7 @@ describe('NdJsonArticleStore', () => {
           source: 'Source A',
           category: 'news',
           publishedAt: '2026-07-14T10:00:00Z',
-          tags: []
+          tags: [],
         },
         {
           id: 'test-2',
@@ -171,15 +169,15 @@ describe('NdJsonArticleStore', () => {
           source: 'Source B',
           category: 'article',
           publishedAt: '2026-07-13T10:00:00Z',
-          tags: []
-        }
+          tags: [],
+        },
       ];
 
       const store = new NdJsonArticleStore(testFile);
       await store.write(articles);
 
       const content = await fs.readFile(testFile, 'utf-8');
-      const lines = content.split('\n').filter(l => l.trim());
+      const lines = content.split('\n').filter((l) => l.trim());
       expect(lines).toHaveLength(2);
       expect(JSON.parse(lines[0])).toEqual(articles[0]);
       expect(JSON.parse(lines[1])).toEqual(articles[1]);
@@ -194,7 +192,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Source',
         category: 'news',
         publishedAt: '2026-07-14T10:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const store = new NdJsonArticleStore(testFile);
@@ -246,7 +244,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Reddit',
         category: 'news',
         publishedAt: '2026-07-14T10:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const article2: Article = {
@@ -257,7 +255,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Reddit',
         category: 'news',
         publishedAt: '2026-07-14T11:00:00Z',
-        tags: ['updated']
+        tags: ['updated'],
       };
 
       const store = new NdJsonArticleStore(testFile);
@@ -277,7 +275,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Tech News',
         category: 'news',
         publishedAt: '2026-07-14T10:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const article2: Article = {
@@ -288,7 +286,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Tech News', // Same source
         category: 'news',
         publishedAt: '2026-07-14T11:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const store = new NdJsonArticleStore(testFile);
@@ -307,7 +305,7 @@ describe('NdJsonArticleStore', () => {
         source: 'BBC',
         category: 'news',
         publishedAt: '2026-07-14T10:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const article2: Article = {
@@ -318,7 +316,7 @@ describe('NdJsonArticleStore', () => {
         source: 'CNN', // Different source
         category: 'news',
         publishedAt: '2026-07-14T11:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const store = new NdJsonArticleStore(testFile);
@@ -337,7 +335,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Source A',
         category: 'news',
         publishedAt: '2026-07-13T10:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const newArticle: Article = {
@@ -348,7 +346,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Source B',
         category: 'article',
         publishedAt: '2026-07-14T10:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const store = new NdJsonArticleStore(testFile);
@@ -356,8 +354,8 @@ describe('NdJsonArticleStore', () => {
       const merged = await store.dedupAndMerge([newArticle]);
 
       expect(merged).toHaveLength(2);
-      expect(merged.some(a => a.id === 'existing-1')).toBe(true);
-      expect(merged.some(a => a.id === 'new-1')).toBe(true);
+      expect(merged.some((a) => a.id === 'existing-1')).toBe(true);
+      expect(merged.some((a) => a.id === 'new-1')).toBe(true);
     });
 
     it('should filter out articles older than 30 days', async () => {
@@ -373,7 +371,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Source A',
         category: 'news',
         publishedAt: thirtyOneDaysAgo.toISOString(),
-        tags: []
+        tags: [],
       };
 
       const recentArticle: Article = {
@@ -384,7 +382,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Source B',
         category: 'news',
         publishedAt: twentyNineDaysAgo.toISOString(),
-        tags: []
+        tags: [],
       };
 
       const store = new NdJsonArticleStore(testFile);
@@ -405,7 +403,7 @@ describe('NdJsonArticleStore', () => {
           source: 'Source A',
           category: 'news',
           publishedAt: '2026-07-11T10:00:00Z',
-          tags: []
+          tags: [],
         },
         {
           id: 'test-2',
@@ -415,7 +413,7 @@ describe('NdJsonArticleStore', () => {
           source: 'Source B',
           category: 'news',
           publishedAt: '2026-07-14T10:00:00Z',
-          tags: []
+          tags: [],
         },
         {
           id: 'test-3',
@@ -425,8 +423,8 @@ describe('NdJsonArticleStore', () => {
           source: 'Source C',
           category: 'news',
           publishedAt: '2026-07-12T10:00:00Z',
-          tags: []
-        }
+          tags: [],
+        },
       ];
 
       const store = new NdJsonArticleStore(testFile);
@@ -447,7 +445,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Source A',
         category: 'news',
         publishedAt: '2026-07-14T10:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const article2: Article = {
@@ -458,7 +456,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Source B',
         category: 'news',
         publishedAt: '2026-07-14T11:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const store = new NdJsonArticleStore(testFile);
@@ -479,7 +477,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Source',
         category: 'news',
         publishedAt: '2026-07-14T10:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const store = new NdJsonArticleStore(testFile);
@@ -499,7 +497,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Source',
         category: 'news',
         publishedAt: '2026-07-14T10:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const store = new NdJsonArticleStore(testFile);
@@ -518,7 +516,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Source A',
         category: 'news',
         publishedAt: '2026-07-14T10:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const article2: Article = {
@@ -529,7 +527,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Source A', // Same source
         category: 'news',
         publishedAt: '2026-07-14T11:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const article3: Article = {
@@ -540,7 +538,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Source A', // Same source
         category: 'news',
         publishedAt: '2026-07-14T12:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const store = new NdJsonArticleStore(testFile);
@@ -564,7 +562,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Source A',
         category: 'news',
         publishedAt: thirtyOneDaysAgo.toISOString(),
-        tags: []
+        tags: [],
       };
 
       const existing2: Article = {
@@ -575,7 +573,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Source B',
         category: 'news',
         publishedAt: '2026-07-13T10:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const new1: Article = {
@@ -586,7 +584,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Source C',
         category: 'news',
         publishedAt: '2026-07-14T10:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const new2: Article = {
@@ -597,7 +595,7 @@ describe('NdJsonArticleStore', () => {
         source: 'Source B', // Same source
         category: 'news',
         publishedAt: '2026-07-14T11:00:00Z',
-        tags: []
+        tags: [],
       };
 
       const store = new NdJsonArticleStore(testFile);
@@ -606,9 +604,9 @@ describe('NdJsonArticleStore', () => {
 
       // Should have: new1 (new), new2 (merged/deduped), existing1 (old/filtered)
       expect(merged).toHaveLength(2);
-      expect(merged.some(a => a.url === 'https://example.com/new1')).toBe(true);
-      expect(merged.some(a => a.url === 'https://example.com/exist2-v2')).toBe(true);
-      expect(merged.some(a => a.url === 'https://example.com/exist1')).toBe(false);
+      expect(merged.some((a) => a.url === 'https://example.com/new1')).toBe(true);
+      expect(merged.some((a) => a.url === 'https://example.com/exist2-v2')).toBe(true);
+      expect(merged.some((a) => a.url === 'https://example.com/exist1')).toBe(false);
     });
   });
 

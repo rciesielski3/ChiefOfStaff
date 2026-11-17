@@ -32,7 +32,7 @@ export interface LatestNewsExport {
  */
 export async function exportLatestNews(
   store: ArticleStore,
-  limit: number = 50
+  limit: number = 50,
 ): Promise<LatestNewsExport> {
   // Read all articles from store
   const articles = await store.read();
@@ -53,7 +53,7 @@ export async function exportLatestNews(
   return {
     date,
     updatedAt,
-    items: latest.map(withResolvedId)
+    items: latest.map(withResolvedId),
   };
 }
 
@@ -67,13 +67,15 @@ export async function exportLatestNews(
  * @param exportData - Export with items array
  * @returns Public format with articles array (same Article objects)
  */
-export function transformToPublicFormat(
-  exportData: LatestNewsExport
-): { date: string; updatedAt: string; articles: Article[] } {
+export function transformToPublicFormat(exportData: LatestNewsExport): {
+  date: string;
+  updatedAt: string;
+  articles: Article[];
+} {
   return {
     date: exportData.date,
     updatedAt: exportData.updatedAt,
-    articles: exportData.items
+    articles: exportData.items,
   };
 }
 
@@ -88,7 +90,7 @@ export function transformToPublicFormat(
  */
 export async function writePublicLatestNews(
   filePath: string,
-  exportData: LatestNewsExport
+  exportData: LatestNewsExport,
 ): Promise<void> {
   // Transform to public format
   const publicData = transformToPublicFormat(exportData);

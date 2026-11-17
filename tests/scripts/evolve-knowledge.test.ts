@@ -59,11 +59,7 @@ describe('evolve-knowledge resilience', () => {
     };
 
     // Write the mixed input file (valid → invalid → valid)
-    const lines = [
-      JSON.stringify(validFact1),
-      malformedJson,
-      JSON.stringify(validFact2),
-    ];
+    const lines = [JSON.stringify(validFact1), malformedJson, JSON.stringify(validFact2)];
     fs.writeFileSync(inputFile, lines.join('\n'));
 
     // Ensure embeddings cache exists
@@ -75,7 +71,7 @@ describe('evolve-knowledge resilience', () => {
       {
         cwd: path.join(__dirname, '../../'),
         encoding: 'utf-8',
-      }
+      },
     );
 
     // Verify the output contains skip information in results
@@ -133,7 +129,7 @@ describe('evolve-knowledge resilience', () => {
       {
         cwd: path.join(__dirname, '../../'),
         encoding: 'utf-8',
-      }
+      },
     );
 
     // Verify it reports count of skipped facts (should show in Evolution results)

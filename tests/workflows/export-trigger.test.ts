@@ -6,7 +6,7 @@ import { join } from 'path';
 describe('export-qa-news trigger', () => {
   const workflow = readFileSync(
     join(__dirname, '../../.github/workflows/export-qa-news.yml'),
-    'utf8'
+    'utf8',
   );
 
   it('is triggered by the Merge Daily Brief PR workflow', () => {
@@ -17,7 +17,7 @@ describe('export-qa-news trigger', () => {
   it('treats an auto-merged automation PR as success so the export still runs', () => {
     const merge = readFileSync(
       join(__dirname, '../../.github/workflows/merge-daily-brief.yml'),
-      'utf8'
+      'utf8',
     );
     expect(merge).toContain('already merged');
   });

@@ -38,9 +38,7 @@ export interface SourceHealthReport {
 }
 
 /** Outcome of a live fetch of one feed. */
-export type FeedCheck =
-  | { ok: true; items: number; newest?: string }
-  | { ok: false; error: string };
+export type FeedCheck = { ok: true; items: number; newest?: string } | { ok: false; error: string };
 
 const MAX_ERROR_LENGTH = 80;
 
@@ -54,7 +52,7 @@ export function computeSourceHealth(
   enabledSources: string[],
   articles: SourceHealthArticle[],
   now: Date,
-  windowDays: number = 7
+  windowDays: number = 7,
 ): SourceHealthReport {
   const end = now.getTime();
   const start = end - windowDays * DAY_MS;
@@ -108,9 +106,7 @@ function day(iso: string): string {
 
 function shortError(error: string): string {
   const oneLine = error.replace(/\s+/g, ' ').trim();
-  return oneLine.length > MAX_ERROR_LENGTH
-    ? oneLine.slice(0, MAX_ERROR_LENGTH - 1) + '…'
-    : oneLine;
+  return oneLine.length > MAX_ERROR_LENGTH ? oneLine.slice(0, MAX_ERROR_LENGTH - 1) + '…' : oneLine;
 }
 
 function zeroRow(entry: SourceHealthEntry, check: FeedCheck | undefined): string {
@@ -130,13 +126,13 @@ function zeroRow(entry: SourceHealthEntry, check: FeedCheck | undefined): string
  */
 export function formatSourceHealthReport(
   report: SourceHealthReport,
-  feedChecks: Map<string, FeedCheck> = new Map()
+  feedChecks: Map<string, FeedCheck> = new Map(),
 ): string {
   const zero = report.sources.filter((s) => s.count === 0);
   const failed = zero.filter((s) => feedChecks.get(s.source)?.ok === false).length;
 
   const rows = report.sources.map((s) =>
-    s.count > 0 ? `${s.count} ${s.source}` : zeroRow(s, feedChecks.get(s.source))
+    s.count > 0 ? `${s.count} ${s.source}` : zeroRow(s, feedChecks.get(s.source)),
   );
 
   const summary =

@@ -21,8 +21,14 @@ describe('dedupAndMerge keeps stored IDs for re-seen articles', () => {
     const url = 'https://www.infoq.com/news/a/';
     const legacyId = buildLegacyArticleId('InfoQ', url);
     const stored: Article = {
-      id: legacyId, title: 'Same title', summary: 's', url, source: 'InfoQ',
-      category: 'news', publishedAt: new Date().toISOString(), tags: []
+      id: legacyId,
+      title: 'Same title',
+      summary: 's',
+      url,
+      source: 'InfoQ',
+      category: 'news',
+      publishedAt: new Date().toISOString(),
+      tags: [],
     };
     await fs.writeFile(file, JSON.stringify(stored) + '\n');
 
@@ -38,9 +44,14 @@ describe('dedupAndMerge keeps stored IDs for re-seen articles', () => {
   it('gives genuinely new articles the new-format ID', async () => {
     const store = new NdJsonArticleStore(file);
     const fresh: Article = {
-      id: 'infoq-0123456789abcdef', title: 'Brand new', summary: 's',
-      url: 'https://www.infoq.com/news/new/', source: 'InfoQ',
-      category: 'news', publishedAt: new Date().toISOString(), tags: []
+      id: 'infoq-0123456789abcdef',
+      title: 'Brand new',
+      summary: 's',
+      url: 'https://www.infoq.com/news/new/',
+      source: 'InfoQ',
+      category: 'news',
+      publishedAt: new Date().toISOString(),
+      tags: [],
     };
     await store.dedupAndMerge([fresh]);
 

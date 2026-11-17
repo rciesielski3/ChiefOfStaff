@@ -9,7 +9,13 @@ function runRebuild(args: string[] = []): string {
   return execFileSync(
     TS_NODE_BIN,
     ['-r', RSS_STUB, path.join(REPO_ROOT, 'src/cli/rebuild-qa-news.ts'), ...args],
-    { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], cwd: REPO_ROOT, env: process.env, timeout: 60000 }
+    {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+      cwd: REPO_ROOT,
+      env: process.env,
+      timeout: 60000,
+    },
   );
 }
 

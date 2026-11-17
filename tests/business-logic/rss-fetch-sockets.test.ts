@@ -43,11 +43,11 @@ describe('fetchRSS socket cleanup', () => {
     });
     // Like a CDN edge: keep idle connections open well past the test window.
     server.keepAliveTimeout = 60000;
-    server.on('connection', socket => {
+    server.on('connection', (socket) => {
       serverSockets.add(socket);
       socket.on('close', () => serverSockets.delete(socket));
     });
-    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
     port = (server.address() as AddressInfo).port;
     baseUrl = `http://127.0.0.1:${port}`;
 
@@ -59,8 +59,8 @@ describe('fetchRSS socket cleanup', () => {
 
   afterAll(async () => {
     (http.globalAgent as any).keepAlive = originalKeepAlive;
-    serverSockets.forEach(socket => socket.destroy());
-    await new Promise<void>(resolve => server.close(() => resolve()));
+    serverSockets.forEach((socket) => socket.destroy());
+    await new Promise<void>((resolve) => server.close(() => resolve()));
   });
 
   /** Client sockets to the test server that still keep the event loop alive. */
@@ -73,7 +73,7 @@ describe('fetchRSS socket cleanup', () => {
   async function expectNoLiveClientSockets(): Promise<void> {
     const deadline = Date.now() + 1000;
     while (liveClientSockets().length > 0 && Date.now() < deadline) {
-      await new Promise(resolve => setTimeout(resolve, 20));
+      await new Promise((resolve) => setTimeout(resolve, 20));
     }
     expect(liveClientSockets()).toHaveLength(0);
   }
@@ -87,7 +87,9 @@ describe('fetchRSS socket cleanup', () => {
   it('releases the connection of a non-2xx response', async () => {
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     jest.spyOn(console, 'error').mockImplementation(() => {});
-    await expect(fetchRSS(`${baseUrl}/forbidden`, 'Forbidden feed')).rejects.toThrow('Status code 403');
+    await expect(fetchRSS(`${baseUrl}/forbidden`, 'Forbidden feed')).rejects.toThrow(
+      'Status code 403',
+    );
     await expectNoLiveClientSockets();
     jest.restoreAllMocks();
   });

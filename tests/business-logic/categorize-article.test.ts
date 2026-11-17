@@ -1,4 +1,7 @@
-import { categorizeForQANews, primaryQANewsCategory } from '../../src/business-logic/categorize-article';
+import {
+  categorizeForQANews,
+  primaryQANewsCategory,
+} from '../../src/business-logic/categorize-article';
 import { Article } from '../../src/business-logic/normalize-article';
 
 describe('categorizeForQANews', () => {
@@ -10,14 +13,14 @@ describe('categorizeForQANews', () => {
     source,
     category: 'tooling',
     publishedAt: new Date().toISOString(),
-    tags: []
+    tags: [],
   });
 
   it('should categorize Jest releases as test-automation using keywords', () => {
     const article = mockArticle(
       'Jest 30.0 Released',
       'Jest reaches feature parity with test runners',
-      'Some Source'
+      'Some Source',
     );
     const categories = categorizeForQANews(article);
     expect(categories).toContain('test-automation');
@@ -27,7 +30,7 @@ describe('categorizeForQANews', () => {
     const article = mockArticle(
       'New release available',
       'Check the latest updates',
-      'Vitest Releases'
+      'Vitest Releases',
     );
     const categories = categorizeForQANews(article);
     expect(categories).toContain('test-automation');
@@ -37,7 +40,7 @@ describe('categorizeForQANews', () => {
     const article = mockArticle(
       'Vulnerability in Testing',
       'OWASP Top 10 and best practice guidelines',
-      'Security Blog'
+      'Security Blog',
     );
     const categories = categorizeForQANews(article);
     expect(categories).toContain('qa-practice');
@@ -47,18 +50,14 @@ describe('categorizeForQANews', () => {
     const article = mockArticle(
       'Architecture Patterns',
       'Engineering practices for scalable systems',
-      'Tech Blog'
+      'Tech Blog',
     );
     const categories = categorizeForQANews(article);
     expect(categories).toContain('engineering');
   });
 
   it('should use fallback category when no match found', () => {
-    const article = mockArticle(
-      'Random Article',
-      'About unrelated topics',
-      'Unknown Source'
-    );
+    const article = mockArticle('Random Article', 'About unrelated topics', 'Unknown Source');
     const categories = categorizeForQANews(article);
     expect(categories).toContain('engineering');
   });
@@ -73,14 +72,14 @@ describe('primaryQANewsCategory', () => {
     source,
     category: 'news',
     publishedAt: new Date().toISOString(),
-    tags: []
+    tags: [],
   });
 
   it('should prefer content keywords over a source name match', () => {
     const article = mockArticle(
       'OpenAI ships a new model for embedding search',
       'Embedding and prompt improvements for the LLM API',
-      'Ministry of Testing'
+      'Ministry of Testing',
     );
     expect(primaryQANewsCategory(article)).toBe('ai');
   });
@@ -89,26 +88,18 @@ describe('primaryQANewsCategory', () => {
     const article = mockArticle(
       'Playwright and Jest test suite tips',
       'Writing a faster e2e test runner setup',
-      'Some Source'
+      'Some Source',
     );
     expect(primaryQANewsCategory(article)).toBe('test-automation');
   });
 
   it('should fall back to the default when no keyword matches, even for a broad source name', () => {
-    const article = mockArticle(
-      'Weekly roundup',
-      'A short list of links',
-      'Ministry of Testing'
-    );
+    const article = mockArticle('Weekly roundup', 'A short list of links', 'Ministry of Testing');
     expect(primaryQANewsCategory(article)).toBe('engineering');
   });
 
   it('should fall back to an exact source key when no keyword matches', () => {
-    const article = mockArticle(
-      'Weekly roundup',
-      'A short list of links',
-      'Jest'
-    );
+    const article = mockArticle('Weekly roundup', 'A short list of links', 'Jest');
     expect(primaryQANewsCategory(article)).toBe('test-automation');
   });
 
@@ -116,7 +107,7 @@ describe('primaryQANewsCategory', () => {
     const article = mockArticle(
       'New LLM model release for coding agents',
       'A faster model with better reasoning',
-      'Testing Blog'
+      'Testing Blog',
     );
     expect(primaryQANewsCategory(article)).toBe('ai');
   });
@@ -125,7 +116,7 @@ describe('primaryQANewsCategory', () => {
     const article = mockArticle(
       'Playwright adds a new test runner',
       'Faster e2e test suites with less flakiness',
-      'Some Source'
+      'Some Source',
     );
     expect(primaryQANewsCategory(article)).toBe('test-automation');
   });
@@ -133,7 +124,7 @@ describe('primaryQANewsCategory', () => {
   it('should let article tags count as content', () => {
     const article: Article = {
       ...mockArticle('Weekly roundup', 'A short list of links', 'Some Source'),
-      tags: ['LLM']
+      tags: ['LLM'],
     };
     expect(primaryQANewsCategory(article)).toBe('ai');
   });
@@ -144,11 +135,7 @@ describe('primaryQANewsCategory', () => {
   });
 
   it('should use the engineering fallback when nothing matches', () => {
-    const article = mockArticle(
-      'Random Article',
-      'About unrelated topics',
-      'Unknown Source'
-    );
+    const article = mockArticle('Random Article', 'About unrelated topics', 'Unknown Source');
     expect(primaryQANewsCategory(article)).toBe('engineering');
   });
 });
@@ -162,7 +149,7 @@ describe('source matching uses whole words', () => {
     source,
     category: 'tooling',
     publishedAt: new Date().toISOString(),
-    tags: []
+    tags: [],
   });
 
   it('does not match the "AI" source rule inside "Email Weekly"', () => {
@@ -193,21 +180,33 @@ describe('expanded category keywords', () => {
     source,
     category: 'news',
     publishedAt: new Date().toISOString(),
-    tags: []
+    tags: [],
   });
 
   it('maps a new test-automation keyword (selenium) to test-automation', () => {
-    const article = mockArticle('Selenium grid tips', 'Notes on running browsers in parallel', 'Some Source');
+    const article = mockArticle(
+      'Selenium grid tips',
+      'Notes on running browsers in parallel',
+      'Some Source',
+    );
     expect(primaryQANewsCategory(article)).toBe('test-automation');
   });
 
   it('maps a new test-automation keyword (mocking) to test-automation', () => {
-    const article = mockArticle('SDK Mocking', 'Stubbing network calls in unit tests', 'Some Source');
+    const article = mockArticle(
+      'SDK Mocking',
+      'Stubbing network calls in unit tests',
+      'Some Source',
+    );
     expect(primaryQANewsCategory(article)).toBe('test-automation');
   });
 
   it('maps a new qa-practice keyword (abuse case) to qa-practice', () => {
-    const article = mockArticle('Abuse Case', 'Describing misuse scenarios for a feature', 'Some Source');
+    const article = mockArticle(
+      'Abuse Case',
+      'Describing misuse scenarios for a feature',
+      'Some Source',
+    );
     expect(primaryQANewsCategory(article)).toBe('qa-practice');
   });
 
@@ -227,12 +226,20 @@ describe('expanded category keywords', () => {
   });
 
   it('keeps a generic title with no category terms in engineering', () => {
-    const article = mockArticle('Team rituals for a healthy workplace', 'Notes on meetings and rest', 'Some Source');
+    const article = mockArticle(
+      'Team rituals for a healthy workplace',
+      'Notes on meetings and rest',
+      'Some Source',
+    );
     expect(primaryQANewsCategory(article)).toBe('engineering');
   });
 
   it('does not match a generic word that merely contains a new keyword', () => {
-    const article = mockArticle('Quality of life tips for commuters', 'Small habits for a calmer day', 'Some Source');
+    const article = mockArticle(
+      'Quality of life tips for commuters',
+      'Small habits for a calmer day',
+      'Some Source',
+    );
     expect(primaryQANewsCategory(article)).toBe('engineering');
   });
 });
