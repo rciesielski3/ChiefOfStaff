@@ -116,8 +116,8 @@ async function main(): Promise<void> {
       dataPath
     });
 
-    // Output JSON to stdout for workflow capture
-    console.log(JSON.stringify(latest));
+    // The export is written to disk above; log only its size
+    console.log(`[Export Latest News] Exported ${latest.items.length} articles to ${dataPath}`);
 
     const totalDuration = Date.now() - workflowStartTime;
     logStructured('WORKFLOW_COMPLETE', {

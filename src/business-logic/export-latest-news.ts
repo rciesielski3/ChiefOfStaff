@@ -1,5 +1,5 @@
 import { Article, withResolvedId } from './normalize-article';
-import { ArticleStore } from './article-store';
+import { ArticleStore, RETENTION_DAYS } from './article-store';
 import { promises as fs } from 'fs';
 import { dirname } from 'path';
 
@@ -18,17 +18,35 @@ export interface LatestNewsExport {
 }
 
 /**
- * Keep one article per story. Some feeds publish the same story twice (InfoQ
- * with a different tracking URL or title case), and the store can hold the
- * same URL under an old and a new ID. A story is identified by its source
- * plus its title, trimmed and lowercased; the source keeps different
- * projects' releases with the same version title ("v1.8.3") apart.
- * Expects newest-first input and keeps the first (newest) of each story.
+ * Identity of a story: source plus URL without fragment and `utm_*` tracking
+ * parameters. InfoQ posts one story twice with different tracking parameters
+ * or title case, and the store can hold one URL under an old and a new ID.
+ * Keying on the URL (not the title) keeps different stories that share a
+ * recurring title, and different projects' "v1.8.3" releases, apart.
+ */
+function storyKey(article: Article): string {
+  let url = String(article.url ?? '');
+  try {
+    const parsed = new URL(url);
+    parsed.hash = '';
+    for (const param of [...parsed.searchParams.keys()]) {
+      if (param.toLowerCase().startsWith('utm_')) parsed.searchParams.delete(param);
+    }
+    url = parsed.toString();
+  } catch {
+    // Not an absolute URL: compare it as written.
+  }
+  return `${article.source}\u0000${url}`;
+}
+
+/**
+ * Keep one article per story (see storyKey). Expects newest-first input and
+ * keeps the first (newest) article of each story.
  */
 function dropRepeatedStories(articles: Article[]): Article[] {
   const seen = new Set<string>();
   return articles.filter(article => {
-    const key = `${article.source}\u0000${article.title.trim().toLowerCase()}`;
+    const key = storyKey(article);
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -41,12 +59,15 @@ function dropRepeatedStories(articles: Article[]): Article[] {
  * Algorithm:
  * 1. Read all articles from store
  * 2. Sort by publishedAt (newest first)
- * 3. Drop repeated stories (same source + title), keeping the newest
+ * 3. Drop articles older than RETENTION_DAYS and repeated stories (same
+ *    source + URL), keeping the newest
  * 4. Keep the newest `limit` articles; without a limit keep all of them
  * 5. Return with metadata (export date/time)
  *
  * QA-News derives its today / week / month views from this one export, so
- * the default is the whole store (the store keeps 30 days, RETENTION_DAYS).
+ * the default is the whole retention window. Retention is applied here too:
+ * the store only prunes when the daily brief writes, so after missed runs it
+ * can still hold older articles.
  *
  * @param store - Article store to read from
  * @param limit - Maximum number of articles to export (default: all)
@@ -64,7 +85,9 @@ export async function exportLatestNews(
     return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
   });
 
-  const unique = dropRepeatedStories(sorted);
+  const cutoff = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
+  const recent = sorted.filter(article => new Date(article.publishedAt).getTime() >= cutoff);
+  const unique = dropRepeatedStories(recent);
   const latest = limit === undefined ? unique : unique.slice(0, limit);
 
   // Generate export metadata

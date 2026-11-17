@@ -39,7 +39,7 @@ describe('exportLatestNews', () => {
       id: `article-${unique}`,
       title: `Test Article ${unique}`,
       summary: 'A test article summary',
-      url: 'https://example.com/test',
+      url: `https://example.com/test-${unique}`,
       source: 'Test Source',
       category: 'news',
       publishedAt: new Date().toISOString(),
@@ -98,7 +98,7 @@ describe('exportLatestNews', () => {
 
   it('exports every stored article by default (store keeps 30 days)', async () => {
     const articles = Array.from({ length: 100 }, (_, i) =>
-      createArticleWithDate(i, { id: `article-${i}` })
+      createArticleWithDate(i % 30, { id: `article-${i}` })
     );
     const store = new MockArticleStore(articles);
 
@@ -107,7 +107,6 @@ describe('exportLatestNews', () => {
     // QA-News filters today / week / month from this one file, so it must
     // hold the whole retention window, not only the newest few days.
     expect(result.items).toHaveLength(100);
-    expect(result.items[0].id).toBe('article-0');
   });
 
   it('should export all articles when limit > store size', async () => {
@@ -276,18 +275,54 @@ describe('exportLatestNews', () => {
     // CLI will detect this and fail with process.exit(1) to prevent silent empty exports
   });
 
-  it('drops repeated stories: same source and same title ignoring case, keeps the newest', async () => {
+  it('drops repeated stories: same source and URL without fragment or utm_ params, keeps the newest', async () => {
+    const story = 'https://www.infoq.com/news/yelp-ui/';
     const store = new MockArticleStore([
-      createArticleWithDate(3, { id: 'old', source: 'InfoQ', title: 'Yelp Combines Native and Server-Driven UI for Its App', url: 'https://infoq.com/a?x=1' }),
-      createArticleWithDate(1, { id: 'new', source: 'InfoQ', title: 'Yelp combines native and server-driven UI for its app ', url: 'https://infoq.com/a?x=2' }),
-      createArticleWithDate(2, { id: 'other-source', source: 'Cloudflare', title: 'Yelp Combines Native and Server-Driven UI for Its App', url: 'https://cf.com/a' }),
-      createArticleWithDate(1, { id: 'k6', source: 'Grafana k6 Releases', title: 'v1.8.3', url: 'https://github.com/k6/v1.8.3' }),
-      createArticleWithDate(1, { id: 'vitest', source: 'Vitest Releases', title: 'v1.8.3', url: 'https://github.com/vitest/v1.8.3' })
+      createArticleWithDate(3, { id: 'old', source: 'InfoQ', title: 'Yelp Combines UI for Its App', url: `${story}?utm_source=infoq&utm_medium=feed` }),
+      createArticleWithDate(1, { id: 'new', source: 'InfoQ', title: 'Yelp combines UI for its app', url: `${story}?utm_campaign=x#top` }),
+      createArticleWithDate(2, { id: 'other-source', source: 'Cloudflare', title: 'Yelp Combines UI', url: story })
     ]);
 
     const result = await exportLatestNews(store);
 
-    expect(result.items.map(a => a.id).sort()).toEqual(['k6', 'new', 'other-source', 'vitest']);
+    expect(result.items.map(a => a.id)).toEqual(['new', 'other-source']);
+  });
+
+  it('keeps different stories that share a title', async () => {
+    const store = new MockArticleStore([
+      createArticleWithDate(1, { id: 'k6', source: 'Grafana k6 Releases', title: 'v1.8.3', url: 'https://github.com/grafana/k6/releases/tag/v1.8.3' }),
+      createArticleWithDate(2, { id: 'vitest', source: 'Vitest Releases', title: 'v1.8.3', url: 'https://github.com/vitest-dev/vitest/releases/tag/v1.8.3' }),
+      createArticleWithDate(3, { id: 'roundup-1', source: 'InfoQ', title: 'Java News Roundup', url: 'https://www.infoq.com/news/roundup-1/' }),
+      createArticleWithDate(4, { id: 'roundup-2', source: 'InfoQ', title: 'Java News Roundup', url: 'https://www.infoq.com/news/roundup-2/' })
+    ]);
+
+    const result = await exportLatestNews(store);
+
+    expect(result.items.map(a => a.id)).toEqual(['k6', 'vitest', 'roundup-1', 'roundup-2']);
+  });
+
+  it('leaves out articles older than the retention window', async () => {
+    const store = new MockArticleStore([
+      createArticleWithDate(1, { id: 'recent' }),
+      createArticleWithDate(29, { id: 'edge' }),
+      createArticleWithDate(45, { id: 'stale' })
+    ]);
+
+    const result = await exportLatestNews(store);
+
+    expect(result.items.map(a => a.id)).toEqual(['recent', 'edge']);
+  });
+
+  it('applies the limit after dropping repeated stories', async () => {
+    const store = new MockArticleStore([
+      createArticleWithDate(1, { id: 'a', url: 'https://example.org/a' }),
+      createArticleWithDate(2, { id: 'a-copy', url: 'https://example.org/a?utm_source=feed' }),
+      createArticleWithDate(3, { id: 'b', url: 'https://example.org/b' })
+    ]);
+
+    const result = await exportLatestNews(store, 2);
+
+    expect(result.items.map(a => a.id)).toEqual(['a', 'b']);
   });
 });
 
