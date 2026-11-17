@@ -1,0 +1,2 @@
+# False positive: placeholder `VAULT_TOKEN=<generate-token>` in docs, not a secret.
+59076cf25b272ed2ff780de6b6915f9fc8ca19f3:docs/DEPLOYMENT_PLAN.md:generic-api-key:258
