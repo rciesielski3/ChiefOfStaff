@@ -18,7 +18,7 @@ import { withQANewsDisplayFields } from '../business-logic/categorize-article';
  *
  * Flow:
  * 1. Load ArticleStore from data/canonical_articles.ndjson
- * 2. Call exportLatestNews(store, 50) to get top 50 articles
+ * 2. Call exportLatestNews(store) to get every stored article (30-day window)
  * 3. Write JSON output to qa-news/data/latest-news.json
  * 4. Log status and exit
  */
@@ -54,11 +54,10 @@ async function main(): Promise<void> {
     const storeCreateDuration = Date.now() - storeCreateTime;
     logStructured('STORE_INIT_COMPLETE', { durationMs: storeCreateDuration });
 
-    // Export latest 50 articles
+    // Export every stored article: QA-News filters today / week / month from it
     const exportStartTime = Date.now();
-    const exportLimit = 50;
-    logStructured('EXPORT_START', { limit: exportLimit });
-    const latest = await exportLatestNews(store, exportLimit);
+    logStructured('EXPORT_START', { limit: 'all' });
+    const latest = await exportLatestNews(store);
     const exportDuration = Date.now() - exportStartTime;
     logStructured('EXPORT_COMPLETE', {
       articleCount: latest.items.length,
@@ -122,8 +121,8 @@ async function main(): Promise<void> {
       dataPath,
     });
 
-    // Output JSON to stdout for workflow capture
-    console.log(JSON.stringify(latest));
+    // The export is written to disk above; log only its size
+    console.log(`[Export Latest News] Exported ${latest.items.length} articles to ${dataPath}`);
 
     const totalDuration = Date.now() - workflowStartTime;
     logStructured('WORKFLOW_COMPLETE', {

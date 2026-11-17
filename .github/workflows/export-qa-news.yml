@@ -143,7 +143,7 @@ jobs:
 
           Generated from latest RSS articles:
           - daily-brief.json: Top 10 articles for today
-          - latest-news.json: Top 50 articles
+          - latest-news.json: all articles from the last 30 days
           - weekly-highlights.json: All articles grouped by week
           - monthly-recap.json: Top 25 articles per month"
 
@@ -169,7 +169,7 @@ jobs:
             --body "Automated QA-News data export from latest RSS articles.
 
           - daily-brief.json: Top 10 articles for today
-          - latest-news.json: Top 50 articles
+          - latest-news.json: all articles from the last 30 days
           - weekly-highlights.json: All articles grouped by week
           - monthly-recap.json: Top 25 articles per month
 

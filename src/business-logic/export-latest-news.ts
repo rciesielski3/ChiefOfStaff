@@ -1,5 +1,5 @@
 import { Article, withResolvedId } from './normalize-article';
-import { ArticleStore } from './article-store';
+import { ArticleStore, RETENTION_DAYS } from './article-store';
 import { promises as fs } from 'fs';
 import { dirname } from 'path';
 
@@ -18,21 +18,68 @@ export interface LatestNewsExport {
 }
 
 /**
+ * Identity of a story: source plus URL without fragment and `utm_*` tracking
+ * parameters. InfoQ posts one story twice with different tracking parameters
+ * or title case, and the store can hold one URL under an old and a new ID.
+ * Keying on the URL (not the title) keeps different stories that share a
+ * recurring title, and different projects' "v1.8.3" releases, apart.
+ */
+function storyKey(article: Article): string {
+  let url = String(article.url ?? '');
+  try {
+    const parsed = new URL(url);
+    parsed.hash = '';
+    // Rebuild the query for every URL so the kept parameters are always
+    // encoded the same way (URLSearchParams encodes "~" as "%7E").
+    const kept = new URLSearchParams();
+    parsed.searchParams.forEach((value, key) => {
+      if (!key.toLowerCase().startsWith('utm_')) kept.append(key, value);
+    });
+    parsed.search = kept.toString();
+    url = parsed.toString();
+  } catch {
+    // Not an absolute URL: compare it as written.
+  }
+  return `${article.source}\u0000${url}`;
+}
+
+/**
+ * Keep one article per story (see storyKey). Expects newest-first input and
+ * keeps the first (newest) article of each story.
+ */
+function dropRepeatedStories(articles: Article[]): Article[] {
+  const seen = new Set<string>();
+  return articles.filter((article) => {
+    const key = storyKey(article);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/**
  * Export latest articles from store as JSON for QA News
  *
  * Algorithm:
  * 1. Read all articles from store
  * 2. Sort by publishedAt (newest first)
- * 3. Slice to top N articles (default 50)
- * 4. Return with metadata (export date/time)
+ * 3. Drop articles older than RETENTION_DAYS and repeated stories (same
+ *    source + URL), keeping the newest
+ * 4. Keep the newest `limit` articles; without a limit keep all of them
+ * 5. Return with metadata (export date/time)
+ *
+ * QA-News derives its today / week / month views from this one export, so
+ * the default is the whole retention window. Retention is applied here too:
+ * the store only prunes when the daily brief writes, so after missed runs it
+ * can still hold older articles.
  *
  * @param store - Article store to read from
- * @param limit - Number of articles to export (default: 50)
+ * @param limit - Maximum number of articles to export (default: all)
  * @returns Export object with metadata and articles
  */
 export async function exportLatestNews(
   store: ArticleStore,
-  limit: number = 50,
+  limit?: number,
 ): Promise<LatestNewsExport> {
   // Read all articles from store
   const articles = await store.read();
@@ -42,8 +89,10 @@ export async function exportLatestNews(
     return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
   });
 
-  // Take top N articles
-  const latest = sorted.slice(0, limit);
+  const cutoff = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
+  const recent = sorted.filter((article) => new Date(article.publishedAt).getTime() >= cutoff);
+  const unique = dropRepeatedStories(recent);
+  const latest = limit === undefined ? unique : unique.slice(0, limit);
 
   // Generate export metadata
   const now = new Date();
