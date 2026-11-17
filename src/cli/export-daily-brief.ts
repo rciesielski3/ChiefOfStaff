@@ -5,7 +5,7 @@ import * as path from 'path';
 import { resolveProjectRoot } from './project-root';
 import { exportDailyBrief, writeDailyBrief, writePublicDailyBrief } from '../business-logic/export-daily-brief';
 import { NdJsonArticleStore } from '../business-logic/article-store';
-import { primaryQANewsCategory } from '../business-logic/categorize-article';
+import { withQANewsDisplayFields } from '../business-logic/categorize-article';
 
 /**
  * CLI: Export daily brief articles to QA News data directory
@@ -88,10 +88,7 @@ async function main(): Promise<void> {
     // Map categories for UI filtering
     const mappedBrief = {
       ...dailyBrief,
-      items: dailyBrief.items.map((article) => ({
-        ...article,
-        category: primaryQANewsCategory(article)
-      }))
+      items: dailyBrief.items.map(withQANewsDisplayFields)
     };
 
     // Write to output file

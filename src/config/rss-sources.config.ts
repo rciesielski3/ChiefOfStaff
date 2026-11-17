@@ -86,3 +86,16 @@ export const RSS_SOURCES: RSSSourceConfig[] = [
 export function getEnabledSources(): RSSSourceConfig[] {
   return RSS_SOURCES.filter(source => (source as any).enabled !== false);
 }
+
+/** Tag and category that QA-News uses for tool releases. */
+export const RELEASE_TAG = 'release';
+
+/**
+ * True when the named source is a GitHub releases feed (URL ends in
+ * /releases.atom). Its items are tool releases, not articles.
+ */
+export function isReleaseSource(sourceName: string): boolean {
+  return RSS_SOURCES.some(
+    source => source.name === sourceName && /\/releases\.atom$/.test(source.url)
+  );
+}

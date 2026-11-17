@@ -6,7 +6,7 @@ import { resolveProjectRoot } from './project-root';
 import { exportMonthlyRecapWithSummaries, MonthlyRecapExport } from '../business-logic/export-monthly-recap';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { SummaryGenerator } from '../business-logic/summary-generator';
-import { primaryQANewsCategory } from '../business-logic/categorize-article';
+import { withQANewsDisplayFields } from '../business-logic/categorize-article';
 
 /**
  * CLI: Export monthly recaps to QA News data directory
@@ -114,10 +114,7 @@ async function main(): Promise<void> {
         month: month.monthOf.substring(0, 7), // Convert "2026-07-01" to "2026-07"
         summary: month.summary || '',
         themes: [], // Empty by design: the deterministic path does not derive themes; populated by synthesis
-        items: month.items.map((article) => ({
-          ...article,
-          category: primaryQANewsCategory(article)
-        }))
+        items: month.items.map(withQANewsDisplayFields)
       }))
     };
 

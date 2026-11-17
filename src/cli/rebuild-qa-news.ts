@@ -12,7 +12,7 @@ import { getEnabledSources } from '../config/rss-sources.config';
 import * as path from 'path';
 import { resolveProjectRoot } from './project-root';
 import * as fs from 'fs/promises';
-import { primaryQANewsCategory } from '../business-logic/categorize-article';
+import { withQANewsDisplayFields } from '../business-logic/categorize-article';
 
 // Load RSS sources from config (single source of truth)
 const RSS_SOURCES = getEnabledSources();
@@ -201,10 +201,7 @@ async function main(): Promise<void> {
     // Map article categories for latest export
     const mappedLatestExport: LatestNewsExport = {
       ...latestExport,
-      items: latestExport.items.map((article) => ({
-        ...article,
-        category: primaryQANewsCategory(article)
-      }))
+      items: latestExport.items.map(withQANewsDisplayFields)
     };
 
     // Write public copy for deployed site
