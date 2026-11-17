@@ -11,9 +11,9 @@ import { buildDeterministicSummary } from './deterministic-summary';
  * - items: Top N articles from this month, sorted by date (newest first)
  */
 export interface MonthlyRecap {
-  monthOf: string;     // First day of month in ISO format: YYYY-MM-01
-  summary: string;     // Will be populated by Task 6; for now, empty string
-  items: Article[];    // Top 25 articles (or custom limit), sorted newest first
+  monthOf: string; // First day of month in ISO format: YYYY-MM-01
+  summary: string; // Will be populated by Task 6; for now, empty string
+  items: Article[]; // Top 25 articles (or custom limit), sorted newest first
 }
 
 /**
@@ -59,7 +59,7 @@ function getMonthKey(date: Date): string {
  */
 export function exportMonthlyRecap(
   articles: Article[],
-  curateLimit: number = 25
+  curateLimit: number = 25,
 ): MonthlyRecapExport {
   // Step 1: Group articles by month key
   const monthMap = new Map<string, Article[]>();
@@ -88,8 +88,8 @@ export function exportMonthlyRecap(
 
     months.push({
       monthOf,
-      summary: '',  // Empty for now; will be populated by Task 6
-      items: curatedItems.map(withResolvedId)
+      summary: '', // Empty for now; will be populated by Task 6
+      items: curatedItems.map(withResolvedId),
     });
   }
 
@@ -99,11 +99,11 @@ export function exportMonthlyRecap(
   });
 
   // Step 6: Fail loudly if two different URLs ended up with the same ID
-  assertUniqueArticleIds(months.flatMap(month => month.items));
+  assertUniqueArticleIds(months.flatMap((month) => month.items));
 
   // Step 7: Return export object
   return {
-    months
+    months,
   };
 }
 
@@ -124,7 +124,7 @@ export function exportMonthlyRecap(
 export async function exportMonthlyRecapWithSummaries(
   articles: Article[],
   curateLimit: number = 25,
-  summaryGenerator?: SummaryGenerator
+  summaryGenerator?: SummaryGenerator,
 ): Promise<MonthlyRecapExport> {
   // Call existing exportMonthlyRecap(articles, curateLimit)
   const export_ = exportMonthlyRecap(articles, curateLimit);

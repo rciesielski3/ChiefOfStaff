@@ -29,7 +29,7 @@ function parseArgs(): ReportOptions {
       : 10,
     file: process.argv.includes('--file')
       ? process.argv[process.argv.indexOf('--file') + 1]
-      : 'data/insights.ndjson'
+      : 'data/insights.ndjson',
   };
 }
 
@@ -63,8 +63,8 @@ async function main(): Promise<void> {
 
   const insights: Insight[] = content
     .split('\n')
-    .filter(line => line.trim())
-    .map(line => JSON.parse(line) as Insight);
+    .filter((line) => line.trim())
+    .map((line) => JSON.parse(line) as Insight);
 
   if (insights.length === 0) {
     console.log('No valid insights found');
@@ -88,9 +88,9 @@ async function main(): Promise<void> {
     console.log(`\n---\n`);
     console.log(`**Confidence Distribution:**`);
     const byConfidence = {
-      high: topInsights.filter(i => i.confidence >= 0.8).length,
-      medium: topInsights.filter(i => i.confidence >= 0.6 && i.confidence < 0.8).length,
-      low: topInsights.filter(i => i.confidence < 0.6).length
+      high: topInsights.filter((i) => i.confidence >= 0.8).length,
+      medium: topInsights.filter((i) => i.confidence >= 0.6 && i.confidence < 0.8).length,
+      low: topInsights.filter((i) => i.confidence < 0.6).length,
     };
     console.log(`- High (≥80%): ${byConfidence.high}`);
     console.log(`- Medium (60-80%): ${byConfidence.medium}`);
@@ -109,7 +109,7 @@ async function main(): Promise<void> {
   process.exit(0);
 }
 
-main().catch(error => {
+main().catch((error) => {
   console.error('Error:', error);
   process.exit(1);
 });

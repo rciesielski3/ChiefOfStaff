@@ -3,7 +3,11 @@
 import { fetchRSS, filterExcludedPaths } from '../business-logic/rss-fetch';
 import { normalizeArticles } from '../business-logic/normalize-article';
 import { scoreArticles, DEFAULT_CONFIG } from '../business-logic/score-article';
-import { exportLatestNews, writePublicLatestNews, LatestNewsExport } from '../business-logic/export-latest-news';
+import {
+  exportLatestNews,
+  writePublicLatestNews,
+  LatestNewsExport,
+} from '../business-logic/export-latest-news';
 import { exportWeeklyHighlights } from '../business-logic/export-weekly-highlights';
 import { exportMonthlyRecap } from '../business-logic/export-monthly-recap';
 import { NdJsonArticleStore } from '../business-logic/article-store';
@@ -55,7 +59,7 @@ async function main(): Promise<void> {
     }
     logStructured('WORKFLOW_START', {
       timestamp: startTime,
-      verbose
+      verbose,
     });
 
     if (verbose) {
@@ -65,7 +69,7 @@ async function main(): Promise<void> {
     }
     logStructured('CONFIG_LOADED', {
       sourceCount: RSS_SOURCES.length,
-      verbose
+      verbose,
     });
 
     // Fetch articles from all sources
@@ -84,7 +88,7 @@ async function main(): Promise<void> {
         }
         const articles = filterExcludedPaths(
           await fetchRSS(source.url, source.name),
-          source.excludePathPrefixes
+          source.excludePathPrefixes,
         );
         const sourceDuration = Date.now() - sourceStartTime;
         if (verbose) {
@@ -93,7 +97,7 @@ async function main(): Promise<void> {
         logStructured('FETCH_SOURCE_COMPLETE', {
           source: source.name,
           articleCount: articles.length,
-          durationMs: sourceDuration
+          durationMs: sourceDuration,
         });
         allRawArticles.push(...articles);
       } catch (error) {
@@ -101,13 +105,13 @@ async function main(): Promise<void> {
         if (verbose) {
           console.warn(
             `  ✗ Failed to fetch ${source.name}:`,
-            error instanceof Error ? error.message : error
+            error instanceof Error ? error.message : error,
           );
         }
         logStructured('FETCH_SOURCE_ERROR', {
           source: source.name,
           error: error instanceof Error ? error.message : String(error),
-          durationMs: sourceDuration
+          durationMs: sourceDuration,
         });
       }
     }
@@ -118,7 +122,7 @@ async function main(): Promise<void> {
     }
     logStructured('FETCH_COMPLETE', {
       totalArticles: allRawArticles.length,
-      durationMs: fetchDuration
+      durationMs: fetchDuration,
     });
 
     // Normalize articles
@@ -134,7 +138,7 @@ async function main(): Promise<void> {
     }
     logStructured('NORMALIZE_COMPLETE', {
       articleCount: articles.length,
-      durationMs: normalizeDuration
+      durationMs: normalizeDuration,
     });
 
     // Score articles
@@ -148,13 +152,13 @@ async function main(): Promise<void> {
     const topScore = scoredArticles[0]?.score || 0;
     if (verbose) {
       console.log(
-        `[Rebuild QA News] Scored: ${scoredArticles.length} articles (top score: ${topScore})\n`
+        `[Rebuild QA News] Scored: ${scoredArticles.length} articles (top score: ${topScore})\n`,
       );
     }
     logStructured('SCORE_COMPLETE', {
       articleCount: scoredArticles.length,
       topScore,
-      durationMs: scoreDuration
+      durationMs: scoreDuration,
     });
 
     // Export latest, weekly, monthly
@@ -167,7 +171,7 @@ async function main(): Promise<void> {
     const projectRoot = resolveProjectRoot();
     const latestExport = await exportLatestNews(
       new NdJsonArticleStore(path.join(projectRoot, 'data/canonical_articles.ndjson')),
-      50
+      50,
     );
     const weeklyExport = exportWeeklyHighlights(scoredArticles);
     const monthlyExport = exportMonthlyRecap(scoredArticles, 25);
@@ -183,7 +187,7 @@ async function main(): Promise<void> {
       latestArticles: latestExport.items.length,
       weekCount: weeklyExport.weeks.length,
       monthCount: monthlyExport.months.length,
-      durationMs: exportDuration
+      durationMs: exportDuration,
     });
 
     // Write exports to qa-news/data/ directory
@@ -194,17 +198,20 @@ async function main(): Promise<void> {
     logStructured('WRITE_START', {
       latestArticles: latestExport.items.length,
       weekCount: weeklyExport.weeks.length,
-      monthCount: monthlyExport.months.length
+      monthCount: monthlyExport.months.length,
     });
 
     // Map article categories for latest export
     const mappedLatestExport: LatestNewsExport = {
       ...latestExport,
-      items: latestExport.items.map(withQANewsDisplayFields)
+      items: latestExport.items.map(withQANewsDisplayFields),
     };
 
     // Write public copy for deployed site
-    await writePublicLatestNews(path.join(projectRoot, 'qa-news/public/latest.json'), mappedLatestExport);
+    await writePublicLatestNews(
+      path.join(projectRoot, 'qa-news/public/latest.json'),
+      mappedLatestExport,
+    );
 
     const dataDir = path.join(projectRoot, 'qa-news/data');
     const latestPath = path.join(dataDir, 'latest-news.json');
@@ -230,7 +237,7 @@ async function main(): Promise<void> {
       latestPath,
       weeklyPath,
       monthlyPath,
-      durationMs: writeDuration
+      durationMs: writeDuration,
     });
 
     const totalDuration = Date.now() - workflowStartTime;
@@ -243,14 +250,14 @@ async function main(): Promise<void> {
       articlesScored: scoredArticles.length,
       latestExported: latestExport.items.length,
       weeksExported: weeklyExport.weeks.length,
-      monthsExported: monthlyExport.months.length
+      monthsExported: monthlyExport.months.length,
     });
   } catch (error) {
     const totalDuration = Date.now() - workflowStartTime;
     console.error('[Rebuild QA News] ❌ Error:', error);
     logStructured('WORKFLOW_ERROR', {
       error: error instanceof Error ? error.message : String(error),
-      totalDurationMs: totalDuration
+      totalDurationMs: totalDuration,
     });
     process.exit(1);
   }
@@ -260,7 +267,7 @@ async function main(): Promise<void> {
 main().catch((error) => {
   console.error('[Rebuild QA News] ❌ Error:', error);
   logStructured('WORKFLOW_ERROR_UNCAUGHT', {
-    error: error instanceof Error ? error.message : String(error)
+    error: error instanceof Error ? error.message : String(error),
   });
   process.exit(1);
 });

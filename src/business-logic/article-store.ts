@@ -87,9 +87,7 @@ export class NdJsonArticleStore implements ArticleStore {
     await this.acquireLock();
 
     try {
-      const content = articles
-        .map(article => JSON.stringify(article))
-        .join('\n');
+      const content = articles.map((article) => JSON.stringify(article)).join('\n');
 
       await fs.writeFile(this.filePath, content + (articles.length > 0 ? '\n' : ''), 'utf-8');
     } finally {
@@ -128,7 +126,7 @@ export class NdJsonArticleStore implements ArticleStore {
 
     // Filter to keep only articles from last 30 days
     const now = new Date();
-    const merged = Array.from(dedupMap.values()).filter(article => {
+    const merged = Array.from(dedupMap.values()).filter((article) => {
       const publishedAt = new Date(article.publishedAt);
       const ageMs = now.getTime() - publishedAt.getTime();
       const ageDays = ageMs / (1000 * 60 * 60 * 24);

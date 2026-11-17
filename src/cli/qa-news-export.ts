@@ -44,10 +44,10 @@ export async function generateQANewsExport(): Promise<string> {
 // Main entry point for CLI
 if (require.main === module) {
   generateQANewsExport()
-    .then(json => {
+    .then((json) => {
       console.log(json);
     })
-    .catch(error => {
+    .catch((error) => {
       console.error('Failed to generate QA News export:', error);
       process.exit(1);
     });

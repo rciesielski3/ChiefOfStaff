@@ -1,4 +1,9 @@
-import { exportWeeklyHighlights, exportWeeklyHighlightsWithSummaries, WeeklyHighlight, WeeklyHighlightsExport } from '../../src/business-logic/export-weekly-highlights';
+import {
+  exportWeeklyHighlights,
+  exportWeeklyHighlightsWithSummaries,
+  WeeklyHighlight,
+  WeeklyHighlightsExport,
+} from '../../src/business-logic/export-weekly-highlights';
 import { Article } from '../../src/business-logic/normalize-article';
 import { SummaryGenerator } from '../../src/business-logic/summary-generator';
 
@@ -26,7 +31,7 @@ describe('exportWeeklyHighlights', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-13T10:00:00Z', // Monday of week 1
-        tags: []
+        tags: [],
       },
       {
         id: 'test-2',
@@ -36,7 +41,7 @@ describe('exportWeeklyHighlights', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-15T14:00:00Z', // Wednesday of week 1
-        tags: []
+        tags: [],
       },
       {
         id: 'test-3',
@@ -46,8 +51,8 @@ describe('exportWeeklyHighlights', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-20T09:00:00Z', // Monday of week 2
-        tags: []
-      }
+        tags: [],
+      },
     ];
 
     const result = exportWeeklyHighlights(articles);
@@ -63,8 +68,8 @@ describe('exportWeeklyHighlights', () => {
     // Second week should be older (2026-07-13)
     expect(result.weeks[1].weekOf).toBe('2026-07-13');
     expect(result.weeks[1].items).toHaveLength(2);
-    expect(result.weeks[1].items.map(a => a.id)).toContain('test-1');
-    expect(result.weeks[1].items.map(a => a.id)).toContain('test-2');
+    expect(result.weeks[1].items.map((a) => a.id)).toContain('test-1');
+    expect(result.weeks[1].items.map((a) => a.id)).toContain('test-2');
   });
 
   /**
@@ -83,7 +88,7 @@ describe('exportWeeklyHighlights', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-13T10:00:00Z',
-        tags: []
+        tags: [],
       },
       {
         id: 'test-2',
@@ -93,14 +98,14 @@ describe('exportWeeklyHighlights', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-20T10:00:00Z',
-        tags: []
-      }
+        tags: [],
+      },
     ];
 
     const result = exportWeeklyHighlights(articles);
 
     // Each week should have a summary field that is a string
-    result.weeks.forEach(week => {
+    result.weeks.forEach((week) => {
       expect(typeof week.summary).toBe('string');
       // Initially should be empty string (Task 6 will populate it)
       expect(week.summary).toBe('');
@@ -138,7 +143,7 @@ describe('exportWeeklyHighlights', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-06T10:00:00Z', // Week of 2026-07-06 (oldest)
-        tags: []
+        tags: [],
       },
       {
         id: 'test-2',
@@ -148,7 +153,7 @@ describe('exportWeeklyHighlights', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-20T10:00:00Z', // Week of 2026-07-20 (newest)
-        tags: []
+        tags: [],
       },
       {
         id: 'test-3',
@@ -158,8 +163,8 @@ describe('exportWeeklyHighlights', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-13T10:00:00Z', // Week of 2026-07-13 (middle)
-        tags: []
-      }
+        tags: [],
+      },
     ];
 
     const result = exportWeeklyHighlights(articles);
@@ -185,7 +190,7 @@ describe('exportWeeklyHighlights', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-13T08:00:00Z', // Monday, early
-        tags: []
+        tags: [],
       },
       {
         id: 'test-2',
@@ -195,7 +200,7 @@ describe('exportWeeklyHighlights', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-15T20:00:00Z', // Wednesday, late
-        tags: []
+        tags: [],
       },
       {
         id: 'test-3',
@@ -205,8 +210,8 @@ describe('exportWeeklyHighlights', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-14T12:00:00Z', // Tuesday, midday
-        tags: []
-      }
+        tags: [],
+      },
     ];
 
     const result = exportWeeklyHighlights(articles);
@@ -240,7 +245,7 @@ describe('exportWeeklyHighlightsWithSummaries', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-13T10:00:00Z',
-        tags: []
+        tags: [],
       },
       {
         id: 'test-2',
@@ -250,15 +255,15 @@ describe('exportWeeklyHighlightsWithSummaries', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-20T10:00:00Z',
-        tags: []
-      }
+        tags: [],
+      },
     ];
 
     // Mock SummaryGenerator
     const mockSummaryGenerator = {
       generateSummary: jest.fn(async (items: Article[]) => {
         return `Generated summary for ${items.length} articles`;
-      })
+      }),
     } as unknown as SummaryGenerator;
 
     const result = await exportWeeklyHighlightsWithSummaries(articles, mockSummaryGenerator);
@@ -267,7 +272,7 @@ describe('exportWeeklyHighlightsWithSummaries', () => {
     expect(result.weeks).toHaveLength(2);
 
     // Each week should have a populated summary
-    result.weeks.forEach(week => {
+    result.weeks.forEach((week) => {
       expect(typeof week.summary).toBe('string');
       expect(week.summary.length).toBeGreaterThan(0);
       expect(week.summary).toMatch(/Generated summary for/);
@@ -294,15 +299,15 @@ describe('exportWeeklyHighlightsWithSummaries', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-13T10:00:00Z',
-        tags: []
-      }
+        tags: [],
+      },
     ];
 
     // Mock SummaryGenerator to throw error
     const mockSummaryGenerator = {
       generateSummary: jest.fn(async () => {
         throw new Error('API error');
-      })
+      }),
     } as unknown as SummaryGenerator;
 
     const result = await exportWeeklyHighlightsWithSummaries(articles, mockSummaryGenerator);
@@ -326,7 +331,7 @@ describe('exportWeeklyHighlightsWithSummaries', () => {
     const articles: Article[] = [];
 
     const mockSummaryGenerator = {
-      generateSummary: jest.fn(async () => 'summary')
+      generateSummary: jest.fn(async () => 'summary'),
     } as unknown as SummaryGenerator;
 
     const result = await exportWeeklyHighlightsWithSummaries(articles, mockSummaryGenerator);

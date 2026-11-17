@@ -36,8 +36,7 @@ async function main() {
     // Load configuration from environment
     const inputPath = process.env.INPUT_FACTS || 'data/knowledge_facts.ndjson';
     const outputPath = process.env.OUTPUT_FACTS || 'data/knowledge_facts.ndjson';
-    const embeddingsCachePath =
-      process.env.EMBEDDINGS_CACHE || 'data/fact_embeddings.ndjson';
+    const embeddingsCachePath = process.env.EMBEDDINGS_CACHE || 'data/fact_embeddings.ndjson';
 
     console.log(`[Knowledge Evolution] Configuration:`);
     console.log(`  - Input facts path: ${inputPath}`);
@@ -62,7 +61,7 @@ async function main() {
     const factLines = fs
       .readFileSync(inputPath, 'utf-8')
       .split('\n')
-      .filter(line => line.trim());
+      .filter((line) => line.trim());
 
     const inputFacts: KnowledgeFact[] = [];
     let skippedCount = 0;
@@ -73,7 +72,9 @@ async function main() {
         inputFacts.push(fact);
       } catch (error) {
         skippedCount++;
-        console.warn(`[Knowledge Evolution] Warning: Failed to parse fact at line ${index + 1}, skipping`);
+        console.warn(
+          `[Knowledge Evolution] Warning: Failed to parse fact at line ${index + 1}, skipping`,
+        );
       }
     }
 
@@ -100,24 +101,15 @@ async function main() {
     console.log('[Knowledge Evolution] Applying evolution logic...');
     logStructured('EVOLUTION_BATCH_START', { factCount: inputFacts.length });
 
-    const evolutionResults = await extractAndEvolveKnowledge(
-      inputFacts,
-      embeddingsCachePath
-    );
+    const evolutionResults = await extractAndEvolveKnowledge(inputFacts, embeddingsCachePath);
 
     const evolutionDuration = Date.now() - evolutionStartTime;
 
     // Count results by action
-    const dedupCount = evolutionResults.filter(
-      r => r.action === 'deduplicate'
-    ).length;
-    const versionCount = evolutionResults.filter(
-      r => r.action === 'version'
-    ).length;
-    const relateCount = evolutionResults.filter(
-      r => r.action === 'relate'
-    ).length;
-    const newCount = evolutionResults.filter(r => r.action === 'new').length;
+    const dedupCount = evolutionResults.filter((r) => r.action === 'deduplicate').length;
+    const versionCount = evolutionResults.filter((r) => r.action === 'version').length;
+    const relateCount = evolutionResults.filter((r) => r.action === 'relate').length;
+    const newCount = evolutionResults.filter((r) => r.action === 'new').length;
 
     console.log('[Knowledge Evolution] Evolution results:');
     console.log(`  - Input facts: ${inputFacts.length}`);
@@ -144,9 +136,7 @@ async function main() {
     console.log(`[Knowledge Evolution] Writing evolved facts to ${outputPath}...`);
     logStructured('WRITE_START', { outputPath });
 
-    const evolvedFacts = evolutionResults
-      .filter(r => r.fact)
-      .map(r => JSON.stringify(r.fact));
+    const evolvedFacts = evolutionResults.filter((r) => r.fact).map((r) => JSON.stringify(r.fact));
 
     // Ensure output directory exists
     const outputDir = path.dirname(outputPath);
@@ -158,9 +148,7 @@ async function main() {
 
     const writeDuration = Date.now() - writeStartTime;
     const outputFactCount = evolvedFacts.length;
-    console.log(
-      `[Knowledge Evolution] Wrote ${outputFactCount} evolved facts to output`
-    );
+    console.log(`[Knowledge Evolution] Wrote ${outputFactCount} evolved facts to output`);
     logStructured('WRITE_COMPLETE', {
       factCount: outputFactCount,
       outputPath,
@@ -171,9 +159,10 @@ async function main() {
     // Summary log
     const totalDuration = Date.now() - workflowStartTime;
     console.log('[Knowledge Evolution] ✅ Complete!');
-    const summaryMsg = skippedCount > 0
-      ? `✓ Evolved ${inputFacts.length} facts (Skipped: ${skippedCount}, Deduplicated: ${dedupCount}, Versioned: ${versionCount}, Related: ${relateCount}, New: ${newCount})`
-      : `✓ Evolved ${inputFacts.length} facts (Deduplicated: ${dedupCount}, Versioned: ${versionCount}, Related: ${relateCount}, New: ${newCount})`;
+    const summaryMsg =
+      skippedCount > 0
+        ? `✓ Evolved ${inputFacts.length} facts (Skipped: ${skippedCount}, Deduplicated: ${dedupCount}, Versioned: ${versionCount}, Related: ${relateCount}, New: ${newCount})`
+        : `✓ Evolved ${inputFacts.length} facts (Deduplicated: ${dedupCount}, Versioned: ${versionCount}, Related: ${relateCount}, New: ${newCount})`;
     console.log(summaryMsg);
     console.log('');
     logStructured('EVOLUTION_COMPLETE_SUMMARY', {
@@ -185,7 +174,10 @@ async function main() {
       versionCount,
       relateCount,
       newCount,
-      evolutionRate: inputFacts.length > 0 ? ((dedupCount + versionCount) / inputFacts.length).toFixed(2) : '0.00',
+      evolutionRate:
+        inputFacts.length > 0
+          ? ((dedupCount + versionCount) / inputFacts.length).toFixed(2)
+          : '0.00',
     });
   } catch (error) {
     const totalDuration = Date.now() - workflowStartTime;
@@ -199,7 +191,7 @@ async function main() {
 }
 
 // Run main function
-main().catch(error => {
+main().catch((error) => {
   console.error('[Knowledge Evolution] ❌ Uncaught error:', error);
   process.exit(1);
 });

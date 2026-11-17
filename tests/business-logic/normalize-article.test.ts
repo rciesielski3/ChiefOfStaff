@@ -4,7 +4,7 @@ import {
   truncateDescription,
   buildArticleId,
   assertUniqueArticleIds,
-  InvalidPublishDateError
+  InvalidPublishDateError,
 } from '../../src/business-logic/normalize-article';
 import { RawArticle } from '../../src/business-logic/rss-fetch';
 
@@ -24,24 +24,30 @@ describe('buildArticleId', () => {
 
 describe('assertUniqueArticleIds', () => {
   it('passes when IDs are distinct', () => {
-    expect(() => assertUniqueArticleIds([
-      { id: 'a', url: 'https://x.test/1' },
-      { id: 'b', url: 'https://x.test/2' }
-    ])).not.toThrow();
+    expect(() =>
+      assertUniqueArticleIds([
+        { id: 'a', url: 'https://x.test/1' },
+        { id: 'b', url: 'https://x.test/2' },
+      ]),
+    ).not.toThrow();
   });
 
   it('allows the same URL to appear twice', () => {
-    expect(() => assertUniqueArticleIds([
-      { id: 'a', url: 'https://x.test/1' },
-      { id: 'a', url: 'https://x.test/1' }
-    ])).not.toThrow();
+    expect(() =>
+      assertUniqueArticleIds([
+        { id: 'a', url: 'https://x.test/1' },
+        { id: 'a', url: 'https://x.test/1' },
+      ]),
+    ).not.toThrow();
   });
 
   it('throws when two different URLs share one ID', () => {
-    expect(() => assertUniqueArticleIds([
-      { id: 'a', url: 'https://x.test/1' },
-      { id: 'a', url: 'https://x.test/2' }
-    ])).toThrow(/Article ID collision: "a"/);
+    expect(() =>
+      assertUniqueArticleIds([
+        { id: 'a', url: 'https://x.test/1' },
+        { id: 'a', url: 'https://x.test/2' },
+      ]),
+    ).toThrow(/Article ID collision: "a"/);
   });
 });
 
@@ -51,7 +57,7 @@ describe('normalizeArticle', () => {
     title: 'Test Article Title',
     pubDate: '2026-07-11T10:00:00Z',
     content: 'This is the article content with <strong>HTML tags</strong>',
-    source: 'Test Blog'
+    source: 'Test Blog',
   };
 
   it('should generate consistent ID from source and link', () => {
@@ -62,8 +68,14 @@ describe('normalizeArticle', () => {
   });
 
   it('should generate distinct IDs for different links on the same host', () => {
-    const first = normalizeArticle({ ...mockRawArticle, link: 'https://www.infoq.com/news/2026/10/a/' });
-    const second = normalizeArticle({ ...mockRawArticle, link: 'https://www.infoq.com/news/2026/10/b/' });
+    const first = normalizeArticle({
+      ...mockRawArticle,
+      link: 'https://www.infoq.com/news/2026/10/a/',
+    });
+    const second = normalizeArticle({
+      ...mockRawArticle,
+      link: 'https://www.infoq.com/news/2026/10/b/',
+    });
 
     expect(first.id).not.toEqual(second.id);
   });
@@ -93,7 +105,7 @@ describe('normalizeArticle', () => {
     const longContent = 'A'.repeat(500);
     const article = {
       ...mockRawArticle,
-      content: longContent
+      content: longContent,
     };
 
     const normalized = normalizeArticle(article);
@@ -105,7 +117,7 @@ describe('normalizeArticle', () => {
   it('should preserve full summary if less than 200 chars', () => {
     const article = {
       ...mockRawArticle,
-      content: 'Short content'
+      content: 'Short content',
     };
 
     const normalized = normalizeArticle(article);
@@ -129,7 +141,7 @@ describe('normalizeArticle', () => {
   it('should infer category from source name', () => {
     const githubArticle = {
       ...mockRawArticle,
-      source: 'GitHub Release Notes'
+      source: 'GitHub Release Notes',
     };
 
     const normalized = normalizeArticle(githubArticle);
@@ -151,20 +163,22 @@ describe('normalizeArticle', () => {
   });
 
   it('rejects an invalid publish date instead of using the current time', () => {
-    expect(() => normalizeArticle({ ...mockRawArticle, pubDate: 'invalid-date' }))
-      .toThrow(InvalidPublishDateError);
+    expect(() => normalizeArticle({ ...mockRawArticle, pubDate: 'invalid-date' })).toThrow(
+      InvalidPublishDateError,
+    );
   });
 
   it('rejects an empty publish date instead of using the current time', () => {
-    expect(() => normalizeArticle({ ...mockRawArticle, pubDate: '' }))
-      .toThrow(InvalidPublishDateError);
+    expect(() => normalizeArticle({ ...mockRawArticle, pubDate: '' })).toThrow(
+      InvalidPublishDateError,
+    );
   });
 
   it('should extract tags from content', () => {
     const article = {
       ...mockRawArticle,
       title: 'Testing TypeScript with Jest and Playwright',
-      content: 'Learn testing automation'
+      content: 'Learn testing automation',
     };
 
     const normalized = normalizeArticle(article);
@@ -178,7 +192,7 @@ describe('normalizeArticle', () => {
     const article = {
       ...mockRawArticle,
       title: 'TypeScript TypeScript TypeScript',
-      content: 'typescript typescript'
+      content: 'typescript typescript',
     };
 
     const normalized = normalizeArticle(article);
@@ -190,7 +204,7 @@ describe('normalizeArticle', () => {
   it('should handle HTML entities', () => {
     const article = {
       ...mockRawArticle,
-      content: 'Title &amp; Description &lt;test&gt; &quot;quoted&quot;'
+      content: 'Title &amp; Description &lt;test&gt; &quot;quoted&quot;',
     };
 
     const normalized = normalizeArticle(article);
@@ -202,7 +216,7 @@ describe('normalizeArticle', () => {
   it('should normalize whitespace in content', () => {
     const article = {
       ...mockRawArticle,
-      content: 'Text   with   multiple    spaces\n\n\nand\nnewlines'
+      content: 'Text   with   multiple    spaces\n\n\nand\nnewlines',
     };
 
     const normalized = normalizeArticle(article);
@@ -214,7 +228,7 @@ describe('normalizeArticle', () => {
   it('should handle empty content', () => {
     const article = {
       ...mockRawArticle,
-      content: ''
+      content: '',
     };
 
     const normalized = normalizeArticle(article);
@@ -225,7 +239,7 @@ describe('normalizeArticle', () => {
   it('should infer category as blog from source', () => {
     const article = {
       ...mockRawArticle,
-      source: 'Playwright Blog'
+      source: 'Playwright Blog',
     };
 
     const normalized = normalizeArticle(article);
@@ -236,7 +250,7 @@ describe('normalizeArticle', () => {
   it('should infer category as news from source', () => {
     const article = {
       ...mockRawArticle,
-      source: 'Tech News Daily'
+      source: 'Tech News Daily',
     };
 
     const normalized = normalizeArticle(article);
@@ -248,7 +262,7 @@ describe('normalizeArticle', () => {
     const article = {
       ...mockRawArticle,
       title: 'Random article about gardening',
-      content: 'How to grow plants in your garden'
+      content: 'How to grow plants in your garden',
     };
 
     const normalized = normalizeArticle(article);
@@ -263,7 +277,7 @@ describe('normalizeArticles', () => {
     title: 'Batch Article',
     pubDate: '2026-07-11T10:00:00Z',
     content: 'Body',
-    source: 'Test Blog'
+    source: 'Test Blog',
   };
 
   it('drops articles with invalid publish dates, logs them, and keeps the rest', () => {
@@ -272,10 +286,13 @@ describe('normalizeArticles', () => {
       const result = normalizeArticles([
         base,
         { ...base, link: 'https://example.com/undated', pubDate: '' },
-        { ...base, link: 'https://example.com/other' }
+        { ...base, link: 'https://example.com/other' },
       ]);
 
-      expect(result.map(a => a.url)).toEqual(['https://example.com/batch', 'https://example.com/other']);
+      expect(result.map((a) => a.url)).toEqual([
+        'https://example.com/batch',
+        'https://example.com/other',
+      ]);
       expect(warn).toHaveBeenCalledWith(expect.stringContaining('https://example.com/undated'));
     } finally {
       warn.mockRestore();
@@ -289,13 +306,13 @@ describe('normalizeArticle description', () => {
     title: 'Description Article',
     pubDate: '2026-07-11T10:00:00Z',
     content: '',
-    source: 'Test Blog'
+    source: 'Test Blog',
   };
 
   it('strips HTML and entities from description', () => {
     const normalized = normalizeArticle({
       ...base,
-      content: '<p>First <strong>bold</strong> &amp; clear.</p>'
+      content: '<p>First <strong>bold</strong> &amp; clear.</p>',
     });
 
     expect(normalized.description).toBe('First bold & clear.');
@@ -326,7 +343,7 @@ describe('normalizeArticle description', () => {
   it('keeps summary output unchanged for an existing fixture', () => {
     const normalized = normalizeArticle({
       ...base,
-      content: 'A'.repeat(500)
+      content: 'A'.repeat(500),
     });
 
     expect(normalized.summary).toBe('A'.repeat(200) + '...');
@@ -335,7 +352,7 @@ describe('normalizeArticle description', () => {
   it('keeps summary output unchanged for short HTML content', () => {
     const normalized = normalizeArticle({
       ...base,
-      content: '<p>Hello &amp; welcome</p>'
+      content: '<p>Hello &amp; welcome</p>',
     });
 
     expect(normalized.summary).toBe('Hello & welcome');

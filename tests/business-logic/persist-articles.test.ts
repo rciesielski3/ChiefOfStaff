@@ -52,7 +52,7 @@ describe('persistArticles', () => {
       category: 'news',
       publishedAt: new Date().toISOString(),
       tags: ['test'],
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -76,22 +76,22 @@ describe('persistArticles', () => {
 
     const stored = await store.read();
     expect(stored).toHaveLength(2);
-    expect(stored.some(a => a.id === 'existing-1')).toBe(true);
-    expect(stored.some(a => a.id === 'new-1')).toBe(true);
+    expect(stored.some((a) => a.id === 'existing-1')).toBe(true);
+    expect(stored.some((a) => a.id === 'new-1')).toBe(true);
   });
 
   it('should replace duplicate articles', async () => {
     const article1 = createArticle({
       id: 'duplicate-1',
       title: 'Original Title',
-      publishedAt: '2026-07-13T10:00:00Z'
+      publishedAt: '2026-07-13T10:00:00Z',
     });
     const store = new MockArticleStore([article1]);
 
     const article2 = createArticle({
       id: 'duplicate-1',
       title: 'Updated Title',
-      publishedAt: '2026-07-14T10:00:00Z'
+      publishedAt: '2026-07-14T10:00:00Z',
     });
 
     await persistArticles([article2], store);
@@ -107,7 +107,7 @@ describe('persistArticles', () => {
     const articles = [
       createArticle({ id: 'article-1', title: 'Article 1' }),
       createArticle({ id: 'article-2', title: 'Article 2' }),
-      createArticle({ id: 'article-3', title: 'Article 3' })
+      createArticle({ id: 'article-3', title: 'Article 3' }),
     ];
 
     await persistArticles(articles, store);
@@ -133,7 +133,7 @@ describe('persistArticles', () => {
       title: 'Complex Article',
       summary: 'A detailed summary with special chars: & < >',
       tags: ['typescript', 'testing', 'automation'],
-      score: 85
+      score: 85,
     });
 
     await persistArticles([article], store);
@@ -150,12 +150,12 @@ describe('persistArticles', () => {
     const article1 = createArticle({
       id: 'source-article-1',
       source: 'Test Source',
-      title: 'Breaking News'
+      title: 'Breaking News',
     });
     const article2 = createArticle({
       id: 'source-article-1', // Same ID means duplicate
       source: 'Test Source',
-      title: 'Breaking News'
+      title: 'Breaking News',
     });
 
     await persistArticles([article1], store);
@@ -184,16 +184,16 @@ describe('persistArticles', () => {
       createArticle({ id: 'a1', category: 'news' }),
       createArticle({ id: 'a2', category: 'release' }),
       createArticle({ id: 'a3', category: 'article' }),
-      createArticle({ id: 'a4', category: 'tutorial' })
+      createArticle({ id: 'a4', category: 'tutorial' }),
     ];
 
     await persistArticles(articles, store);
 
     const stored = await store.read();
     expect(stored).toHaveLength(4);
-    expect(stored.map(a => a.category)).toContain('news');
-    expect(stored.map(a => a.category)).toContain('release');
-    expect(stored.map(a => a.category)).toContain('article');
-    expect(stored.map(a => a.category)).toContain('tutorial');
+    expect(stored.map((a) => a.category)).toContain('news');
+    expect(stored.map((a) => a.category)).toContain('release');
+    expect(stored.map((a) => a.category)).toContain('article');
+    expect(stored.map((a) => a.category)).toContain('tutorial');
   });
 });

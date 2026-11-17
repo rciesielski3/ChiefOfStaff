@@ -56,7 +56,7 @@ describe('Daily Brief Article Persistence', () => {
       publishedAt: new Date().toISOString(),
       tags: ['test'],
       score: 90,
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -72,8 +72,8 @@ describe('Daily Brief Article Persistence', () => {
         url: 'https://test.com',
         source: 'test',
         category: 'test',
-        score: 90
-      })
+        score: 90,
+      }),
     ];
 
     await persistArticles(testArticles, mockStore);
@@ -88,7 +88,7 @@ describe('Daily Brief Article Persistence', () => {
     const testArticles = [
       createArticle({ id: '1', title: 'Article 1', score: 95 }),
       createArticle({ id: '2', title: 'Article 2', score: 85 }),
-      createArticle({ id: '3', title: 'Article 3', score: 75 })
+      createArticle({ id: '3', title: 'Article 3', score: 75 }),
     ];
 
     await persistArticles(testArticles, mockStore);
@@ -104,8 +104,8 @@ describe('Daily Brief Article Persistence', () => {
       createArticle({
         id: 'scored-1',
         title: 'Scored Article',
-        score: 95
-      })
+        score: 95,
+      }),
     ];
 
     await persistArticles(testArticles, mockStore);

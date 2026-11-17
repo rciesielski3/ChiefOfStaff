@@ -29,7 +29,6 @@ function logStructured(stage: string, data: Record<string, any>): void {
   console.error(`[${timestamp}] [${stage}] ${fields}`);
 }
 
-
 async function main(): Promise<void> {
   const workflowStartTime = Date.now();
   try {
@@ -41,7 +40,7 @@ async function main(): Promise<void> {
     const storeFilePath = path.join(projectRoot, 'data/canonical_articles.ndjson');
     logStructured('PATHS_RESOLVED', {
       projectRoot,
-      storeFilePath
+      storeFilePath,
     });
 
     // Create article store
@@ -58,7 +57,7 @@ async function main(): Promise<void> {
     const loadDuration = Date.now() - loadStartTime;
     logStructured('LOAD_COMPLETE', {
       articleCount: articles.length,
-      durationMs: loadDuration
+      durationMs: loadDuration,
     });
 
     // Export monthly recaps (curate to top 25 per month)
@@ -70,11 +69,18 @@ async function main(): Promise<void> {
     // Check if ANTHROPIC_API_KEY is available for summary generation
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (apiKey) {
-      logStructured('SUMMARIES_ENABLED', { });
+      logStructured('SUMMARIES_ENABLED', {});
       const summaryGenerator = new SummaryGenerator(apiKey);
-      monthlyExport = await exportMonthlyRecapWithSummaries(articles, curateLimit, summaryGenerator);
+      monthlyExport = await exportMonthlyRecapWithSummaries(
+        articles,
+        curateLimit,
+        summaryGenerator,
+      );
     } else {
-      logStructured('SUMMARIES_SKIPPED', { reason: 'ANTHROPIC_API_KEY not set', fallback: 'deterministic' });
+      logStructured('SUMMARIES_SKIPPED', {
+        reason: 'ANTHROPIC_API_KEY not set',
+        fallback: 'deterministic',
+      });
       monthlyExport = await exportMonthlyRecapWithSummaries(articles, curateLimit);
     }
 
@@ -82,18 +88,20 @@ async function main(): Promise<void> {
     logStructured('EXPORT_COMPLETE', {
       monthCount: monthlyExport.months.length,
       totalArticles: monthlyExport.months.reduce((sum, m) => sum + m.items.length, 0),
-      durationMs: exportDuration
+      durationMs: exportDuration,
     });
 
     // Validation: Detect empty export
     if (monthlyExport.months.length === 0) {
       console.warn('[Export Monthly Recap] ⚠️  WARNING: Export produced 0 months');
       console.warn('[Export Monthly Recap] Store may be empty or not yet populated by daily-brief');
-      console.warn('[Export Monthly Recap] Check: data/canonical_articles.ndjson exists and has content');
+      console.warn(
+        '[Export Monthly Recap] Check: data/canonical_articles.ndjson exists and has content',
+      );
       logStructured('VALIDATION_FAILED', {
         reason: 'empty_export',
         expectedMinMonths: 1,
-        actualMonths: 0
+        actualMonths: 0,
       });
       process.exit(1);
     }
@@ -101,7 +109,7 @@ async function main(): Promise<void> {
     // Write JSON export to qa-news/data directory
     const writeStartTime = Date.now();
     logStructured('WRITE_START', {
-      monthCount: monthlyExport.months.length
+      monthCount: monthlyExport.months.length,
     });
 
     // Transform data for QA-News format:
@@ -114,8 +122,8 @@ async function main(): Promise<void> {
         month: month.monthOf.substring(0, 7), // Convert "2026-07-01" to "2026-07"
         summary: month.summary || '',
         themes: [], // Empty by design: the deterministic path does not derive themes; populated by synthesis
-        items: month.items.map(withQANewsDisplayFields)
-      }))
+        items: month.items.map(withQANewsDisplayFields),
+      })),
     };
 
     const dataPath = path.join(projectRoot, 'qa-news/data/monthly-recap.json');
@@ -130,7 +138,7 @@ async function main(): Promise<void> {
     const writeDuration = Date.now() - writeStartTime;
     logStructured('WRITE_COMPLETE', {
       durationMs: writeDuration,
-      dataPath
+      dataPath,
     });
 
     // Output JSON to stdout for workflow capture
@@ -139,14 +147,14 @@ async function main(): Promise<void> {
     const totalDuration = Date.now() - workflowStartTime;
     logStructured('WORKFLOW_COMPLETE', {
       totalDurationMs: totalDuration,
-      monthCount: monthlyExport.months.length
+      monthCount: monthlyExport.months.length,
     });
   } catch (error) {
     const totalDuration = Date.now() - workflowStartTime;
     console.error('✗ Export failed:', error instanceof Error ? error.message : error);
     logStructured('WORKFLOW_ERROR', {
       error: error instanceof Error ? error.message : String(error),
-      totalDurationMs: totalDuration
+      totalDurationMs: totalDuration,
     });
     process.exit(1);
   }
@@ -156,7 +164,7 @@ async function main(): Promise<void> {
 main().catch((error) => {
   console.error('[Export Monthly Recap] ❌ Error:', error);
   logStructured('WORKFLOW_ERROR_UNCAUGHT', {
-    error: error instanceof Error ? error.message : String(error)
+    error: error instanceof Error ? error.message : String(error),
   });
   process.exit(1);
 });

@@ -3,7 +3,7 @@ import {
   sendTelegramHTML,
   sendTelegramMarkdown,
   sendTelegramMock,
-  TelegramResponse
+  TelegramResponse,
 } from '../../src/business-logic/telegram';
 
 // Mock the global fetch API
@@ -29,12 +29,12 @@ describe('sendTelegram', () => {
       result: {
         message_id: 12345,
         chat: { id: 123456789 },
-        text: mockMessage
-      }
+        text: mockMessage,
+      },
     };
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: jest.fn().mockResolvedValueOnce(mockResponse)
+      json: jest.fn().mockResolvedValueOnce(mockResponse),
     });
 
     await sendTelegram(mockMessage, mockToken, mockChatId);
@@ -43,44 +43,44 @@ describe('sendTelegram', () => {
       `https://api.telegram.org/bot${mockToken}/sendMessage`,
       expect.objectContaining({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      })
+        headers: { 'Content-Type': 'application/json' },
+      }),
     );
   });
 
   it('should throw error on empty token', async () => {
     await expect(sendTelegram(mockMessage, '', mockChatId)).rejects.toThrow(
-      'Missing TELEGRAM_BOT_TOKEN'
+      'Missing TELEGRAM_BOT_TOKEN',
     );
   });
 
   it('should throw error on whitespace-only token', async () => {
     await expect(sendTelegram(mockMessage, '   ', mockChatId)).rejects.toThrow(
-      'Missing TELEGRAM_BOT_TOKEN'
+      'Missing TELEGRAM_BOT_TOKEN',
     );
   });
 
   it('should throw error on empty chat ID', async () => {
     await expect(sendTelegram(mockMessage, mockToken, '')).rejects.toThrow(
-      'Missing TELEGRAM_CHAT_ID'
+      'Missing TELEGRAM_CHAT_ID',
     );
   });
 
   it('should throw error on whitespace-only chat ID', async () => {
     await expect(sendTelegram(mockMessage, mockToken, '   ')).rejects.toThrow(
-      'Missing TELEGRAM_CHAT_ID'
+      'Missing TELEGRAM_CHAT_ID',
     );
   });
 
   it('should throw error on empty message', async () => {
     await expect(sendTelegram('', mockToken, mockChatId)).rejects.toThrow(
-      'Message cannot be empty'
+      'Message cannot be empty',
     );
   });
 
   it('should throw error on whitespace-only message', async () => {
     await expect(sendTelegram('   ', mockToken, mockChatId)).rejects.toThrow(
-      'Message cannot be empty'
+      'Message cannot be empty',
     );
   });
 
@@ -90,12 +90,12 @@ describe('sendTelegram', () => {
       result: {
         message_id: 12345,
         chat: { id: 123456789 },
-        text: mockMessage
-      }
+        text: mockMessage,
+      },
     };
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: jest.fn().mockResolvedValueOnce(mockResponse)
+      json: jest.fn().mockResolvedValueOnce(mockResponse),
     });
 
     await sendTelegram(mockMessage, mockToken, mockChatId, 'HTML');
@@ -112,12 +112,12 @@ describe('sendTelegram', () => {
       result: {
         message_id: 12345,
         chat: { id: 123456789 },
-        text: mockMessage
-      }
+        text: mockMessage,
+      },
     };
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: jest.fn().mockResolvedValueOnce(mockResponse)
+      json: jest.fn().mockResolvedValueOnce(mockResponse),
     });
 
     await sendTelegram(mockMessage, mockToken, mockChatId, 'MarkdownV2');
@@ -134,12 +134,12 @@ describe('sendTelegram', () => {
       result: {
         message_id: 12345,
         chat: { id: 123456789 },
-        text: mockMessage
-      }
+        text: mockMessage,
+      },
     };
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: jest.fn().mockResolvedValueOnce(mockResponse)
+      json: jest.fn().mockResolvedValueOnce(mockResponse),
     });
 
     await sendTelegram(mockMessage, mockToken, mockChatId);
@@ -154,15 +154,15 @@ describe('sendTelegram', () => {
     const mockResponse: TelegramResponse = {
       ok: false,
       error_code: 400,
-      description: 'Bad Request: message text is empty'
+      description: 'Bad Request: message text is empty',
     };
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: jest.fn().mockResolvedValueOnce(mockResponse)
+      json: jest.fn().mockResolvedValueOnce(mockResponse),
     });
 
     await expect(sendTelegram(mockMessage, mockToken, mockChatId)).rejects.toThrow(
-      'Telegram API error (400): Bad Request: message text is empty'
+      'Telegram API error (400): Bad Request: message text is empty',
     );
   });
 
@@ -170,15 +170,15 @@ describe('sendTelegram', () => {
     const mockResponse: TelegramResponse = {
       ok: false,
       error_code: 401,
-      description: 'Unauthorized: invalid bot token'
+      description: 'Unauthorized: invalid bot token',
     };
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: jest.fn().mockResolvedValueOnce(mockResponse)
+      json: jest.fn().mockResolvedValueOnce(mockResponse),
     });
 
     await expect(sendTelegram(mockMessage, mockToken, mockChatId)).rejects.toThrow(
-      'Telegram API error (401): Unauthorized: invalid bot token'
+      'Telegram API error (401): Unauthorized: invalid bot token',
     );
   });
 
@@ -186,15 +186,15 @@ describe('sendTelegram', () => {
     const mockResponse: TelegramResponse = {
       ok: false,
       error_code: 500,
-      description: 'Internal Server Error'
+      description: 'Internal Server Error',
     };
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: jest.fn().mockResolvedValueOnce(mockResponse)
+      json: jest.fn().mockResolvedValueOnce(mockResponse),
     });
 
     await expect(sendTelegram(mockMessage, mockToken, mockChatId)).rejects.toThrow(
-      'Telegram API error (500): Internal Server Error'
+      'Telegram API error (500): Internal Server Error',
     );
   });
 
@@ -203,17 +203,17 @@ describe('sendTelegram', () => {
     (global.fetch as jest.Mock).mockRejectedValueOnce(fetchError);
 
     await expect(sendTelegram(mockMessage, mockToken, mockChatId)).rejects.toThrow(
-      'Failed to send Telegram message: Network error'
+      'Failed to send Telegram message: Network error',
     );
   });
 
   it('should handle JSON parse error', async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: jest.fn().mockRejectedValueOnce(new Error('Invalid JSON'))
+      json: jest.fn().mockRejectedValueOnce(new Error('Invalid JSON')),
     });
 
     await expect(sendTelegram(mockMessage, mockToken, mockChatId)).rejects.toThrow(
-      'Failed to send Telegram message'
+      'Failed to send Telegram message',
     );
   });
 
@@ -223,21 +223,18 @@ describe('sendTelegram', () => {
       result: {
         message_id: 12345,
         chat: { id: 123456789 },
-        text: mockMessage
-      }
+        text: mockMessage,
+      },
     };
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: jest.fn().mockResolvedValueOnce(mockResponse)
+      json: jest.fn().mockResolvedValueOnce(mockResponse),
     });
 
     await sendTelegram(mockMessage, mockToken, mockChatId);
 
     const expectedUrl = `https://api.telegram.org/bot${mockToken}/sendMessage`;
-    expect(global.fetch).toHaveBeenCalledWith(
-      expectedUrl,
-      expect.any(Object)
-    );
+    expect(global.fetch).toHaveBeenCalledWith(expectedUrl, expect.any(Object));
   });
 
   it('should send correct payload structure', async () => {
@@ -246,12 +243,12 @@ describe('sendTelegram', () => {
       result: {
         message_id: 12345,
         chat: { id: 123456789 },
-        text: mockMessage
-      }
+        text: mockMessage,
+      },
     };
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: jest.fn().mockResolvedValueOnce(mockResponse)
+      json: jest.fn().mockResolvedValueOnce(mockResponse),
     });
 
     await sendTelegram(mockMessage, mockToken, mockChatId);
@@ -263,7 +260,7 @@ describe('sendTelegram', () => {
       chat_id: mockChatId,
       text: mockMessage,
       parse_mode: 'Markdown',
-      disable_web_page_preview: false
+      disable_web_page_preview: false,
     });
   });
 });
@@ -284,12 +281,12 @@ describe('sendTelegramHTML', () => {
       result: {
         message_id: 12345,
         chat: { id: 123456789 },
-        text: mockMessage
-      }
+        text: mockMessage,
+      },
     };
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: jest.fn().mockResolvedValueOnce(mockResponse)
+      json: jest.fn().mockResolvedValueOnce(mockResponse),
     });
 
     await sendTelegramHTML(mockMessage, mockToken, mockChatId);
@@ -317,12 +314,12 @@ describe('sendTelegramMarkdown', () => {
       result: {
         message_id: 12345,
         chat: { id: 123456789 },
-        text: mockMessage
-      }
+        text: mockMessage,
+      },
     };
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: jest.fn().mockResolvedValueOnce(mockResponse)
+      json: jest.fn().mockResolvedValueOnce(mockResponse),
     });
 
     await sendTelegramMarkdown(mockMessage, mockToken, mockChatId);

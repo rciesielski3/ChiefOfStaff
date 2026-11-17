@@ -3,7 +3,11 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { resolveProjectRoot } from './project-root';
-import { exportDailyBrief, writeDailyBrief, writePublicDailyBrief } from '../business-logic/export-daily-brief';
+import {
+  exportDailyBrief,
+  writeDailyBrief,
+  writePublicDailyBrief,
+} from '../business-logic/export-daily-brief';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { withQANewsDisplayFields } from '../business-logic/categorize-article';
 
@@ -42,7 +46,7 @@ async function main(): Promise<void> {
     logStructured('PATHS_RESOLVED', {
       projectRoot,
       storeFilePath,
-      outputPath
+      outputPath,
     });
 
     // Create article store
@@ -61,14 +65,16 @@ async function main(): Promise<void> {
     logStructured('EXPORT_COMPLETE', {
       articleCount: dailyBrief.items.length,
       exportDate: dailyBrief.date,
-      durationMs: exportDuration
+      durationMs: exportDuration,
     });
 
     // Validation: Detect empty export
     if (dailyBrief.items.length === 0) {
       console.warn('[Export Daily Brief] ⚠️  WARNING: Export produced 0 articles');
       console.warn('[Export Daily Brief] Store may be empty or not yet populated by daily-brief');
-      console.warn('[Export Daily Brief] Check: data/canonical_articles.ndjson exists and has content');
+      console.warn(
+        '[Export Daily Brief] Check: data/canonical_articles.ndjson exists and has content',
+      );
 
       // Additional diagnostics
       try {
@@ -81,14 +87,14 @@ async function main(): Promise<void> {
       logStructured('VALIDATION_WARNING', {
         reason: 'empty_export',
         expectedMinArticles: 1,
-        actualArticles: 0
+        actualArticles: 0,
       });
     }
 
     // Map categories for UI filtering
     const mappedBrief = {
       ...dailyBrief,
-      items: dailyBrief.items.map(withQANewsDisplayFields)
+      items: dailyBrief.items.map(withQANewsDisplayFields),
     };
 
     // Write to output file
@@ -105,7 +111,7 @@ async function main(): Promise<void> {
       articleCount: dailyBrief.items.length,
       filePath: outputPath,
       publicPath,
-      durationMs: writeDuration
+      durationMs: writeDuration,
     });
 
     console.log(`[Export Daily Brief] ✅ Exported daily brief to ${outputPath}`);
@@ -114,14 +120,13 @@ async function main(): Promise<void> {
 
     logStructured('WORKFLOW_COMPLETE', {
       totalDurationMs: Date.now() - workflowStartTime,
-      articleCount: dailyBrief.items.length
+      articleCount: dailyBrief.items.length,
     });
-
   } catch (error) {
     console.error('[Export Daily Brief] ❌ ERROR:', error instanceof Error ? error.message : error);
     logStructured('WORKFLOW_ERROR', {
       error: error instanceof Error ? error.message : String(error),
-      totalDurationMs: Date.now() - workflowStartTime
+      totalDurationMs: Date.now() - workflowStartTime,
     });
     process.exit(1);
   }

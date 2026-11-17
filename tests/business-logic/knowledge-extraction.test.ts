@@ -32,7 +32,8 @@ Common mistakes include not setting resource limits, using default namespaces in
     const validFact: KnowledgeFact = {
       id: 'fact_001',
       article_id: 'article_001',
-      content: 'Kubernetes is a container orchestration platform that automates deployment and management',
+      content:
+        'Kubernetes is a container orchestration platform that automates deployment and management',
       type: 'DEFINITION',
       confidence: 0.95,
       extraction_method: 'claude',
@@ -49,13 +50,13 @@ Common mistakes include not setting resource limits, using default namespaces in
     it('should reject fact with missing id', () => {
       const fact = { ...validFact, id: '' };
       const errors = validateFact(fact);
-      expect(errors.some(e => e.field === 'id')).toBe(true);
+      expect(errors.some((e) => e.field === 'id')).toBe(true);
     });
 
     it('should reject fact with content too short', () => {
       const fact = { ...validFact, content: 'Too short' };
       const errors = validateFact(fact);
-      expect(errors.some(e => e.field === 'content')).toBe(true);
+      expect(errors.some((e) => e.field === 'content')).toBe(true);
     });
 
     it('should reject fact with content too long', () => {
@@ -64,37 +65,37 @@ Common mistakes include not setting resource limits, using default namespaces in
         content: 'a'.repeat(501),
       };
       const errors = validateFact(fact);
-      expect(errors.some(e => e.field === 'content')).toBe(true);
+      expect(errors.some((e) => e.field === 'content')).toBe(true);
     });
 
     it('should reject fact with invalid type', () => {
       const fact = { ...validFact, type: 'INVALID' as any };
       const errors = validateFact(fact);
-      expect(errors.some(e => e.field === 'type')).toBe(true);
+      expect(errors.some((e) => e.field === 'type')).toBe(true);
     });
 
     it('should reject fact with confidence out of range', () => {
       const fact = { ...validFact, confidence: 1.5 };
       const errors = validateFact(fact);
-      expect(errors.some(e => e.field === 'confidence')).toBe(true);
+      expect(errors.some((e) => e.field === 'confidence')).toBe(true);
     });
 
     it('should reject fact with invalid extraction method', () => {
       const fact = { ...validFact, extraction_method: 'invalid' as any };
       const errors = validateFact(fact);
-      expect(errors.some(e => e.field === 'extraction_method')).toBe(true);
+      expect(errors.some((e) => e.field === 'extraction_method')).toBe(true);
     });
 
     it('should reject fact with invalid timestamp', () => {
       const fact = { ...validFact, extracted_at: 'not-a-date' };
       const errors = validateFact(fact);
-      expect(errors.some(e => e.field === 'extracted_at')).toBe(true);
+      expect(errors.some((e) => e.field === 'extracted_at')).toBe(true);
     });
 
     it('should reject fact with version < 1', () => {
       const fact = { ...validFact, version: 0 };
       const errors = validateFact(fact);
-      expect(errors.some(e => e.field === 'version')).toBe(true);
+      expect(errors.some((e) => e.field === 'version')).toBe(true);
     });
   });
 
@@ -264,9 +265,17 @@ Common mistakes include not setting resource limits, using default namespaces in
 
   describe('confidence thresholds', () => {
     it('should define thresholds for all fact types', () => {
-      const types = ['DEFINITION', 'TECHNIQUE', 'WARNING', 'BENCHMARK', 'QUOTE', 'PATTERN', 'INSIGHT'] as const;
+      const types = [
+        'DEFINITION',
+        'TECHNIQUE',
+        'WARNING',
+        'BENCHMARK',
+        'QUOTE',
+        'PATTERN',
+        'INSIGHT',
+      ] as const;
 
-      types.forEach(type => {
+      types.forEach((type) => {
         expect(CONFIDENCE_THRESHOLDS[type]).toBeDefined();
         expect(CONFIDENCE_THRESHOLDS[type]).toBeGreaterThanOrEqual(0.7);
         expect(CONFIDENCE_THRESHOLDS[type]).toBeLessThanOrEqual(1.0);
@@ -295,7 +304,12 @@ Common mistakes include not setting resource limits, using default namespaces in
 
     it('should initialize with custom fallback cache', () => {
       const cache = new InMemoryClassificationCache();
-      const service = new KnowledgeExtractionService('test-key', 'claude-haiku-4-5', undefined, cache);
+      const service = new KnowledgeExtractionService(
+        'test-key',
+        'claude-haiku-4-5',
+        undefined,
+        cache,
+      );
       expect(service).toBeDefined();
     });
 
@@ -355,18 +369,39 @@ Common mistakes include not setting resource limits, using default namespaces in
     it('should classify all 26+ domain types without error', () => {
       const service = new KnowledgeExtractionService();
       const allDomains = [
-        'ai-safety', 'ml-ops', 'nlp', 'computer-vision', 'reinforcement-learning', 'llm-applications',
-        'cloud-infra', 'devops', 'databases', 'networking', 'security',
-        'javascript', 'python', 'rust', 'go', 'other-languages',
-        'web-dev', 'frontend-frameworks', 'css-design', 'accessibility',
-        'cryptography', 'performance', 'testing', 'documentation', 'open-source', 'general',
+        'ai-safety',
+        'ml-ops',
+        'nlp',
+        'computer-vision',
+        'reinforcement-learning',
+        'llm-applications',
+        'cloud-infra',
+        'devops',
+        'databases',
+        'networking',
+        'security',
+        'javascript',
+        'python',
+        'rust',
+        'go',
+        'other-languages',
+        'web-dev',
+        'frontend-frameworks',
+        'css-design',
+        'accessibility',
+        'cryptography',
+        'performance',
+        'testing',
+        'documentation',
+        'open-source',
+        'general',
       ];
 
       const classifier = (service as any).domainClassifier;
       const availableDomains = classifier.getAllDomains();
 
       expect(availableDomains.length).toBeGreaterThanOrEqual(26);
-      allDomains.forEach(domain => {
+      allDomains.forEach((domain) => {
         expect(availableDomains).toContain(domain);
       });
     });
@@ -424,7 +459,7 @@ Common mistakes include not setting resource limits, using default namespaces in
           article_id: 'article_schema_001',
           content: 'Docker is a containerization platform that uses images and containers',
           type: 'DEFINITION',
-          confidence: 0.90,
+          confidence: 0.9,
           extraction_method: 'claude',
           extracted_at: new Date().toISOString(),
           version: 1,

@@ -36,9 +36,9 @@ export const DEFAULT_CONFIG: ScoringConfig = {
       'continuous testing': 30,
       'testing tools': 25,
       'test coverage': 25,
-      'testing': 25,
-      'automation': 25,
-      'qa': 20,
+      testing: 25,
+      automation: 25,
+      qa: 20,
 
       // Performance/Security Testing
       'performance testing': 30,
@@ -47,43 +47,43 @@ export const DEFAULT_CONFIG: ScoringConfig = {
       'penetration testing': 30,
 
       // Existing (keep)
-      'breaking': 35,
-      'security': 40,
-      'migration': 25,
-      'playwright': 20,
-      'typescript': 15,
-      'mcp': 25,
-      'agent': 20,
+      breaking: 35,
+      security: 40,
+      migration: 25,
+      playwright: 20,
+      typescript: 15,
+      mcp: 25,
+      agent: 20,
       'ci/cd': 15,
-      'release': 20
+      release: 20,
     },
     sources: {
       // QA/Testing sources (HIGH WEIGHT)
       'Ministry of Testing': 50,
       'Google Testing': 45,
       'Martin Fowler': 40,
-      'InfoQ': 30,
-      'Cypress': 40,
-      'Playwright': 45,
+      InfoQ: 30,
+      Cypress: 40,
+      Playwright: 45,
 
       // Existing (adjusted)
       'github-release': 35,
       'github-trending': 25,
       'hacker-news': 15,
       'ai-radar': 20,
-      'devto': 15,
-      'openai': 15,
-      'google': 15,
-      'cloudflare': 10,
-      'github': 15,
-      'lobsters': 8
-    }
+      devto: 15,
+      openai: 15,
+      google: 15,
+      cloudflare: 10,
+      github: 15,
+      lobsters: 8,
+    },
   },
   priority: {
     critical: 90,
     high: 70,
-    medium: 45
-  }
+    medium: 45,
+  },
 };
 
 export type Priority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
@@ -112,7 +112,10 @@ export interface ScoredArticle extends Article {
  * @param config - Scoring configuration (defaults to DEFAULT_CONFIG)
  * @returns Scored article with score, priority, and reason
  */
-export function scoreArticle(article: Article, config: ScoringConfig = DEFAULT_CONFIG): ScoredArticle {
+export function scoreArticle(
+  article: Article,
+  config: ScoringConfig = DEFAULT_CONFIG,
+): ScoredArticle {
   let score = config.weights.base;
   const reason: string[] = [];
 
@@ -154,10 +157,13 @@ export function scoreArticle(article: Article, config: ScoringConfig = DEFAULT_C
 
   // Classify priority
   const priority: Priority =
-    score >= config.priority.critical ? 'CRITICAL' :
-    score >= config.priority.high ? 'HIGH' :
-    score >= config.priority.medium ? 'MEDIUM' :
-    'LOW';
+    score >= config.priority.critical
+      ? 'CRITICAL'
+      : score >= config.priority.high
+        ? 'HIGH'
+        : score >= config.priority.medium
+          ? 'MEDIUM'
+          : 'LOW';
 
   // Deduplicate reasons
   const uniqueReasons = [...new Set(reason)];
@@ -166,7 +172,7 @@ export function scoreArticle(article: Article, config: ScoringConfig = DEFAULT_C
     ...article,
     score,
     priority,
-    reason: uniqueReasons
+    reason: uniqueReasons,
   };
 }
 
@@ -189,26 +195,54 @@ export function hasNegativeKeywords(article: Article): boolean {
   const text = `${article.title} ${article.summary}`.toLowerCase();
 
   const negativeKeywords = [
-    'ecc', 'ddr5', 'memory', 'gpu', 'cpu', 'processor',
-    'hardware', 'smart tv', 'iot device', 'proxies',
-    'ipv6', 'networking', 'router', 'firewall'
+    'ecc',
+    'ddr5',
+    'memory',
+    'gpu',
+    'cpu',
+    'processor',
+    'hardware',
+    'smart tv',
+    'iot device',
+    'proxies',
+    'ipv6',
+    'networking',
+    'router',
+    'firewall',
   ];
 
   // QA/Testing keywords that override negative keyword filtering
   // If article has both a negative keyword AND one of these QA keywords,
   // it's in a testing context and should NOT be filtered
   const qaKeywords = [
-    'test automation', 'qa engineering', 'testing strategy', 'e2e testing',
-    'unit testing', 'integration testing', 'test framework', 'automated testing',
-    'testing best practices', 'continuous testing', 'testing tools', 'test coverage',
-    'performance testing', 'load testing', 'security testing', 'penetration testing',
-    'playwright', 'cypress', 'jest', 'vitest', 'qa', 'automation'
+    'test automation',
+    'qa engineering',
+    'testing strategy',
+    'e2e testing',
+    'unit testing',
+    'integration testing',
+    'test framework',
+    'automated testing',
+    'testing best practices',
+    'continuous testing',
+    'testing tools',
+    'test coverage',
+    'performance testing',
+    'load testing',
+    'security testing',
+    'penetration testing',
+    'playwright',
+    'cypress',
+    'jest',
+    'vitest',
+    'qa',
+    'automation',
   ];
 
   for (const keyword of negativeKeywords) {
     if (text.includes(keyword)) {
       // Check if this is in a QA/testing context
-      const hasQaKeyword = qaKeywords.some(qa => text.includes(qa));
+      const hasQaKeyword = qaKeywords.some((qa) => text.includes(qa));
       if (!hasQaKeyword) {
         return true; // Has negative keyword with no QA context -> filter out
       }
@@ -227,13 +261,13 @@ export function hasNegativeKeywords(article: Article): boolean {
  */
 export function scoreArticles(
   articles: Article[],
-  config: ScoringConfig = DEFAULT_CONFIG
+  config: ScoringConfig = DEFAULT_CONFIG,
 ): ScoredArticle[] {
   // Score all articles
-  const scoredArticles = articles.map(article => scoreArticle(article, config));
+  const scoredArticles = articles.map((article) => scoreArticle(article, config));
 
   // Filter out negative keyword articles (unless they have QA keywords too)
-  const filtered = scoredArticles.filter(article => !hasNegativeKeywords(article));
+  const filtered = scoredArticles.filter((article) => !hasNegativeKeywords(article));
 
   // Sort by score descending
   return filtered.sort((a, b) => b.score - a.score);

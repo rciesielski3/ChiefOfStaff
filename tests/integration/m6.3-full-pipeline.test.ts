@@ -54,7 +54,7 @@ describe('M6.3 Full Pipeline Integration', () => {
             extracted_at: new Date().toISOString(),
             sensitivity: 'PUBLIC' as const,
             version: 1,
-          }))
+          })),
       );
 
     let dedupCount = 0;
@@ -120,25 +120,27 @@ describe('M6.3 Full Pipeline Integration', () => {
     ];
 
     // Process each through sensitivity assessor
-    const results = await Promise.all(piiTestSet.map(f => sensitivityAssessor.assessFact(f)));
+    const results = await Promise.all(piiTestSet.map((f) => sensitivityAssessor.assessFact(f)));
 
     // Assert: No false negatives (all must be PRIVATE or UNCERTAIN, not PUBLIC)
     results.forEach((result, idx) => {
       expect(result.sensitivity).not.toBe('PUBLIC');
-      console.log(`  [${piiTestSet[idx].id}] sensitivity: ${result.sensitivity} (confidence: ${(result.confidence * 100).toFixed(0)}%)`);
+      console.log(
+        `  [${piiTestSet[idx].id}] sensitivity: ${result.sensitivity} (confidence: ${(result.confidence * 100).toFixed(0)}%)`,
+      );
     });
 
     // Verify at least 3 out of 4 are marked PRIVATE (strong signal)
-    const privateCount = results.filter(r => r.sensitivity === 'PRIVATE').length;
+    const privateCount = results.filter((r) => r.sensitivity === 'PRIVATE').length;
     expect(privateCount).toBeGreaterThanOrEqual(3);
 
     console.log(`
     PII False-Negative Test Results:
     ================================
     Test cases: ${piiTestSet.length}
-    PRIVATE: ${results.filter(r => r.sensitivity === 'PRIVATE').length}
-    UNCERTAIN: ${results.filter(r => r.sensitivity === 'UNCERTAIN').length}
-    PUBLIC: ${results.filter(r => r.sensitivity === 'PUBLIC').length}
+    PRIVATE: ${results.filter((r) => r.sensitivity === 'PRIVATE').length}
+    UNCERTAIN: ${results.filter((r) => r.sensitivity === 'UNCERTAIN').length}
+    PUBLIC: ${results.filter((r) => r.sensitivity === 'PUBLIC').length}
     Result: PASS (zero false negatives) ✓
     `);
   });
@@ -225,7 +227,8 @@ describe('M6.3 Full Pipeline Integration', () => {
     const testFact: Fact = {
       id: 'e2e_test_1',
       article_id: 'e2e_a1',
-      content: 'Machine learning enables predictive analytics for business intelligence applications',
+      content:
+        'Machine learning enables predictive analytics for business intelligence applications',
       type: 'DEFINITION',
       confidence: 0.88,
       extracted_at: new Date().toISOString(),

@@ -16,39 +16,41 @@ const legacyArticle = (title: string, url: string): Article => ({
   category: 'news',
   publishedAt: now,
   tags: [],
-  score: 50
+  score: 50,
 });
 
 const legacyRows = [
   legacyArticle('First', 'https://www.infoq.com/news/a/'),
   legacyArticle('Second', 'https://www.infoq.com/news/b/'),
-  legacyArticle('Third', 'https://www.infoq.com/news/c/')
+  legacyArticle('Third', 'https://www.infoq.com/news/c/'),
 ];
 
-const fakeStore = { read: async () => legacyRows.map(a => ({ ...a })) } as unknown as ArticleStore;
+const fakeStore = {
+  read: async () => legacyRows.map((a) => ({ ...a })),
+} as unknown as ArticleStore;
 
 describe('exporters emit distinct IDs for legacy-colliding articles', () => {
   it('exportLatestNews (live latest.json)', async () => {
     const result = await exportLatestNews(fakeStore, 50);
-    const ids = result.items.map(a => a.id);
+    const ids = result.items.map((a) => a.id);
     expect(new Set(ids).size).toBe(3);
   });
 
   it('exportDailyBrief (live daily.json)', async () => {
     const result = await exportDailyBrief(fakeStore, 10, 1);
-    const ids = result.items.map(a => a.id);
+    const ids = result.items.map((a) => a.id);
     expect(new Set(ids).size).toBe(3);
   });
 
   it('exportWeeklyHighlights (weekly.json)', () => {
     const result = exportWeeklyHighlights(legacyRows);
-    const ids = result.weeks.flatMap(w => w.items.map(a => a.id));
+    const ids = result.weeks.flatMap((w) => w.items.map((a) => a.id));
     expect(new Set(ids).size).toBe(3);
   });
 
   it('exportMonthlyRecap (monthly.json)', () => {
     const result = exportMonthlyRecap(legacyRows);
-    const ids = result.months.flatMap(m => m.items.map(a => a.id));
+    const ids = result.months.flatMap((m) => m.items.map((a) => a.id));
     expect(new Set(ids).size).toBe(3);
   });
 
@@ -69,9 +71,12 @@ describe('weekly and monthly exports fail loudly on an ID collision', () => {
     category: 'news',
     publishedAt: now,
     tags: [],
-    score: 50
+    score: 50,
   });
-  const clashRows = [clashing('https://www.infoq.com/news/x/'), clashing('https://www.infoq.com/news/y/')];
+  const clashRows = [
+    clashing('https://www.infoq.com/news/x/'),
+    clashing('https://www.infoq.com/news/y/'),
+  ];
 
   it('exportWeeklyHighlights throws', () => {
     expect(() => exportWeeklyHighlights(clashRows)).toThrow(/Article ID collision/);

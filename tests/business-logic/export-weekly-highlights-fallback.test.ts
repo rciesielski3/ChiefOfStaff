@@ -12,7 +12,7 @@ describe('exportWeeklyHighlights — Deterministic Fallback Text Validation', ()
       source: 'Test',
       category: 'test',
       publishedAt: '2026-07-21T10:00:00Z',
-      tags: []
+      tags: [],
     },
     {
       id: 'a2',
@@ -22,8 +22,8 @@ describe('exportWeeklyHighlights — Deterministic Fallback Text Validation', ()
       source: 'Test',
       category: 'test',
       publishedAt: '2026-07-21T11:00:00Z',
-      tags: []
-    }
+      tags: [],
+    },
   ];
 
   it('should use deterministic fallback text format: "{count} stories. Latest: ...; Top categories: ..."', async () => {
@@ -35,7 +35,9 @@ describe('exportWeeklyHighlights — Deterministic Fallback Text Validation', ()
     const summary = result.weeks[0].summary;
     // Items are newest first, so the top titles start with Article 2
     const label = primaryQANewsCategory(testArticles[1]);
-    expect(summary).toBe(`2 stories. Latest: Test Article 2; Test Article 1. Top categories: ${label} (2).`);
+    expect(summary).toBe(
+      `2 stories. Latest: Test Article 2; Test Article 1. Top categories: ${label} (2).`,
+    );
   });
 
   it('should use deterministic fallback text when SummaryGenerator is not provided', async () => {

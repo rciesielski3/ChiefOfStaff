@@ -9,13 +9,13 @@
  * Semantic classification of knowledge facts
  */
 export type FactType =
-  | 'DEFINITION'   // Explains what something is
-  | 'TECHNIQUE'    // How-to or best practice
-  | 'WARNING'      // Important caution or risk
-  | 'BENCHMARK'    // Measurable metric or data
-  | 'QUOTE'        // Direct quotation
-  | 'PATTERN'      // Trend or recurring relationship
-  | 'INSIGHT';     // Synthesized analysis
+  | 'DEFINITION' // Explains what something is
+  | 'TECHNIQUE' // How-to or best practice
+  | 'WARNING' // Important caution or risk
+  | 'BENCHMARK' // Measurable metric or data
+  | 'QUOTE' // Direct quotation
+  | 'PATTERN' // Trend or recurring relationship
+  | 'INSIGHT'; // Synthesized analysis
 
 /**
  * Lifecycle status of a fact
@@ -26,11 +26,11 @@ export type FactStatus = 'active' | 'superseded' | 'deprecated';
  * Types of insights generated from cross-article analysis
  */
 export type InsightType =
-  | 'TREND'         // Multiple articles point to emerging pattern
+  | 'TREND' // Multiple articles point to emerging pattern
   | 'CONTRADICTION' // Conflicting claims across articles
-  | 'SYNTHESIS'     // Combining facts from N articles into new understanding
-  | 'BENCHMARK'     // Repeated measurements/metrics over time
-  | 'ALERT';        // Unusual/surprising finding
+  | 'SYNTHESIS' // Combining facts from N articles into new understanding
+  | 'BENCHMARK' // Repeated measurements/metrics over time
+  | 'ALERT'; // Unusual/surprising finding
 
 /**
  * Method used to extract the fact
@@ -62,27 +62,27 @@ export interface KnowledgeFact {
   article_id: string;
 
   // Fact content
-  content: string;                           // The actual fact text (50–500 chars)
-  type: FactType;                            // Semantic classification
+  content: string; // The actual fact text (50–500 chars)
+  type: FactType; // Semantic classification
 
   // Confidence and quality
-  confidence: number;                        // 0.0–1.0, extraction certainty
-  extraction_method: ExtractionMethod;       // How was this fact extracted
+  confidence: number; // 0.0–1.0, extraction certainty
+  extraction_method: ExtractionMethod; // How was this fact extracted
 
   // Citations
-  source_text?: string;                      // Exact quote from article (QUOTE type)
-  source_location?: SourceLocation;          // Location within article
+  source_text?: string; // Exact quote from article (QUOTE type)
+  source_location?: SourceLocation; // Location within article
 
   // Metadata (filled by M6.2+)
-  domain?: string;                           // Domain classification (e.g., "ai-ml", "infrastructure")
-  domain_confidence?: number;                // Domain classification confidence (0.0–1.0)
-  keywords?: string[];                       // Key terms for searchability
+  domain?: string; // Domain classification (e.g., "ai-ml", "infrastructure")
+  domain_confidence?: number; // Domain classification confidence (0.0–1.0)
+  keywords?: string[]; // Key terms for searchability
 
   // Timestamps and versioning
-  extracted_at: string;                      // ISO timestamp
-  version: number;                           // Version number, incremented on updates
-  superseded_by?: string;                    // ID of fact that replaces this one
-  status: FactStatus;                        // Lifecycle status
+  extracted_at: string; // ISO timestamp
+  version: number; // Version number, incremented on updates
+  superseded_by?: string; // ID of fact that replaces this one
+  status: FactStatus; // Lifecycle status
 }
 
 /**
@@ -93,7 +93,7 @@ export interface FactExtractionRequest {
   title: string;
   summary: string;
   url: string;
-  full_text: string;  // Article body for extraction
+  full_text: string; // Article body for extraction
 }
 
 /**
@@ -121,13 +121,13 @@ export interface FactExtractionBatch {
  * Confidence thresholds by fact type (minimum to include in KB)
  */
 export const CONFIDENCE_THRESHOLDS: Record<FactType, number> = {
-  'DEFINITION': 0.90,
-  'TECHNIQUE': 0.80,
-  'WARNING': 0.95,
-  'BENCHMARK': 0.85,
-  'QUOTE': 1.00,
-  'PATTERN': 0.75,
-  'INSIGHT': 0.70,
+  DEFINITION: 0.9,
+  TECHNIQUE: 0.8,
+  WARNING: 0.95,
+  BENCHMARK: 0.85,
+  QUOTE: 1.0,
+  PATTERN: 0.75,
+  INSIGHT: 0.7,
 };
 
 /**
@@ -161,7 +161,11 @@ export function validateFact(fact: KnowledgeFact): FactValidationError[] {
     errors.push({ field: 'content', message: 'Content must be 50–500 characters' });
   }
 
-  if (!['DEFINITION', 'TECHNIQUE', 'WARNING', 'BENCHMARK', 'QUOTE', 'PATTERN', 'INSIGHT'].includes(fact.type)) {
+  if (
+    !['DEFINITION', 'TECHNIQUE', 'WARNING', 'BENCHMARK', 'QUOTE', 'PATTERN', 'INSIGHT'].includes(
+      fact.type,
+    )
+  ) {
     errors.push({ field: 'type', message: 'Invalid fact type' });
   }
 
@@ -199,21 +203,21 @@ export interface Insight {
   id: string;
 
   // Insight content
-  type: InsightType;                  // Semantic classification
-  title: string;                      // Human-readable title
-  description: string;                // Detailed explanation
+  type: InsightType; // Semantic classification
+  title: string; // Human-readable title
+  description: string; // Detailed explanation
 
   // Associated data
-  facts_included: string[];           // IDs of facts that contributed
-  related_articles: string[];         // IDs of source articles
+  facts_included: string[]; // IDs of facts that contributed
+  related_articles: string[]; // IDs of source articles
 
   // Quality and confidence
-  confidence: number;                 // 0.0–1.0, synthesis certainty
-  domain?: string;                    // Domain classification (optional)
+  confidence: number; // 0.0–1.0, synthesis certainty
+  domain?: string; // Domain classification (optional)
 
   // Metadata
-  generated_at: string;               // ISO timestamp
-  updated_at?: string;                // Last update timestamp (for versioning)
+  generated_at: string; // ISO timestamp
+  updated_at?: string; // Last update timestamp (for versioning)
 }
 
 /**

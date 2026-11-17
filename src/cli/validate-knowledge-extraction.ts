@@ -36,7 +36,11 @@ import * as fs from 'fs/promises';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { KnowledgeExtractionService } from '../business-logic/knowledge-extraction';
 import { FactStore } from '../business-logic/knowledge-store';
-import { FactExtractionRequest, KnowledgeFact, validateFact } from '../business-logic/knowledge-types';
+import {
+  FactExtractionRequest,
+  KnowledgeFact,
+  validateFact,
+} from '../business-logic/knowledge-types';
 
 interface ValidationMetrics {
   articlesProcessed: number;
@@ -76,7 +80,7 @@ function calculateConfidenceStats(facts: KnowledgeFact[]): ValidationMetrics['co
     return { min: 0, max: 0, mean: 0, median: 0, q25: 0, q75: 0 };
   }
 
-  const confidences = facts.map(f => f.confidence).sort((a, b) => a - b);
+  const confidences = facts.map((f) => f.confidence).sort((a, b) => a - b);
   const n = confidences.length;
 
   // Calculate median correctly for even/odd arrays
@@ -99,15 +103,17 @@ function calculateConfidenceStats(facts: KnowledgeFact[]): ValidationMetrics['co
   };
 }
 
-function calculateDomainConfidenceStats(facts: KnowledgeFact[]): ValidationMetrics['domainConfidenceStats'] {
-  const factsWithDomain = facts.filter(f => f.domain_confidence !== undefined && f.domain_confidence !== null);
+function calculateDomainConfidenceStats(
+  facts: KnowledgeFact[],
+): ValidationMetrics['domainConfidenceStats'] {
+  const factsWithDomain = facts.filter(
+    (f) => f.domain_confidence !== undefined && f.domain_confidence !== null,
+  );
   if (factsWithDomain.length === 0) {
     return { min: 0, max: 0, mean: 0, median: 0 };
   }
 
-  const confidences = factsWithDomain
-    .map(f => f.domain_confidence!)
-    .sort((a, b) => a - b);
+  const confidences = factsWithDomain.map((f) => f.domain_confidence!).sort((a, b) => a - b);
   const n = confidences.length;
 
   let median: number;
@@ -152,13 +158,15 @@ async function main() {
     }
 
     const topArticles = allArticles.slice(0, Math.min(extractCount, allArticles.length));
-    console.log(`[MVP Validation] Loaded ${allArticles.length} articles, using top ${topArticles.length}\n`);
+    console.log(
+      `[MVP Validation] Loaded ${allArticles.length} articles, using top ${topArticles.length}\n`,
+    );
     logStructured('ARTICLES_LOADED', {
       totalArticles: allArticles.length,
-      selectedArticles: topArticles.length
+      selectedArticles: topArticles.length,
     });
 
-    const extractionRequests: FactExtractionRequest[] = topArticles.map(article => {
+    const extractionRequests: FactExtractionRequest[] = topArticles.map((article) => {
       if (!article.summary) {
         console.warn(`[MVP Validation] Article ${article.id} has no summary`);
       }
@@ -193,12 +201,10 @@ async function main() {
     const CONCURRENCY = 3;
     for (let i = 0; i < extractionRequests.length; i += CONCURRENCY) {
       const batch = extractionRequests.slice(i, i + CONCURRENCY);
-      const batchResults = await Promise.all(
-        batch.map(req => service.extractFacts(req))
-      );
+      const batchResults = await Promise.all(batch.map((req) => service.extractFacts(req)));
 
       for (const result of batchResults) {
-        const article = topArticles.find(a => a.id === result.article_id);
+        const article = topArticles.find((a) => a.id === result.article_id);
         const metric = {
           articleId: result.article_id,
           title: article?.title || 'Unknown',
@@ -213,12 +219,14 @@ async function main() {
           console.log(`  ⚠️  ${metric.articleId}: ERROR - ${result.error}`);
         } else {
           allExtractedFacts.push(...result.facts);
-          console.log(`  ✓ ${metric.articleId}: ${result.facts.length} facts (${result.extraction_time_ms}ms)`);
+          console.log(
+            `  ✓ ${metric.articleId}: ${result.facts.length} facts (${result.extraction_time_ms}ms)`,
+          );
         }
       }
 
       if (i + CONCURRENCY < extractionRequests.length) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
 
@@ -226,7 +234,7 @@ async function main() {
     logStructured('EXTRACTION_COMPLETE', {
       factsExtracted: allExtractedFacts.length,
       failedExtractions,
-      articlesProcessed: extractionMetrics.length
+      articlesProcessed: extractionMetrics.length,
     });
 
     // Validate facts
@@ -243,17 +251,19 @@ async function main() {
         console.warn(`  ✗ Validation error in fact ${fact.id}:`, errors);
         logStructured('VALIDATION_ERROR', {
           fact_id: fact.id,
-          errors: errors.map(e => `${e.field}: ${e.message}`)
+          errors: errors.map((e) => `${e.field}: ${e.message}`),
         });
       } else {
         validatedFacts.push(fact);
       }
     }
 
-    console.log(`[MVP Validation] Validation complete: ${validatedFacts.length}/${allExtractedFacts.length} facts valid\n`);
+    console.log(
+      `[MVP Validation] Validation complete: ${validatedFacts.length}/${allExtractedFacts.length} facts valid\n`,
+    );
     logStructured('VALIDATION_COMPLETE', {
       validFacts: validatedFacts.length,
-      invalidFacts: validationErrors
+      invalidFacts: validationErrors,
     });
 
     // Compute metrics
@@ -327,7 +337,7 @@ async function main() {
       confidenceStats: metrics.confidenceStats,
       factsByType: metrics.factsByType,
       factsByDomain: metrics.factsByDomain,
-      domainConfidenceStats: metrics.domainConfidenceStats
+      domainConfidenceStats: metrics.domainConfidenceStats,
     });
 
     // Show sample facts for manual review
@@ -338,10 +348,12 @@ async function main() {
 
     for (let i = 0; i < sampleFacts.length; i++) {
       const fact = sampleFacts[i];
-      const article = topArticles.find(a => a.id === fact.article_id);
+      const article = topArticles.find((a) => a.id === fact.article_id);
       console.log(`\n${i + 1}. [${fact.type}] Confidence: ${fact.confidence.toFixed(2)}`);
       if (fact.domain) {
-        console.log(`   Domain: ${fact.domain} (confidence: ${fact.domain_confidence?.toFixed(2) || 'N/A'})`);
+        console.log(
+          `   Domain: ${fact.domain} (confidence: ${fact.domain_confidence?.toFixed(2) || 'N/A'})`,
+        );
       }
       console.log(`   Article: ${article?.title || 'Unknown'}`);
       console.log(`   Fact: ${fact.content}`);
@@ -364,18 +376,17 @@ async function main() {
       validFacts: validatedFacts.length,
       validationErrors: metrics.validationErrors,
       avgConfidence: metrics.confidenceStats.mean,
-      avgFactsPerArticle: metrics.avgFactsPerArticle
+      avgFactsPerArticle: metrics.avgFactsPerArticle,
     });
 
     // Save metrics to file for reference
     const metricsPath = 'data/extraction_metrics_baseline.json';
     await fs.writeFile(metricsPath, JSON.stringify(metrics, null, 2), 'utf-8');
     console.log(`\nBaseline metrics saved to: ${metricsPath}`);
-
   } catch (error) {
     console.error('[MVP Validation] ❌ Error:', error);
     logStructured('VALIDATION_ERROR_FATAL', {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     process.exit(1);
   }
@@ -385,7 +396,7 @@ async function main() {
 main().catch((error) => {
   console.error('[MVP Validation] ❌ Uncaught error:', error);
   logStructured('VALIDATION_ERROR_UNCAUGHT', {
-    error: error instanceof Error ? error.message : String(error)
+    error: error instanceof Error ? error.message : String(error),
   });
   process.exit(1);
 });

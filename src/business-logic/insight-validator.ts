@@ -44,10 +44,7 @@ export class InsightValidator {
    * @param facts Optional array of facts for hallucination detection
    * @returns ValidationResult with pass/fail status and metrics
    */
-  validateInsights(
-    insights: Insight[],
-    facts: KnowledgeFact[] = []
-  ): ValidationResult {
+  validateInsights(insights: Insight[], facts: KnowledgeFact[] = []): ValidationResult {
     const failures: string[] = [];
     const metrics = this.getMetrics(insights, facts);
 
@@ -59,9 +56,7 @@ export class InsightValidator {
     // Validate insight types
     const validTypes = Object.values(InsightType);
     if (!metrics.all_valid_types) {
-      failures.push(
-        `Some insights have invalid types (must be one of: ${validTypes.join(', ')})`
-      );
+      failures.push(`Some insights have invalid types (must be one of: ${validTypes.join(', ')})`);
     }
 
     // Validate confidence scores
@@ -83,7 +78,7 @@ export class InsightValidator {
     for (const insight of insights) {
       if (!insight.id || !insight.title || !insight.summary) {
         failures.push(
-          `Insight missing required fields: id="${insight.id}", title="${insight.title}", summary="${insight.summary}"`
+          `Insight missing required fields: id="${insight.id}", title="${insight.title}", summary="${insight.summary}"`,
         );
       }
       if (!Array.isArray(insight.relatedFactIds) || insight.relatedFactIds.length === 0) {
@@ -120,10 +115,8 @@ export class InsightValidator {
       facts_count_sum += insight.relatedFactIds.length;
     }
 
-    const confidence_mean =
-      insights.length > 0 ? confidence_sum / insights.length : 0;
-    const facts_per_insight_mean =
-      insights.length > 0 ? facts_count_sum / insights.length : 0;
+    const confidence_mean = insights.length > 0 ? confidence_sum / insights.length : 0;
+    const facts_per_insight_mean = insights.length > 0 ? facts_count_sum / insights.length : 0;
 
     const validTypes = Object.values(InsightType);
     const all_valid_types = insights.every((i) => validTypes.includes(i.type));

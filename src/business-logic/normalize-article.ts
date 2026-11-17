@@ -62,7 +62,9 @@ export function assertUniqueArticleIds(articles: Array<Pick<Article, 'id' | 'url
     if (seenUrl === undefined) {
       urlById.set(article.id, article.url);
     } else if (seenUrl !== article.url) {
-      throw new Error(`Article ID collision: "${article.id}" maps to both ${seenUrl} and ${article.url}`);
+      throw new Error(
+        `Article ID collision: "${article.id}" maps to both ${seenUrl} and ${article.url}`,
+      );
     }
   }
 }
@@ -78,7 +80,10 @@ const ELLIPSIS = '...';
  * @param text - Cleaned text (single spaces, trimmed)
  * @param maxLength - Maximum length of the returned string
  */
-export function truncateDescription(text: string, maxLength: number = DESCRIPTION_MAX_LENGTH): string {
+export function truncateDescription(
+  text: string,
+  maxLength: number = DESCRIPTION_MAX_LENGTH,
+): string {
   if (text.length <= maxLength) return text;
   if (maxLength < ELLIPSIS.length) return text.slice(0, Math.max(0, maxLength));
 
@@ -108,7 +113,10 @@ export function truncateDescription(text: string, maxLength: number = DESCRIPTIO
  * never stamped with the current time (that would give crawl times a false "recent" score).
  */
 export class InvalidPublishDateError extends Error {
-  constructor(public readonly link: string, public readonly pubDate: string) {
+  constructor(
+    public readonly link: string,
+    public readonly pubDate: string,
+  ) {
     super(`Invalid publish date "${pubDate}" for ${link}`);
     this.name = 'InvalidPublishDateError';
   }
@@ -145,9 +153,7 @@ export function normalizeArticle(raw: RawArticle): Article {
     .replace(/\s+/g, ' ') // Normalize whitespace
     .trim();
 
-  const summary = cleanContent.length > 200
-    ? cleanContent.substring(0, 200) + '...'
-    : cleanContent;
+  const summary = cleanContent.length > 200 ? cleanContent.substring(0, 200) + '...' : cleanContent;
 
   const description = truncateDescription(cleanContent);
 
@@ -181,7 +187,7 @@ export function normalizeArticle(raw: RawArticle): Article {
     source: raw.source,
     category,
     publishedAt,
-    tags
+    tags,
   };
 }
 
@@ -240,8 +246,8 @@ function extractTags(title: string, content: string): string[] {
     'bug',
     'ai',
     'llm',
-    'machine-learning'
+    'machine-learning',
   ];
 
-  return commonTags.filter(tag => text.includes(tag));
+  return commonTags.filter((tag) => text.includes(tag));
 }

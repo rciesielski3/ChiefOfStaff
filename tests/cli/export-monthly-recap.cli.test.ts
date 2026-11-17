@@ -44,7 +44,7 @@ describe('Export Monthly Recap CLI', () => {
     const fs = require('fs');
     const cliContent = fs.readFileSync(
       path.join(__dirname, '../../src/cli/export-monthly-recap.ts'),
-      'utf-8'
+      'utf-8',
     );
 
     // Verify the error handler pattern exists
@@ -58,7 +58,7 @@ describe('Export Monthly Recap CLI', () => {
     const fs = require('fs');
     const cliContent = fs.readFileSync(
       path.join(__dirname, '../../src/cli/export-monthly-recap.ts'),
-      'utf-8'
+      'utf-8',
     );
 
     // Check that console.error is called in error handler
@@ -69,7 +69,7 @@ describe('Export Monthly Recap CLI', () => {
     const fs = require('fs');
     const cliContent = fs.readFileSync(
       path.join(__dirname, '../../src/cli/export-monthly-recap.ts'),
-      'utf-8'
+      'utf-8',
     );
 
     // Verify error handler exits with code 1
@@ -80,7 +80,7 @@ describe('Export Monthly Recap CLI', () => {
     const fs = require('fs');
     const cliContent = fs.readFileSync(
       path.join(__dirname, '../../src/cli/export-monthly-recap.ts'),
-      'utf-8'
+      'utf-8',
     );
 
     // Verify AtomicFileWriter is not imported
@@ -91,7 +91,7 @@ describe('Export Monthly Recap CLI', () => {
     const fs = require('fs');
     const cliContent = fs.readFileSync(
       path.join(__dirname, '../../src/cli/export-monthly-recap.ts'),
-      'utf-8'
+      'utf-8',
     );
 
     // Verify writeToDataDirs function is not defined
@@ -102,7 +102,7 @@ describe('Export Monthly Recap CLI', () => {
     const fs = require('fs');
     const cliContent = fs.readFileSync(
       path.join(__dirname, '../../src/cli/export-monthly-recap.ts'),
-      'utf-8'
+      'utf-8',
     );
 
     // Verify single-write logic is present
@@ -117,7 +117,7 @@ describe('Export Monthly Recap CLI', () => {
     const fs = require('fs');
     const cliContent = fs.readFileSync(
       path.join(__dirname, '../../src/cli/export-monthly-recap.ts'),
-      'utf-8'
+      'utf-8',
     );
 
     // Verify WRITE_COMPLETE logs dataPath only

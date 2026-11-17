@@ -15,7 +15,8 @@ describe('InsightValidator', () => {
         {
           id: 'fact-1',
           article_id: 'article-1',
-          content: 'Machine learning models require large datasets for training purposes and data quality directly impacts model performance significantly',
+          content:
+            'Machine learning models require large datasets for training purposes and data quality directly impacts model performance significantly',
           type: 'TECHNIQUE',
           confidence: 0.92,
           extraction_method: 'claude',
@@ -26,7 +27,8 @@ describe('InsightValidator', () => {
         {
           id: 'fact-2',
           article_id: 'article-2',
-          content: 'Deep learning neural networks have shown superior performance in image recognition tasks compared to traditional approaches',
+          content:
+            'Deep learning neural networks have shown superior performance in image recognition tasks compared to traditional approaches',
           type: 'BENCHMARK',
           confidence: 0.88,
           extraction_method: 'claude',
@@ -56,7 +58,8 @@ describe('InsightValidator', () => {
           id: 'insight-2',
           type: InsightType.RELATIONSHIP,
           title: 'Deep Learning Dominates Image Tasks',
-          summary: 'Neural networks consistently outperform traditional ML in image-related domains',
+          summary:
+            'Neural networks consistently outperform traditional ML in image-related domains',
           confidence: 0.79,
           relatedFactIds: ['fact-2'],
           domains: ['ai-ml'],
@@ -101,9 +104,10 @@ describe('InsightValidator', () => {
         {
           id: 'fact-1',
           article_id: 'article-1',
-          content: 'Test framework speeds up development and reduces bugs by providing automated testing capabilities in software projects',
+          content:
+            'Test framework speeds up development and reduces bugs by providing automated testing capabilities in software projects',
           type: 'TECHNIQUE',
-          confidence: 0.90,
+          confidence: 0.9,
           extraction_method: 'claude',
           extracted_at: '2026-07-22T10:00:00Z',
           version: 1,
@@ -116,7 +120,8 @@ describe('InsightValidator', () => {
           id: 'insight-1',
           type: InsightType.BEST_PRACTICE,
           title: 'Testing is Essential',
-          summary: 'Automated testing frameworks significantly improve code quality and reduce defects',
+          summary:
+            'Automated testing frameworks significantly improve code quality and reduce defects',
           confidence: 0.85,
           relatedFactIds: ['fact-1'],
           domains: ['testing'],
@@ -140,9 +145,10 @@ describe('InsightValidator', () => {
         {
           id: 'fact-1',
           article_id: 'article-1',
-          content: 'Test framework speeds up development and reduces bugs by providing automated testing capabilities in software projects',
+          content:
+            'Test framework speeds up development and reduces bugs by providing automated testing capabilities in software projects',
           type: 'TECHNIQUE',
-          confidence: 0.90,
+          confidence: 0.9,
           extraction_method: 'claude',
           extracted_at: '2026-07-22T10:00:00Z',
           version: 1,
@@ -258,7 +264,7 @@ describe('InsightValidator', () => {
           article_id: 'article-1',
           content: 'Test content for zero-output detection',
           type: 'TECHNIQUE',
-          confidence: 0.90,
+          confidence: 0.9,
           extraction_method: 'claude',
           extracted_at: '2026-07-23T10:00:00Z',
           version: 1,

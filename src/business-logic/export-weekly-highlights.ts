@@ -11,9 +11,9 @@ import { buildDeterministicSummary } from './deterministic-summary';
  * - items: ALL articles published in this week, sorted by date (newest first)
  */
 export interface WeeklyHighlight {
-  weekOf: string;     // Monday of week in ISO format: YYYY-MM-DD
-  summary: string;    // Will be populated by Task 6; for now, empty string
-  items: Article[];   // ALL articles from that week, sorted newest first
+  weekOf: string; // Monday of week in ISO format: YYYY-MM-DD
+  summary: string; // Will be populated by Task 6; for now, empty string
+  items: Article[]; // ALL articles from that week, sorted newest first
 }
 
 /**
@@ -110,8 +110,8 @@ export function exportWeeklyHighlights(articles: Article[]): WeeklyHighlightsExp
 
     weeks.push({
       weekOf,
-      summary: '',  // Empty for now; will be populated by Task 6
-      items: items.map(withResolvedId)
+      summary: '', // Empty for now; will be populated by Task 6
+      items: items.map(withResolvedId),
     });
   }
 
@@ -121,11 +121,11 @@ export function exportWeeklyHighlights(articles: Article[]): WeeklyHighlightsExp
   });
 
   // Step 5: Fail loudly if two different URLs ended up with the same ID
-  assertUniqueArticleIds(weeks.flatMap(week => week.items));
+  assertUniqueArticleIds(weeks.flatMap((week) => week.items));
 
   // Step 6: Return export object
   return {
-    weeks
+    weeks,
   };
 }
 
@@ -144,7 +144,7 @@ export function exportWeeklyHighlights(articles: Article[]): WeeklyHighlightsExp
  */
 export async function exportWeeklyHighlightsWithSummaries(
   articles: Article[],
-  summaryGenerator?: SummaryGenerator
+  summaryGenerator?: SummaryGenerator,
 ): Promise<WeeklyHighlightsExport> {
   // Call existing exportWeeklyHighlights(articles)
   const export_ = exportWeeklyHighlights(articles);

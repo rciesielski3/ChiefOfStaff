@@ -32,7 +32,7 @@ const DEFAULT_BASE_DELAY_MS = 100;
 export const DEFAULT_FEED_TIMEOUT_MS = 10000;
 
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -41,15 +41,14 @@ function sleep(ms: number): Promise<void> {
 function createParser(signal: AbortSignal): Parser {
   return new Parser({
     headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-      'Accept': '*/*'
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      Accept: '*/*',
     },
     customFields: {
-      item: [
-        ['content:encoded', 'content']
-      ]
+      item: [['content:encoded', 'content']],
     },
-    requestOptions: { signal }
+    requestOptions: { signal },
   });
 }
 
@@ -61,11 +60,7 @@ function createParser(signal: AbortSignal): Parser {
  * process alive. The timer is always cleared, so a feed that answers in time
  * does not leave a pending timer behind either.
  */
-async function parseFeedWithTimeout(
-  sourceUrl: string,
-  sourceName: string,
-  timeoutMs: number
-) {
+async function parseFeedWithTimeout(sourceUrl: string, sourceName: string, timeoutMs: number) {
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -77,10 +72,7 @@ async function parseFeedWithTimeout(
   });
 
   try {
-    return await Promise.race([
-      createParser(controller.signal).parseURL(sourceUrl),
-      timedOut
-    ]);
+    return await Promise.race([createParser(controller.signal).parseURL(sourceUrl), timedOut]);
   } finally {
     clearTimeout(timer);
     // Release every connection this attempt opened, also when it settled in
@@ -109,7 +101,7 @@ async function parseFeedWithTimeout(
  */
 export async function fetchWithRetry<T>(
   fn: () => Promise<T>,
-  options: RetryOptions = {}
+  options: RetryOptions = {},
 ): Promise<T> {
   const maxAttempts = options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS;
   const baseDelayMs = options.baseDelayMs ?? DEFAULT_BASE_DELAY_MS;
@@ -126,7 +118,7 @@ export async function fetchWithRetry<T>(
         const delayMs = baseDelayMs * Math.pow(2, attempt - 1);
         console.warn(
           `Attempt ${attempt}/${maxAttempts} failed, retrying in ${delayMs}ms...`,
-          error
+          error,
         );
         await sleep(delayMs);
       }
@@ -155,24 +147,22 @@ export async function fetchWithRetry<T>(
 export async function fetchRSS(
   sourceUrl: string,
   sourceName: string,
-  timeoutMs: number = DEFAULT_FEED_TIMEOUT_MS
+  timeoutMs: number = DEFAULT_FEED_TIMEOUT_MS,
 ): Promise<RawArticle[]> {
   try {
-    const feed = await fetchWithRetry(
-      () => parseFeedWithTimeout(sourceUrl, sourceName, timeoutMs)
-    );
+    const feed = await fetchWithRetry(() => parseFeedWithTimeout(sourceUrl, sourceName, timeoutMs));
 
     // Items without a usable publish date are dropped: stamping them with the
     // fetch time would make them look fresh and earn the "recent" bonus.
     return (feed.items || [])
-      .map(item => ({
+      .map((item) => ({
         link: item.link || '',
         title: item.title || '',
         pubDate: item.pubDate || item.isoDate || '',
         content: (item as any).content || item.contentSnippet || (item as any).description || '',
-        source: sourceName
+        source: sourceName,
       }))
-      .filter(item => {
+      .filter((item) => {
         const valid = item.pubDate !== '' && !Number.isNaN(Date.parse(item.pubDate));
         if (!valid) {
           console.warn(`[RSS] Dropping undated item from ${sourceName}: ${item.link}`);
@@ -202,17 +192,17 @@ export interface RSSSourceConfig {
  */
 export function filterExcludedPaths<T extends { link: string }>(
   items: T[],
-  excludePathPrefixes: string[] = []
+  excludePathPrefixes: string[] = [],
 ): T[] {
   if (excludePathPrefixes.length === 0) return items;
-  return items.filter(item => {
+  return items.filter((item) => {
     let pathname: string;
     try {
       pathname = new URL(item.link).pathname;
     } catch {
       return true;
     }
-    return !excludePathPrefixes.some(prefix => pathname.startsWith(prefix));
+    return !excludePathPrefixes.some((prefix) => pathname.startsWith(prefix));
   });
 }
 
@@ -255,9 +245,7 @@ export interface FetchAllSourcesResult {
  * @param sources - RSS sources to fetch from
  * @returns Combined articles, per-source results, and success/failure counts
  */
-export async function fetchAllSources(
-  sources: RSSSourceConfig[]
-): Promise<FetchAllSourcesResult> {
+export async function fetchAllSources(sources: RSSSourceConfig[]): Promise<FetchAllSourcesResult> {
   const articles: RawArticle[] = [];
   const results: SourceFetchResult[] = [];
 
@@ -266,14 +254,14 @@ export async function fetchAllSources(
       console.log(`[Daily Brief] Fetching from ${source.name}...`);
       const sourceArticles = filterExcludedPaths(
         await fetchRSS(source.url, source.name),
-        source.excludePathPrefixes
+        source.excludePathPrefixes,
       );
       articles.push(...sourceArticles);
 
       results.push({
         source: source.name,
         success: true,
-        count: sourceArticles.length
+        count: sourceArticles.length,
       });
 
       console.log(`[Daily Brief] ✅ ${source.name}: ${sourceArticles.length} articles`);
@@ -284,7 +272,7 @@ export async function fetchAllSources(
         source: source.name,
         success: false,
         count: 0,
-        error: message
+        error: message,
       });
 
       console.warn(`[Daily Brief] ⚠️  Failed to fetch from ${source.name}: ${message}`);
@@ -292,8 +280,8 @@ export async function fetchAllSources(
     }
   }
 
-  const successCount = results.filter(r => r.success).length;
-  const failureCount = results.filter(r => !r.success).length;
+  const successCount = results.filter((r) => r.success).length;
+  const failureCount = results.filter((r) => !r.success).length;
 
   return { articles, results, successCount, failureCount };
 }

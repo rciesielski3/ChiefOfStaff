@@ -68,12 +68,13 @@ describe('fact validation and metrics calculation integration', () => {
       version: 1,
       status: 'active',
       domain: 'infrastructure',
-      domain_confidence: 0.90,
+      domain_confidence: 0.9,
     },
     {
       id: 'fact_004',
       article_id: 'article_003',
-      content: 'Best practice: always set resource limits for containers in production environments',
+      content:
+        'Best practice: always set resource limits for containers in production environments',
       type: 'TECHNIQUE',
       confidence: 0.85,
       extraction_method: 'claude',
@@ -120,7 +121,7 @@ describe('fact validation and metrics calculation integration', () => {
       source: 'Tech News',
       category: 'technology',
       publishedAt: '2026-07-20T10:00:00Z',
-      tags: ['kubernetes', 'containers']
+      tags: ['kubernetes', 'containers'],
     },
     {
       id: 'article_002',
@@ -130,7 +131,7 @@ describe('fact validation and metrics calculation integration', () => {
       source: 'Dev Journal',
       category: 'technology',
       publishedAt: '2026-07-19T14:30:00Z',
-      tags: ['docker', 'containers']
+      tags: ['docker', 'containers'],
     },
     {
       id: 'article_003',
@@ -140,7 +141,7 @@ describe('fact validation and metrics calculation integration', () => {
       source: 'Security Weekly',
       category: 'technology',
       publishedAt: '2026-07-18T09:15:00Z',
-      tags: ['kubernetes', 'security', 'operations']
+      tags: ['kubernetes', 'security', 'operations'],
     },
     {
       id: 'article_004',
@@ -150,7 +151,7 @@ describe('fact validation and metrics calculation integration', () => {
       source: 'DevOps Weekly',
       category: 'technology',
       publishedAt: '2026-07-17T16:45:00Z',
-      tags: ['kubernetes', 'deployment', 'devops']
+      tags: ['kubernetes', 'deployment', 'devops'],
     },
   ];
 
@@ -161,11 +162,11 @@ describe('fact validation and metrics calculation integration', () => {
     articlesFile = path.join(testDir, 'articles.ndjson');
 
     // Write sample facts to file
-    const factsContent = sampleFacts.map(f => JSON.stringify(f)).join('\n') + '\n';
+    const factsContent = sampleFacts.map((f) => JSON.stringify(f)).join('\n') + '\n';
     await fs.writeFile(factsFile, factsContent, 'utf-8');
 
     // Write sample articles to file
-    const articlesContent = sampleArticles.map(a => JSON.stringify(a)).join('\n') + '\n';
+    const articlesContent = sampleArticles.map((a) => JSON.stringify(a)).join('\n') + '\n';
     await fs.writeFile(articlesFile, articlesContent, 'utf-8');
   });
 
@@ -247,7 +248,7 @@ describe('fact validation and metrics calculation integration', () => {
       const factStore = new FactStore(factsFile);
       const facts = await factStore.readAll();
 
-      const confidences = facts.map(f => f.confidence);
+      const confidences = facts.map((f) => f.confidence);
       const min = Math.min(...confidences);
       const max = Math.max(...confidences);
 
@@ -259,7 +260,7 @@ describe('fact validation and metrics calculation integration', () => {
       const factStore = new FactStore(factsFile);
       const facts = await factStore.readAll();
 
-      const confidences = facts.map(f => f.confidence);
+      const confidences = facts.map((f) => f.confidence);
       const mean = confidences.reduce((a, b) => a + b, 0) / confidences.length;
 
       expect(mean).toBeCloseTo(0.8933, 2);
@@ -269,7 +270,7 @@ describe('fact validation and metrics calculation integration', () => {
       const factStore = new FactStore(factsFile);
       const facts = await factStore.readAll();
 
-      const confidences = facts.map(f => f.confidence).sort((a, b) => a - b);
+      const confidences = facts.map((f) => f.confidence).sort((a, b) => a - b);
       const n = confidences.length;
       let median: number;
 
@@ -280,14 +281,14 @@ describe('fact validation and metrics calculation integration', () => {
       }
 
       // For [0.82, 0.85, 0.88, 0.92, 0.93, 0.95], median is (0.88 + 0.92) / 2
-      expect(median).toBe(0.90);
+      expect(median).toBe(0.9);
     });
 
     it('should calculate confidence quartiles correctly', async () => {
       const factStore = new FactStore(factsFile);
       const facts = await factStore.readAll();
 
-      const confidences = facts.map(f => f.confidence).sort((a, b) => a - b);
+      const confidences = facts.map((f) => f.confidence).sort((a, b) => a - b);
       const n = confidences.length;
 
       const q25 = confidences[Math.floor(n * 0.25)];
@@ -316,7 +317,7 @@ describe('fact validation and metrics calculation integration', () => {
       const store = new FactStore(testFile);
       const facts = await store.readAll();
 
-      const confidences = facts.map(f => f.confidence);
+      const confidences = facts.map((f) => f.confidence);
       const min = Math.min(...confidences);
       const max = Math.max(...confidences);
       const mean = confidences.reduce((a, b) => a + b, 0) / confidences.length;
@@ -332,8 +333,10 @@ describe('fact validation and metrics calculation integration', () => {
       const factStore = new FactStore(factsFile);
       const facts = await factStore.readAll();
 
-      const factsWithDomain = facts.filter(f => f.domain_confidence !== undefined);
-      const domainConfidences = factsWithDomain.map(f => f.domain_confidence!).sort((a, b) => a - b);
+      const factsWithDomain = facts.filter((f) => f.domain_confidence !== undefined);
+      const domainConfidences = factsWithDomain
+        .map((f) => f.domain_confidence!)
+        .sort((a, b) => a - b);
 
       const min = domainConfidences[0];
       const max = domainConfidences[domainConfidences.length - 1];
@@ -365,7 +368,7 @@ describe('fact validation and metrics calculation integration', () => {
       const store = new FactStore(testFile);
       const facts = await store.readAll();
 
-      const factsWithDomainConf = facts.filter(f => f.domain_confidence !== undefined);
+      const factsWithDomainConf = facts.filter((f) => f.domain_confidence !== undefined);
       expect(factsWithDomainConf).toHaveLength(0);
     });
   });
@@ -382,8 +385,8 @@ describe('fact validation and metrics calculation integration', () => {
           min: 0.82,
           max: 0.95,
           mean: 0.8933,
-          median: 0.90,
-        }
+          median: 0.9,
+        },
       };
 
       expect(metrics.totalFacts).toBe(6);
@@ -418,7 +421,7 @@ Confidence Median: ${metrics.confidenceStats.median.toFixed(2)}
           min: 0.82,
           max: 0.95,
           mean: 0.8933,
-          median: 0.90,
+          median: 0.9,
           q25: 0.85,
           q75: 0.92,
         },
@@ -431,7 +434,7 @@ Confidence Median: ${metrics.confidenceStats.median.toFixed(2)}
           infrastructure: 3,
           operations: 2,
           security: 1,
-        }
+        },
       };
 
       const jsonString = JSON.stringify(metricsJson, null, 2);
@@ -463,14 +466,14 @@ Confidence Median: ${metrics.confidenceStats.median.toFixed(2)}
 
     it('should detect invalid facts in batch', async () => {
       const invalidFact: any = {
-        id: '',  // Invalid: empty id
+        id: '', // Invalid: empty id
         article_id: 'article_001',
-        content: 'x'.repeat(501),  // Invalid: too long
-        type: 'INVALID_TYPE',  // Invalid type
-        confidence: 1.5,  // Invalid: out of range
+        content: 'x'.repeat(501), // Invalid: too long
+        type: 'INVALID_TYPE', // Invalid type
+        confidence: 1.5, // Invalid: out of range
         extraction_method: 'claude',
-        extracted_at: 'not-a-date',  // Invalid timestamp
-        version: 0,  // Invalid: < 1
+        extracted_at: 'not-a-date', // Invalid timestamp
+        version: 0, // Invalid: < 1
         status: 'active',
       };
 
@@ -492,7 +495,7 @@ Confidence Median: ${metrics.confidenceStats.median.toFixed(2)}
       };
 
       const errors = validateFact(invalidFact);
-      const errorFields = errors.map(e => e.field);
+      const errorFields = errors.map((e) => e.field);
 
       expect(errorFields).toContain('id');
       expect(errorFields).toContain('type');
@@ -530,15 +533,16 @@ Confidence Median: ${metrics.confidenceStats.median.toFixed(2)}
       }
 
       // Calculate confidence stats
-      const confidences = validatedFacts.map(f => f.confidence).sort((a, b) => a - b);
+      const confidences = validatedFacts.map((f) => f.confidence).sort((a, b) => a - b);
       const n = confidences.length;
       const confidenceStats = {
         min: confidences[0],
         max: confidences[n - 1],
         mean: confidences.reduce((a, b) => a + b, 0) / n,
-        median: n % 2 === 1
-          ? confidences[Math.floor(n / 2)]
-          : (confidences[n / 2 - 1] + confidences[n / 2]) / 2,
+        median:
+          n % 2 === 1
+            ? confidences[Math.floor(n / 2)]
+            : (confidences[n / 2 - 1] + confidences[n / 2]) / 2,
       };
 
       // Calculate domain distribution
@@ -566,7 +570,7 @@ Confidence Median: ${metrics.confidenceStats.median.toFixed(2)}
       expect(confidenceStats.min).toBe(0.82);
       expect(confidenceStats.max).toBe(0.95);
       expect(confidenceStats.mean).toBeCloseTo(0.8933, 2);
-      expect(confidenceStats.median).toBe(0.90);
+      expect(confidenceStats.median).toBe(0.9);
 
       expect(factsByDomain['infrastructure']).toBe(3);
       expect(factsByDomain['operations']).toBe(2);
@@ -587,7 +591,7 @@ Confidence Median: ${metrics.confidenceStats.median.toFixed(2)}
       expect(facts).toHaveLength(0);
 
       // Should handle empty facts gracefully
-      const confidences = facts.map(f => f.confidence);
+      const confidences = facts.map((f) => f.confidence);
       expect(confidences).toHaveLength(0);
     });
 

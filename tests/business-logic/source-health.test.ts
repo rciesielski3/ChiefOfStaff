@@ -92,7 +92,7 @@ describe('computeSourceHealth', () => {
     const report = computeSourceHealth(
       ['A'],
       [article('Removed Feed', '2026-11-13T00:00:00Z')],
-      NOW
+      NOW,
     );
 
     expect(report.sources.map((s) => s.source)).toEqual(['A']);
@@ -124,7 +124,7 @@ describe('formatSourceHealthReport', () => {
         article('Quiet', '2026-11-10T00:00:00Z'),
         article('Dead', '2026-10-01T09:30:00Z'),
       ],
-      NOW
+      NOW,
     );
 
     const text = formatSourceHealthReport(report);
@@ -138,7 +138,7 @@ describe('formatSourceHealthReport', () => {
         '⚠️ 0 Dead (last article: 2026-10-01)',
         '',
         'Total: 3 articles from 3 sources (1 with zero)',
-      ].join('\n')
+      ].join('\n'),
     );
   });
 
@@ -147,7 +147,7 @@ describe('formatSourceHealthReport', () => {
     const text = formatSourceHealthReport(report);
 
     expect(text).toContain(
-      `⚠️ 0 Ghost (no articles in last ${RETENTION_DAYS} days, store retention)`
+      `⚠️ 0 Ghost (no articles in last ${RETENTION_DAYS} days, store retention)`,
     );
     expect(text).not.toContain('never');
   });
@@ -155,11 +155,8 @@ describe('formatSourceHealthReport', () => {
   describe('with live feed checks', () => {
     const report = computeSourceHealth(
       ['Busy', 'Quiet', 'Blocked', 'Empty', 'Unchecked'],
-      [
-        article('Busy', '2026-11-13T00:00:00Z'),
-        article('Quiet', '2026-10-20T00:00:00Z'),
-      ],
-      NOW
+      [article('Busy', '2026-11-13T00:00:00Z'), article('Quiet', '2026-10-20T00:00:00Z')],
+      NOW,
     );
     const checks = new Map<string, FeedCheck>([
       ['Quiet', { ok: true, items: 10, newest: '2026-10-05T08:00:00.000Z' }],
@@ -179,7 +176,7 @@ describe('formatSourceHealthReport', () => {
           `⚠️ 0 Unchecked (no articles in last ${RETENTION_DAYS} days, store retention)`,
           '',
           'Total: 1 articles from 5 sources (4 with zero, 1 fetch failed)',
-        ].join('\n')
+        ].join('\n'),
       );
     });
 
@@ -205,7 +202,7 @@ describe('summarizeFeedItems', () => {
         { pubDate: 'Sun, 05 Oct 2026 08:00:00 GMT' },
         { pubDate: '2026-09-01T00:00:00Z' },
         { pubDate: 'garbage' },
-      ])
+      ]),
     ).toEqual({ ok: true, items: 3, newest: '2026-10-05T08:00:00.000Z' });
   });
 

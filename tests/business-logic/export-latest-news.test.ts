@@ -1,5 +1,10 @@
 import { promises as fs } from 'fs';
-import { exportLatestNews, LatestNewsExport, transformToPublicFormat, writePublicLatestNews } from '../../src/business-logic/export-latest-news';
+import {
+  exportLatestNews,
+  LatestNewsExport,
+  transformToPublicFormat,
+  writePublicLatestNews,
+} from '../../src/business-logic/export-latest-news';
 import { ArticleStore } from '../../src/business-logic/article-store';
 import { Article } from '../../src/business-logic/normalize-article';
 
@@ -43,7 +48,7 @@ describe('exportLatestNews', () => {
       category: 'news',
       publishedAt: new Date().toISOString(),
       tags: ['test'],
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -55,7 +60,7 @@ describe('exportLatestNews', () => {
     date.setDate(date.getDate() - daysAgo);
     return createArticle({
       publishedAt: date.toISOString(),
-      ...overrides
+      ...overrides,
     });
   }
 
@@ -83,7 +88,7 @@ describe('exportLatestNews', () => {
     const articles = [
       createArticleWithDate(2, { id: 'oldest', title: 'Oldest' }),
       createArticleWithDate(0, { id: 'newest', title: 'Newest' }),
-      createArticleWithDate(1, { id: 'middle', title: 'Middle' })
+      createArticleWithDate(1, { id: 'middle', title: 'Middle' }),
     ];
     const store = new MockArticleStore(articles);
 
@@ -97,7 +102,7 @@ describe('exportLatestNews', () => {
 
   it('should respect limit parameter (default 50)', async () => {
     const articles = Array.from({ length: 100 }, (_, i) =>
-      createArticleWithDate(i, { id: `article-${i}` })
+      createArticleWithDate(i, { id: `article-${i}` }),
     );
     const store = new MockArticleStore(articles);
 
@@ -110,7 +115,7 @@ describe('exportLatestNews', () => {
     const articles = [
       createArticleWithDate(0, { id: 'a1' }),
       createArticleWithDate(1, { id: 'a2' }),
-      createArticleWithDate(2, { id: 'a3' })
+      createArticleWithDate(2, { id: 'a3' }),
     ];
     const store = new MockArticleStore(articles);
 
@@ -121,7 +126,7 @@ describe('exportLatestNews', () => {
 
   it('should export correct number when limit is specified', async () => {
     const articles = Array.from({ length: 30 }, (_, i) =>
-      createArticleWithDate(i, { id: `article-${i}` })
+      createArticleWithDate(i, { id: `article-${i}` }),
     );
     const store = new MockArticleStore(articles);
 
@@ -152,7 +157,7 @@ describe('exportLatestNews', () => {
     const article = createArticle();
     const store = new MockArticleStore([article]);
 
-    const result = await exportLatestNews(store) as LatestNewsExport;
+    const result = (await exportLatestNews(store)) as LatestNewsExport;
 
     expect(result).toHaveProperty('date');
     expect(result).toHaveProperty('updatedAt');
@@ -165,7 +170,7 @@ describe('exportLatestNews', () => {
       title: 'Complete Article',
       summary: 'Full summary with details',
       tags: ['typescript', 'testing'],
-      score: 95
+      score: 95,
     });
     const store = new MockArticleStore([article]);
 
@@ -193,7 +198,7 @@ describe('exportLatestNews', () => {
       createArticleWithDate(100, { id: 'very-old' }),
       createArticleWithDate(50, { id: 'old' }),
       createArticleWithDate(0, { id: 'newest-1' }),
-      createArticleWithDate(1, { id: 'newest-2' })
+      createArticleWithDate(1, { id: 'newest-2' }),
     ];
     const store = new MockArticleStore(articles);
 
@@ -209,7 +214,7 @@ describe('exportLatestNews', () => {
     const articles = [
       createArticle({ id: 'a1', publishedAt: now }),
       createArticle({ id: 'a2', publishedAt: now }),
-      createArticle({ id: 'a3', publishedAt: now })
+      createArticle({ id: 'a3', publishedAt: now }),
     ];
     const store = new MockArticleStore(articles);
 
@@ -228,7 +233,7 @@ describe('exportLatestNews', () => {
     const afterRead = await store.read();
 
     expect(afterRead).toHaveLength(beforeRead.length);
-    expect(afterRead.map(a => a.id)).toEqual(beforeRead.map(a => a.id));
+    expect(afterRead.map((a) => a.id)).toEqual(beforeRead.map((a) => a.id));
   });
 
   it('should export with various article categories', async () => {
@@ -236,24 +241,24 @@ describe('exportLatestNews', () => {
       createArticleWithDate(0, { id: 'news', category: 'news' }),
       createArticleWithDate(1, { id: 'release', category: 'release' }),
       createArticleWithDate(2, { id: 'article', category: 'article' }),
-      createArticleWithDate(3, { id: 'tutorial', category: 'tutorial' })
+      createArticleWithDate(3, { id: 'tutorial', category: 'tutorial' }),
     ];
     const store = new MockArticleStore(articles);
 
     const result = await exportLatestNews(store, 10);
 
     expect(result.items).toHaveLength(4);
-    expect(result.items.some(a => a.category === 'news')).toBe(true);
-    expect(result.items.some(a => a.category === 'release')).toBe(true);
-    expect(result.items.some(a => a.category === 'article')).toBe(true);
-    expect(result.items.some(a => a.category === 'tutorial')).toBe(true);
+    expect(result.items.some((a) => a.category === 'news')).toBe(true);
+    expect(result.items.some((a) => a.category === 'release')).toBe(true);
+    expect(result.items.some((a) => a.category === 'article')).toBe(true);
+    expect(result.items.some((a) => a.category === 'tutorial')).toBe(true);
   });
 
   it('should export with correct sorting stability', async () => {
     const articles = [
       createArticleWithDate(0, { id: 'a1', title: 'Article 1' }),
       createArticleWithDate(0, { id: 'a2', title: 'Article 2' }),
-      createArticleWithDate(0, { id: 'a3', title: 'Article 3' })
+      createArticleWithDate(0, { id: 'a3', title: 'Article 3' }),
     ];
     const store = new MockArticleStore(articles);
 
@@ -287,9 +292,9 @@ describe('transformToPublicFormat', () => {
           source: 'Test Source',
           category: 'news',
           publishedAt: '2026-07-31T08:00:00Z',
-          tags: ['test']
-        }
-      ]
+          tags: ['test'],
+        },
+      ],
     };
 
     const output = transformToPublicFormat(input);
@@ -297,7 +302,7 @@ describe('transformToPublicFormat', () => {
     expect(output).toEqual({
       date: '2026-07-31',
       updatedAt: '2026-07-31T10:00:00Z',
-      articles: input.items
+      articles: input.items,
     });
 
     // Verify articles and items point to same objects
@@ -318,9 +323,9 @@ describe('transformToPublicFormat', () => {
           source: 'Test Source',
           category: 'news',
           publishedAt: '2026-07-31T08:00:00Z',
-          tags: []
-        }
-      ]
+          tags: [],
+        },
+      ],
     };
 
     const output = transformToPublicFormat(input);
@@ -332,7 +337,7 @@ describe('transformToPublicFormat', () => {
     const input = {
       date: '2026-07-31',
       updatedAt: '2026-07-31T10:00:00Z',
-      items: []
+      items: [],
     };
 
     const output = transformToPublicFormat(input);
@@ -358,9 +363,9 @@ describe('writePublicLatestNews', () => {
           source: 'Test',
           category: 'news',
           publishedAt: '2026-07-31T08:00:00Z',
-          tags: []
-        }
-      ]
+          tags: [],
+        },
+      ],
     };
 
     await writePublicLatestNews(filePath, testData);
@@ -381,7 +386,7 @@ describe('writePublicLatestNews', () => {
     const testData = {
       date: '2026-07-31',
       updatedAt: '2026-07-31T10:00:00Z',
-      items: []
+      items: [],
     };
 
     await writePublicLatestNews(filePath, testData);

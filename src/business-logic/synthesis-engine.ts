@@ -55,7 +55,7 @@ export class SynthesisEngine {
   private groupPatternsByTheme(): Map<string, Insight[]> {
     const grouped = new Map<string, Insight[]>();
 
-    this.patterns.forEach(pattern => {
+    this.patterns.forEach((pattern) => {
       const theme = this.extractTheme(pattern.title);
       if (!grouped.has(theme)) {
         grouped.set(theme, []);
@@ -82,19 +82,18 @@ export class SynthesisEngine {
       // Only create best practice if we have multiple patterns
       if (patterns.length >= 2) {
         // Calculate average confidence
-        const avgConfidence =
-          patterns.reduce((sum, p) => sum + p.confidence, 0) / patterns.length;
+        const avgConfidence = patterns.reduce((sum, p) => sum + p.confidence, 0) / patterns.length;
 
         // Only create if average confidence exceeds threshold
         if (avgConfidence > 0.85) {
           // Collect all related facts from patterns
-          const relatedFactIds = Array.from(new Set(patterns.flatMap(p => p.relatedFactIds)));
+          const relatedFactIds = Array.from(new Set(patterns.flatMap((p) => p.relatedFactIds)));
 
           // Collect all domains from patterns
-          const domains = Array.from(new Set(patterns.flatMap(p => p.domains)));
+          const domains = Array.from(new Set(patterns.flatMap((p) => p.domains)));
 
           // Determine evolution stage
-          const evolutionStage = avgConfidence > 0.90 ? 'mature' : 'growth';
+          const evolutionStage = avgConfidence > 0.9 ? 'mature' : 'growth';
 
           // Create best practice insight
           const insight = InsightFactory.create({
@@ -105,12 +104,12 @@ export class SynthesisEngine {
             relatedFactIds,
             domains: domains.length > 0 ? domains : ['general'],
             tags: ['best-practice', theme, ...domains],
-            supportingEvidence: patterns.map(p => p.title),
+            supportingEvidence: patterns.map((p) => p.title),
             evolutionStage,
             metadata: {
               patternCount: patterns.length,
               theme,
-              sourcePatternIds: patterns.map(p => p.id),
+              sourcePatternIds: patterns.map((p) => p.id),
             },
           });
 
@@ -132,12 +131,12 @@ export class SynthesisEngine {
     const insights: Insight[] = [];
 
     // Find patterns with multiple domains
-    const multiDomainPatterns = this.patterns.filter(p => p.domains.length > 1);
+    const multiDomainPatterns = this.patterns.filter((p) => p.domains.length > 1);
 
     // Group multi-domain patterns by theme
     const relationshipGroups = new Map<string, Insight[]>();
 
-    multiDomainPatterns.forEach(pattern => {
+    multiDomainPatterns.forEach((pattern) => {
       const theme = this.extractTheme(pattern.title);
       if (!relationshipGroups.has(theme)) {
         relationshipGroups.set(theme, []);
@@ -148,15 +147,14 @@ export class SynthesisEngine {
     // Create relationship insights for theme groups
     relationshipGroups.forEach((patterns, theme) => {
       // Get all unique domains in this group
-      const domains = Array.from(new Set(patterns.flatMap(p => p.domains)));
+      const domains = Array.from(new Set(patterns.flatMap((p) => p.domains)));
 
       // Create relationship if we have patterns spanning multiple domains
       if (domains.length > 1) {
-        const avgConfidence =
-          patterns.reduce((sum, p) => sum + p.confidence, 0) / patterns.length;
+        const avgConfidence = patterns.reduce((sum, p) => sum + p.confidence, 0) / patterns.length;
 
         // Collect all related facts from patterns
-        const relatedFactIds = Array.from(new Set(patterns.flatMap(p => p.relatedFactIds)));
+        const relatedFactIds = Array.from(new Set(patterns.flatMap((p) => p.relatedFactIds)));
 
         // Create relationship insight
         const insight = InsightFactory.create({
@@ -167,13 +165,13 @@ export class SynthesisEngine {
           relatedFactIds,
           domains,
           tags: ['relationship', theme, ...domains],
-          supportingEvidence: patterns.map(p => p.title),
+          supportingEvidence: patterns.map((p) => p.title),
           evolutionStage: 'new',
           metadata: {
             patternCount: patterns.length,
             theme,
             connectedDomains: domains,
-            sourcePatternIds: patterns.map(p => p.id),
+            sourcePatternIds: patterns.map((p) => p.id),
           },
         });
 
@@ -194,9 +192,7 @@ export class SynthesisEngine {
    */
   private extractTheme(title: string): string {
     // Remove leading prefixes
-    let normalized = title
-      .toLowerCase()
-      .replace(/^(pattern:|best practice:|trend:)\s*/i, '');
+    let normalized = title.toLowerCase().replace(/^(pattern:|best practice:|trend:)\s*/i, '');
 
     // Remove all trailing pattern-related words globally
     normalized = normalized

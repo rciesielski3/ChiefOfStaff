@@ -25,7 +25,11 @@ import {
   ArticleContext,
 } from './domain-classification-fallback';
 import { EmbeddingsService } from '../services/embeddings';
-import { EvolutionEngine, Fact as EvolutionFact, EvolutionResult } from '../services/evolution-engine';
+import {
+  EvolutionEngine,
+  Fact as EvolutionFact,
+  EvolutionResult,
+} from '../services/evolution-engine';
 import { SensitivityAssessor } from '../services/sensitivity-assessor';
 
 /**
@@ -49,13 +53,13 @@ export class KnowledgeExtractionService {
 
   private domainClassifier: DomainClassifier;
   private domainFallback: DomainClassificationFallback;
-  private readonly FALLBACK_CONFIDENCE_THRESHOLD = 0.60;
+  private readonly FALLBACK_CONFIDENCE_THRESHOLD = 0.6;
 
   constructor(
     apiKey?: string,
     model?: string,
     domainClassifierCache?: ClassificationCacheStore,
-    domainFallbackCache?: ClassificationCacheStore
+    domainFallbackCache?: ClassificationCacheStore,
   ) {
     this.client = new Anthropic({
       apiKey: apiKey || process.env.ANTHROPIC_API_KEY,
@@ -65,7 +69,7 @@ export class KnowledgeExtractionService {
     const configuredModel = model || process.env.CLAUDE_MODEL || 'claude-haiku-4-5';
     if (!this.VALID_MODELS.includes(configuredModel)) {
       throw new Error(
-        `Invalid Claude model: ${configuredModel}. Valid models: ${this.VALID_MODELS.join(', ')}`
+        `Invalid Claude model: ${configuredModel}. Valid models: ${this.VALID_MODELS.join(', ')}`,
       );
     }
     this.model = configuredModel;
@@ -87,23 +91,15 @@ export class KnowledgeExtractionService {
       // Extract from each chunk
       const allFactsRaw: ExtractedFactRaw[] = [];
       for (let i = 0; i < chunks.length; i++) {
-        const chunkFacts = await this.extractFromChunk(
-          request,
-          chunks[i],
-          i + 1,
-          chunks.length
-        );
+        const chunkFacts = await this.extractFromChunk(request, chunks[i], i + 1, chunks.length);
         allFactsRaw.push(...chunkFacts);
       }
 
       // Convert raw facts to KnowledgeFact objects
-      const facts = this.convertToKnowledgeFacts(
-        request.article_id,
-        allFactsRaw
-      );
+      const facts = this.convertToKnowledgeFacts(request.article_id, allFactsRaw);
 
       // Filter by confidence threshold
-      const validFacts = facts.filter(fact => {
+      const validFacts = facts.filter((fact) => {
         const threshold = CONFIDENCE_THRESHOLDS[fact.type];
         return fact.confidence >= threshold;
       });
@@ -149,7 +145,7 @@ export class KnowledgeExtractionService {
     request: FactExtractionRequest,
     chunk: string,
     chunkNum: number,
-    totalChunks: number
+    totalChunks: number,
   ): Promise<ExtractedFactRaw[]> {
     const chunkLabel = totalChunks > 1 ? ` (chunk ${chunkNum}/${totalChunks})` : '';
 
@@ -197,21 +193,18 @@ FACTS:`;
 
     // Extract text from response (with null check)
     if (!message.content || !message.content[0]) {
-      console.warn(
-        `Claude returned empty content for article ${request.article_id}${chunkLabel}`
-      );
+      console.warn(`Claude returned empty content for article ${request.article_id}${chunkLabel}`);
       return [];
     }
 
-    const responseText =
-      message.content[0].type === 'text' ? message.content[0].text : '';
+    const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
 
     // Parse JSON array from response
     try {
       const jsonMatch = responseText.match(/\[[\s\S]*\]/);
       if (!jsonMatch) {
         console.warn(
-          `No JSON array found in extraction response for article ${request.article_id}${chunkLabel}`
+          `No JSON array found in extraction response for article ${request.article_id}${chunkLabel}`,
         );
         return [];
       }
@@ -219,7 +212,7 @@ FACTS:`;
       const factsRaw = JSON.parse(jsonMatch[0]) as ExtractedFactRaw[];
 
       // Ensure each fact has required fields
-      return factsRaw.filter(fact => {
+      return factsRaw.filter((fact) => {
         return (
           fact.content &&
           typeof fact.content === 'string' &&
@@ -230,7 +223,7 @@ FACTS:`;
     } catch (error) {
       console.error(
         `Failed to parse extraction JSON for article ${request.article_id}${chunkLabel}:`,
-        error
+        error,
       );
       return [];
     }
@@ -241,7 +234,7 @@ FACTS:`;
    */
   private convertToKnowledgeFacts(
     articleId: string,
-    rawFacts: ExtractedFactRaw[]
+    rawFacts: ExtractedFactRaw[],
   ): KnowledgeFact[] {
     return rawFacts.map((raw) => ({
       id: `fact_${articleId}_${randomUUID()}`,
@@ -291,7 +284,7 @@ FACTS:`;
    */
   private async classifyFactsDomains(
     facts: KnowledgeFact[],
-    request: FactExtractionRequest
+    request: FactExtractionRequest,
   ): Promise<KnowledgeFact[]> {
     const context: ArticleContext = {
       title: request.title,
@@ -308,16 +301,12 @@ FACTS:`;
       let finalResult: DomainClassificationResult = heuristicResult;
       if (heuristicResult.confidence < this.FALLBACK_CONFIDENCE_THRESHOLD) {
         try {
-          finalResult = await this.domainFallback.classifyAsync(
-            fact,
-            heuristicResult,
-            context
-          );
+          finalResult = await this.domainFallback.classifyAsync(fact, heuristicResult, context);
         } catch (error) {
           // If fallback fails, stick with heuristic result
           console.warn(
             `Domain fallback classification failed for fact ${fact.id}, using heuristic:`,
-            error instanceof Error ? error.message : String(error)
+            error instanceof Error ? error.message : String(error),
           );
         }
       }
@@ -350,10 +339,7 @@ FACTS:`;
       // Restore fallback cache if present
       if (parsed.fallback && Array.isArray(parsed.fallback.entries)) {
         const fallbackCache = this.domainFallback.getCache() as any;
-        if (
-          fallbackCache &&
-          typeof fallbackCache.importEntries === 'function'
-        ) {
+        if (fallbackCache && typeof fallbackCache.importEntries === 'function') {
           fallbackCache.importEntries(parsed.fallback.entries);
           console.info(`Restored ${parsed.fallback.entries.length} fallback cache entries`);
         }
@@ -361,7 +347,7 @@ FACTS:`;
     } catch (error) {
       console.warn(
         `Failed to load cache snapshots from ${cachePath}:`,
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error),
       );
     }
   }
@@ -381,10 +367,7 @@ FACTS:`;
       const cacheData: any = {};
 
       // Export fallback cache
-      if (
-        fallbackCache &&
-        typeof fallbackCache.exportEntries === 'function'
-      ) {
+      if (fallbackCache && typeof fallbackCache.exportEntries === 'function') {
         const entries = fallbackCache.exportEntries();
         cacheData.fallback = { entries };
       }
@@ -394,7 +377,7 @@ FACTS:`;
     } catch (error) {
       console.error(
         `Failed to save cache snapshots to ${cachePath}:`,
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error),
       );
     }
   }
@@ -428,7 +411,7 @@ FACTS:`;
  */
 export async function extractFactsBatch(
   requests: FactExtractionRequest[],
-  concurrency: number = 3
+  concurrency: number = 3,
 ): Promise<FactExtractionBatch[]> {
   const service = new KnowledgeExtractionService();
   const results: FactExtractionBatch[] = [];
@@ -436,14 +419,12 @@ export async function extractFactsBatch(
   // Process in batches to respect rate limits
   for (let i = 0; i < requests.length; i += concurrency) {
     const batch = requests.slice(i, i + concurrency);
-    const batchResults = await Promise.all(
-      batch.map(req => service.extractFacts(req))
-    );
+    const batchResults = await Promise.all(batch.map((req) => service.extractFacts(req)));
     results.push(...batchResults);
 
     // Add small delay between batches
     if (i + concurrency < requests.length) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
 
@@ -462,7 +443,7 @@ export async function extractFactsBatch(
  */
 export async function extractAndEvolveKnowledge(
   facts: KnowledgeFact[],
-  embeddingsCachePath?: string
+  embeddingsCachePath?: string,
 ): Promise<EvolutionResult[]> {
   const embeddingsService = new EmbeddingsService();
   await embeddingsService.loadModel();

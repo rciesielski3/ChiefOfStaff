@@ -36,7 +36,7 @@ export class InsightStore {
    */
   async findById(id: string): Promise<Insight | null> {
     const allInsights = await this.readAll();
-    const insight = allInsights.find(i => i.id === id);
+    const insight = allInsights.find((i) => i.id === id);
     return insight || null;
   }
 
@@ -45,7 +45,7 @@ export class InsightStore {
    */
   async findByDomain(domain: string): Promise<Insight[]> {
     const allInsights = await this.readAll();
-    return allInsights.filter(i => i.domains.includes(domain));
+    return allInsights.filter((i) => i.domains.includes(domain));
   }
 
   /**
@@ -53,15 +53,15 @@ export class InsightStore {
    */
   async findByType(type: string): Promise<Insight[]> {
     const allInsights = await this.readAll();
-    return allInsights.filter(i => (i.type as string) === type);
+    return allInsights.filter((i) => (i.type as string) === type);
   }
 
   /**
    * Get high-confidence insights (threshold 0.80 by default)
    */
-  async findHighConfidence(threshold: number = 0.80): Promise<Insight[]> {
+  async findHighConfidence(threshold: number = 0.8): Promise<Insight[]> {
     const allInsights = await this.readAll();
-    return allInsights.filter(i => i.confidence >= threshold);
+    return allInsights.filter((i) => i.confidence >= threshold);
   }
 
   /**
@@ -69,7 +69,7 @@ export class InsightStore {
    */
   async update(id: string, partial: Partial<Insight>): Promise<Insight | null> {
     const allInsights = await this.readAll();
-    const index = allInsights.findIndex(i => i.id === id);
+    const index = allInsights.findIndex((i) => i.id === id);
 
     if (index === -1) {
       return null;
@@ -91,7 +91,7 @@ export class InsightStore {
    */
   async delete(id: string): Promise<boolean> {
     const allInsights = await this.readAll();
-    const index = allInsights.findIndex(i => i.id === id);
+    const index = allInsights.findIndex((i) => i.id === id);
 
     if (index === -1) {
       return false;
@@ -153,9 +153,7 @@ export class InsightStore {
     const dir = path.dirname(this.filePath);
     await fs.mkdir(dir, { recursive: true });
 
-    const content = insights
-      .map(insight => JSON.stringify(insight))
-      .join('\n');
+    const content = insights.map((insight) => JSON.stringify(insight)).join('\n');
 
     // Write atomically using AtomicFileWriter
     await this.writer.writeFile(this.filePath, content + (insights.length > 0 ? '\n' : ''));

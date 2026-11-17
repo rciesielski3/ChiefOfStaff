@@ -3,7 +3,10 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { resolveProjectRoot } from './project-root';
-import { exportWeeklyHighlightsWithSummaries, WeeklyHighlightsExport } from '../business-logic/export-weekly-highlights';
+import {
+  exportWeeklyHighlightsWithSummaries,
+  WeeklyHighlightsExport,
+} from '../business-logic/export-weekly-highlights';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { SummaryGenerator } from '../business-logic/summary-generator';
 import { withQANewsDisplayFields } from '../business-logic/categorize-article';
@@ -29,7 +32,6 @@ function logStructured(stage: string, data: Record<string, any>): void {
   console.error(`[${timestamp}] [${stage}] ${fields}`);
 }
 
-
 async function main(): Promise<void> {
   const workflowStartTime = Date.now();
   try {
@@ -41,7 +43,7 @@ async function main(): Promise<void> {
     const storeFilePath = path.join(projectRoot, 'data/canonical_articles.ndjson');
     logStructured('PATHS_RESOLVED', {
       projectRoot,
-      storeFilePath
+      storeFilePath,
     });
 
     // Create article store
@@ -58,7 +60,7 @@ async function main(): Promise<void> {
     const loadDuration = Date.now() - loadStartTime;
     logStructured('LOAD_COMPLETE', {
       articleCount: articles.length,
-      durationMs: loadDuration
+      durationMs: loadDuration,
     });
 
     // Export weekly highlights
@@ -69,11 +71,14 @@ async function main(): Promise<void> {
     // Check if ANTHROPIC_API_KEY is available for summary generation
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (apiKey) {
-      logStructured('SUMMARIES_ENABLED', { });
+      logStructured('SUMMARIES_ENABLED', {});
       const summaryGenerator = new SummaryGenerator(apiKey);
       weeklyExport = await exportWeeklyHighlightsWithSummaries(articles, summaryGenerator);
     } else {
-      logStructured('SUMMARIES_SKIPPED', { reason: 'ANTHROPIC_API_KEY not set', fallback: 'deterministic' });
+      logStructured('SUMMARIES_SKIPPED', {
+        reason: 'ANTHROPIC_API_KEY not set',
+        fallback: 'deterministic',
+      });
       weeklyExport = await exportWeeklyHighlightsWithSummaries(articles);
     }
 
@@ -81,18 +86,22 @@ async function main(): Promise<void> {
     logStructured('EXPORT_COMPLETE', {
       weekCount: weeklyExport.weeks.length,
       totalArticles: weeklyExport.weeks.reduce((sum, w) => sum + w.items.length, 0),
-      durationMs: exportDuration
+      durationMs: exportDuration,
     });
 
     // Validation: Detect empty export
     if (weeklyExport.weeks.length === 0) {
       console.warn('[Export Weekly Highlights] ⚠️  WARNING: Export produced 0 weeks');
-      console.warn('[Export Weekly Highlights] Store may be empty or not yet populated by daily-brief');
-      console.warn('[Export Weekly Highlights] Check: data/canonical_articles.ndjson exists and has content');
+      console.warn(
+        '[Export Weekly Highlights] Store may be empty or not yet populated by daily-brief',
+      );
+      console.warn(
+        '[Export Weekly Highlights] Check: data/canonical_articles.ndjson exists and has content',
+      );
       logStructured('VALIDATION_FAILED', {
         reason: 'empty_export',
         expectedMinWeeks: 1,
-        actualWeeks: 0
+        actualWeeks: 0,
       });
       process.exit(1);
     }
@@ -100,7 +109,7 @@ async function main(): Promise<void> {
     // Write JSON export to qa-news/data/weekly-highlights.json
     const writeStartTime = Date.now();
     logStructured('WRITE_START', {
-      weekCount: weeklyExport.weeks.length
+      weekCount: weeklyExport.weeks.length,
     });
 
     // Map article categories to QA-News valid categories for data export
@@ -108,8 +117,8 @@ async function main(): Promise<void> {
       ...weeklyExport,
       weeks: weeklyExport.weeks.map((week) => ({
         ...week,
-        items: week.items.map(withQANewsDisplayFields)
-      }))
+        items: week.items.map(withQANewsDisplayFields),
+      })),
     };
 
     const jsonContent = JSON.stringify(mappedData, null, 2);
@@ -124,7 +133,7 @@ async function main(): Promise<void> {
     const writeDuration = Date.now() - writeStartTime;
     logStructured('WRITE_COMPLETE', {
       durationMs: writeDuration,
-      dataPath
+      dataPath,
     });
 
     // Output JSON to stdout for workflow capture
@@ -133,14 +142,14 @@ async function main(): Promise<void> {
     const totalDuration = Date.now() - workflowStartTime;
     logStructured('WORKFLOW_COMPLETE', {
       totalDurationMs: totalDuration,
-      weekCount: weeklyExport.weeks.length
+      weekCount: weeklyExport.weeks.length,
     });
   } catch (error) {
     const totalDuration = Date.now() - workflowStartTime;
     console.error('✗ Export failed:', error instanceof Error ? error.message : error);
     logStructured('WORKFLOW_ERROR', {
       error: error instanceof Error ? error.message : String(error),
-      totalDurationMs: totalDuration
+      totalDurationMs: totalDuration,
     });
     process.exit(1);
   }
@@ -150,7 +159,7 @@ async function main(): Promise<void> {
 main().catch((error) => {
   console.error('[Export Weekly Highlights] ❌ Error:', error);
   logStructured('WORKFLOW_ERROR_UNCAUGHT', {
-    error: error instanceof Error ? error.message : String(error)
+    error: error instanceof Error ? error.message : String(error),
   });
   process.exit(1);
 });
