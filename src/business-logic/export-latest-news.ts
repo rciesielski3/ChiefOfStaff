@@ -29,9 +29,13 @@ function storyKey(article: Article): string {
   try {
     const parsed = new URL(url);
     parsed.hash = '';
-    for (const param of [...parsed.searchParams.keys()]) {
-      if (param.toLowerCase().startsWith('utm_')) parsed.searchParams.delete(param);
-    }
+    // Rebuild the query for every URL so the kept parameters are always
+    // encoded the same way (URLSearchParams encodes "~" as "%7E").
+    const kept = new URLSearchParams();
+    parsed.searchParams.forEach((value, key) => {
+      if (!key.toLowerCase().startsWith('utm_')) kept.append(key, value);
+    });
+    parsed.search = kept.toString();
     url = parsed.toString();
   } catch {
     // Not an absolute URL: compare it as written.

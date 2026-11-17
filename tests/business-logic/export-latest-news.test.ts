@@ -288,6 +288,17 @@ describe('exportLatestNews', () => {
     expect(result.items.map(a => a.id)).toEqual(['new', 'other-source']);
   });
 
+  it('treats a URL and the same URL plus utm_ params as one story even with "~" in the query', async () => {
+    const store = new MockArticleStore([
+      createArticleWithDate(1, { id: 'tracked', url: 'https://example.org/story?topic=qa~news&utm_source=feed' }),
+      createArticleWithDate(2, { id: 'plain', url: 'https://example.org/story?topic=qa~news' })
+    ]);
+
+    const result = await exportLatestNews(store);
+
+    expect(result.items.map(a => a.id)).toEqual(['tracked']);
+  });
+
   it('keeps different stories that share a title', async () => {
     const store = new MockArticleStore([
       createArticleWithDate(1, { id: 'k6', source: 'Grafana k6 Releases', title: 'v1.8.3', url: 'https://github.com/grafana/k6/releases/tag/v1.8.3' }),
