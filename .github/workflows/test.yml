@@ -45,7 +45,7 @@ jobs:
         run: npm run typecheck
 
       - name: Run tests
-        run: npm test -- --ci
+        run: npm test -- --ci --coverage
 
       - name: Fail if tests modified tracked files
         run: git diff --exit-code --stat
