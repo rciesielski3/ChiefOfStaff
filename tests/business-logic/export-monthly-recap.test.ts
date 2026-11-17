@@ -1,4 +1,9 @@
-import { exportMonthlyRecap, exportMonthlyRecapWithSummaries, MonthlyRecap, MonthlyRecapExport } from '../../src/business-logic/export-monthly-recap';
+import {
+  exportMonthlyRecap,
+  exportMonthlyRecapWithSummaries,
+  MonthlyRecap,
+  MonthlyRecapExport,
+} from '../../src/business-logic/export-monthly-recap';
 import { Article } from '../../src/business-logic/normalize-article';
 import { SummaryGenerator } from '../../src/business-logic/summary-generator';
 
@@ -28,7 +33,7 @@ describe('exportMonthlyRecap', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: `2026-06-${String(i).padStart(2, '0')}T10:00:00Z`,
-        tags: []
+        tags: [],
       });
     }
 
@@ -42,7 +47,7 @@ describe('exportMonthlyRecap', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: `2026-07-${String(i).padStart(2, '0')}T10:00:00Z`,
-        tags: []
+        tags: [],
       });
     }
 
@@ -81,7 +86,7 @@ describe('exportMonthlyRecap', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-06-15T10:00:00Z',
-        tags: []
+        tags: [],
       },
       {
         id: 'test-2',
@@ -91,14 +96,14 @@ describe('exportMonthlyRecap', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-15T10:00:00Z',
-        tags: []
-      }
+        tags: [],
+      },
     ];
 
     const result = exportMonthlyRecap(articles);
 
     // Each month should have a summary field that is a string
-    result.months.forEach(month => {
+    result.months.forEach((month) => {
       expect(typeof month.summary).toBe('string');
       // Initially should be empty string (Task 6 will populate it)
       expect(month.summary).toBe('');
@@ -136,7 +141,7 @@ describe('exportMonthlyRecap', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-05-15T10:00:00Z', // May (oldest)
-        tags: []
+        tags: [],
       },
       {
         id: 'test-2',
@@ -146,7 +151,7 @@ describe('exportMonthlyRecap', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-15T10:00:00Z', // July (newest)
-        tags: []
+        tags: [],
       },
       {
         id: 'test-3',
@@ -156,8 +161,8 @@ describe('exportMonthlyRecap', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-06-15T10:00:00Z', // June (middle)
-        tags: []
-      }
+        tags: [],
+      },
     ];
 
     const result = exportMonthlyRecap(articles);
@@ -189,7 +194,7 @@ describe('exportMonthlyRecap', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: `2026-07-${String(i).padStart(2, '0')}T10:00:00Z`,
-        tags: []
+        tags: [],
       });
     }
 
@@ -227,7 +232,7 @@ describe('exportMonthlyRecapWithSummaries', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-06-15T10:00:00Z',
-        tags: []
+        tags: [],
       },
       {
         id: 'test-2',
@@ -237,15 +242,15 @@ describe('exportMonthlyRecapWithSummaries', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-15T10:00:00Z',
-        tags: []
-      }
+        tags: [],
+      },
     ];
 
     // Mock SummaryGenerator
     const mockSummaryGenerator = {
       generateSummary: jest.fn(async (items: Article[]) => {
         return `Generated summary for ${items.length} articles`;
-      })
+      }),
     } as unknown as SummaryGenerator;
 
     const result = await exportMonthlyRecapWithSummaries(articles, 25, mockSummaryGenerator);
@@ -254,7 +259,7 @@ describe('exportMonthlyRecapWithSummaries', () => {
     expect(result.months).toHaveLength(2);
 
     // Each month should have a populated summary
-    result.months.forEach(month => {
+    result.months.forEach((month) => {
       expect(typeof month.summary).toBe('string');
       expect(month.summary.length).toBeGreaterThan(0);
       expect(month.summary).toMatch(/Generated summary for/);
@@ -281,15 +286,15 @@ describe('exportMonthlyRecapWithSummaries', () => {
         source: 'Test Source',
         category: 'news',
         publishedAt: '2026-07-15T10:00:00Z',
-        tags: []
-      }
+        tags: [],
+      },
     ];
 
     // Mock SummaryGenerator to throw error
     const mockSummaryGenerator = {
       generateSummary: jest.fn(async () => {
         throw new Error('API error');
-      })
+      }),
     } as unknown as SummaryGenerator;
 
     const result = await exportMonthlyRecapWithSummaries(articles, 25, mockSummaryGenerator);
@@ -313,7 +318,7 @@ describe('exportMonthlyRecapWithSummaries', () => {
     const articles: Article[] = [];
 
     const mockSummaryGenerator = {
-      generateSummary: jest.fn(async () => 'summary')
+      generateSummary: jest.fn(async () => 'summary'),
     } as unknown as SummaryGenerator;
 
     const result = await exportMonthlyRecapWithSummaries(articles, 25, mockSummaryGenerator);

@@ -46,7 +46,7 @@ describe('Daily Brief CLI Error Handling', () => {
     // Read the CLI file to verify error handler is present
     const cliContent = fs.readFileSync(
       path.join(__dirname, '../../src/cli/daily-brief.ts'),
-      'utf-8'
+      'utf-8',
     );
 
     // Verify the error handler pattern exists
@@ -59,7 +59,7 @@ describe('Daily Brief CLI Error Handling', () => {
     // Verify error handler logs to console.error
     const cliContent = fs.readFileSync(
       path.join(__dirname, '../../src/cli/daily-brief.ts'),
-      'utf-8'
+      'utf-8',
     );
 
     // Check that console.error is called in error handler
@@ -69,7 +69,7 @@ describe('Daily Brief CLI Error Handling', () => {
   it('exits with code 1 when main throws', () => {
     const cliContent = fs.readFileSync(
       path.join(__dirname, '../../src/cli/daily-brief.ts'),
-      'utf-8'
+      'utf-8',
     );
 
     // Verify error handler exits with code 1
@@ -109,7 +109,7 @@ describe('Daily Brief CLI process lifetime', () => {
     });
     // Keep idle connections open far longer than the exit deadline.
     server.keepAliveTimeout = 10 * 60 * 1000;
-    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
 
     root = createTempProjectRoot([]);
     fs.writeFileSync(
@@ -117,42 +117,46 @@ describe('Daily Brief CLI process lifetime', () => {
       [
         "require('http').globalAgent.keepAlive = true;",
         `const config = require(${JSON.stringify(path.join(REPO_ROOT, 'src/config/rss-sources.config'))});`,
-        'config.getEnabledSources = () => [{ name: "Local redirect", url: process.env.LOCAL_FEED_URL, enabled: true }];'
-      ].join('\n')
+        'config.getEnabledSources = () => [{ name: "Local redirect", url: process.env.LOCAL_FEED_URL, enabled: true }];',
+      ].join('\n'),
     );
   });
 
   afterAll(async () => {
     server.closeAllConnections();
-    await new Promise<void>(resolve => server.close(() => resolve()));
+    await new Promise<void>((resolve) => server.close(() => resolve()));
     fs.rmSync(root, { recursive: true, force: true });
   });
 
-  it('exits with code 0 on its own after WORKFLOW_COMPLETE', async () => {
-    const { port } = server.address() as AddressInfo;
-    const child = spawn(
-      TS_NODE_BIN,
-      ['-r', path.join(root, 'local-sources.js'), path.join(REPO_ROOT, 'src/cli/daily-brief.ts')],
-      {
-        cwd: root,
-        env: { ...process.env, LOCAL_FEED_URL: `http://127.0.0.1:${port}/redirect` },
-        stdio: ['ignore', 'pipe', 'pipe']
-      }
-    );
-    let output = '';
-    child.stdout.on('data', chunk => (output += chunk));
-    child.stderr.on('data', chunk => (output += chunk));
+  it(
+    'exits with code 0 on its own after WORKFLOW_COMPLETE',
+    async () => {
+      const { port } = server.address() as AddressInfo;
+      const child = spawn(
+        TS_NODE_BIN,
+        ['-r', path.join(root, 'local-sources.js'), path.join(REPO_ROOT, 'src/cli/daily-brief.ts')],
+        {
+          cwd: root,
+          env: { ...process.env, LOCAL_FEED_URL: `http://127.0.0.1:${port}/redirect` },
+          stdio: ['ignore', 'pipe', 'pipe'],
+        },
+      );
+      let output = '';
+      child.stdout.on('data', (chunk) => (output += chunk));
+      child.stderr.on('data', (chunk) => (output += chunk));
 
-    const killTimer = setTimeout(() => child.kill('SIGKILL'), EXIT_DEADLINE_MS);
-    const [code, signal] = await new Promise<[number | null, string | null]>(resolve =>
-      child.on('exit', (c, s) => resolve([c, s]))
-    );
-    clearTimeout(killTimer);
+      const killTimer = setTimeout(() => child.kill('SIGKILL'), EXIT_DEADLINE_MS);
+      const [code, signal] = await new Promise<[number | null, string | null]>((resolve) =>
+        child.on('exit', (c, s) => resolve([c, s])),
+      );
+      clearTimeout(killTimer);
 
-    expect(output).toContain('[WORKFLOW_COMPLETE]');
-    expect(output).toContain('Local redirect: 1 articles');
-    expect(signal).toBeNull(); // SIGKILL here means the process hung after its work
-    expect(code).toBe(0);
-    expect(fs.existsSync(path.join(root, 'data/canonical_articles.ndjson'))).toBe(true);
-  }, EXIT_DEADLINE_MS + 30000);
+      expect(output).toContain('[WORKFLOW_COMPLETE]');
+      expect(output).toContain('Local redirect: 1 articles');
+      expect(signal).toBeNull(); // SIGKILL here means the process hung after its work
+      expect(code).toBe(0);
+      expect(fs.existsSync(path.join(root, 'data/canonical_articles.ndjson'))).toBe(true);
+    },
+    EXIT_DEADLINE_MS + 30000,
+  );
 });

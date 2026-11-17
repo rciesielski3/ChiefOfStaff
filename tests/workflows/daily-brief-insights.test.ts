@@ -27,16 +27,12 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
     try {
       let output = '';
       try {
-        output = execFileSync(
-          TS_NODE_BIN,
-          [cli('generate-insights.ts')],
-          {
-            encoding: 'utf-8',
-            stdio: ['pipe', 'pipe', 'pipe'],
-            env,
-            cwd: projectRoot()
-          }
-        );
+        output = execFileSync(TS_NODE_BIN, [cli('generate-insights.ts')], {
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+          env,
+          cwd: projectRoot(),
+        });
       } catch (e: any) {
         output = e.stdout || '';
       }
@@ -64,16 +60,12 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
 
       let output = '';
       try {
-        output = execFileSync(
-          TS_NODE_BIN,
-          [cli('generate-insights.ts')],
-          {
-            encoding: 'utf-8',
-            stdio: ['pipe', 'pipe', 'pipe'],
-            env,
-            cwd: projectRoot()
-          }
-        );
+        output = execFileSync(TS_NODE_BIN, [cli('generate-insights.ts')], {
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+          env,
+          cwd: projectRoot(),
+        });
       } catch (e: any) {
         output = e.stdout || '';
       }
@@ -86,7 +78,10 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
       // If insights were generated, file should exist or be mentioned
       // If no facts, should indicate skipped or 0 insights
       if (fs.existsSync(knowledgeFactsPath())) {
-        const facts = fs.readFileSync(knowledgeFactsPath(), 'utf-8').split('\n').filter(l => l.trim());
+        const facts = fs
+          .readFileSync(knowledgeFactsPath(), 'utf-8')
+          .split('\n')
+          .filter((l) => l.trim());
         if (facts.length === 0) {
           expect(output).toContain('no facts');
         }
@@ -105,16 +100,12 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
       // Run the pipeline
       let output = '';
       try {
-        output = execFileSync(
-          TS_NODE_BIN,
-          [cli('generate-insights.ts')],
-          {
-            encoding: 'utf-8',
-            stdio: ['pipe', 'pipe', 'pipe'],
-            env,
-            cwd: projectRoot()
-          }
-        );
+        output = execFileSync(TS_NODE_BIN, [cli('generate-insights.ts')], {
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+          env,
+          cwd: projectRoot(),
+        });
       } catch (e: any) {
         output = e.stdout || '';
       }
@@ -122,7 +113,7 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
       // If insights file was created, validate it contains valid NDJSON
       if (fs.existsSync(insightsPath())) {
         const content = fs.readFileSync(insightsPath(), 'utf-8');
-        const lines = content.split('\n').filter(line => line.trim());
+        const lines = content.split('\n').filter((line) => line.trim());
 
         // Each line should be valid JSON
         for (const line of lines) {
@@ -156,16 +147,12 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
       let exitCode = 0;
 
       try {
-        output = execFileSync(
-          TS_NODE_BIN,
-          [cli('generate-insights.ts')],
-          {
-            encoding: 'utf-8',
-            stdio: ['pipe', 'pipe', 'pipe'],
-            env,
-            cwd: projectRoot()
-          }
-        );
+        output = execFileSync(TS_NODE_BIN, [cli('generate-insights.ts')], {
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+          env,
+          cwd: projectRoot(),
+        });
       } catch (e: any) {
         output = e.stdout || '';
         exitCode = e.status || 1;
@@ -205,13 +192,13 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
         // Run daily brief first
         dailyBriefOutput = execFileSync(
           TS_NODE_BIN,
-          ['-r', RSS_STUB, cli('daily-brief.ts')],  // RSS stubbed: no network
+          ['-r', RSS_STUB, cli('daily-brief.ts')], // RSS stubbed: no network
           {
             encoding: 'utf-8',
             stdio: ['pipe', 'pipe', 'pipe'],
             env,
-            cwd: projectRoot()
-          }
+            cwd: projectRoot(),
+          },
         );
       } catch (e: any) {
         dailyBriefOutput = e.stdout || '';
@@ -219,16 +206,12 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
 
       try {
         // Then run insights generation
-        insightsOutput = execFileSync(
-          TS_NODE_BIN,
-          [cli('generate-insights.ts')],
-          {
-            encoding: 'utf-8',
-            stdio: ['pipe', 'pipe', 'pipe'],
-            env,
-            cwd: projectRoot()
-          }
-        );
+        insightsOutput = execFileSync(TS_NODE_BIN, [cli('generate-insights.ts')], {
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+          env,
+          cwd: projectRoot(),
+        });
       } catch (e: any) {
         insightsOutput = e.stdout || '';
       }
@@ -249,13 +232,19 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
       // Daily brief should persist articles to canonical_articles.ndjson
       const articlesPath = path.join(projectRoot(), 'data/canonical_articles.ndjson');
       if (fs.existsSync(articlesPath)) {
-        const articles = fs.readFileSync(articlesPath, 'utf-8').split('\n').filter(l => l.trim());
+        const articles = fs
+          .readFileSync(articlesPath, 'utf-8')
+          .split('\n')
+          .filter((l) => l.trim());
         expect(articles.length).toBeGreaterThanOrEqual(0);
       }
 
       // Insights should be stored if facts were extracted
       if (fs.existsSync(insightsPath())) {
-        const insights = fs.readFileSync(insightsPath(), 'utf-8').split('\n').filter(l => l.trim());
+        const insights = fs
+          .readFileSync(insightsPath(), 'utf-8')
+          .split('\n')
+          .filter((l) => l.trim());
         // Having insights is good, but not required if no facts were extracted
         if (insights.length > 0) {
           expect(insights.length).toBeGreaterThan(0);

@@ -60,7 +60,7 @@ export class SensitivityAssessor {
     });
 
     const lowerContent = content.toLowerCase();
-    this.proprietaryKeywords.forEach(keyword => {
+    this.proprietaryKeywords.forEach((keyword) => {
       if (lowerContent.includes(keyword)) {
         reasons.push(`Contains proprietary keyword: "${keyword}"`);
         privateScore += 0.3;
@@ -109,8 +109,7 @@ Answer ONLY with JSON: {"sensitivity": "PUBLIC" or "PRIVATE" or "UNCERTAIN", "co
         ],
       });
 
-      const responseText =
-        message.content[0].type === 'text' ? message.content[0].text : '{}';
+      const responseText = message.content[0].type === 'text' ? message.content[0].text : '{}';
       const parsed = JSON.parse(responseText);
 
       return {

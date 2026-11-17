@@ -1,4 +1,9 @@
-import { scoreArticle, scoreArticles, DEFAULT_CONFIG, hasNegativeKeywords } from '../../src/business-logic/score-article';
+import {
+  scoreArticle,
+  scoreArticles,
+  DEFAULT_CONFIG,
+  hasNegativeKeywords,
+} from '../../src/business-logic/score-article';
 import { Article } from '../../src/business-logic/normalize-article';
 
 describe('scoreArticle', () => {
@@ -10,7 +15,7 @@ describe('scoreArticle', () => {
     source: 'Playwright Blog',
     category: 'release',
     publishedAt: new Date().toISOString(),
-    tags: ['playwright', 'testing']
+    tags: ['playwright', 'testing'],
   };
 
   it('should start with base score', () => {
@@ -23,7 +28,7 @@ describe('scoreArticle', () => {
   it('should add weight for matching keywords in title', () => {
     const article = {
       ...mockArticle,
-      title: 'Breaking: Security vulnerability in popular library'
+      title: 'Breaking: Security vulnerability in popular library',
     };
 
     const result = scoreArticle(article);
@@ -36,7 +41,7 @@ describe('scoreArticle', () => {
   it('should add weight for matching source name', () => {
     const article = {
       ...mockArticle,
-      source: 'OpenAI Blog'
+      source: 'OpenAI Blog',
     };
 
     const result = scoreArticle(article);
@@ -50,7 +55,7 @@ describe('scoreArticle', () => {
     const criticalArticle = {
       ...mockArticle,
       title: 'Breaking security vulnerability: critical CVE exploit',
-      source: 'OpenAI'
+      source: 'OpenAI',
     };
 
     const result = scoreArticle(criticalArticle);
@@ -62,7 +67,7 @@ describe('scoreArticle', () => {
   it('should classify HIGH priority', () => {
     const highArticle = {
       ...mockArticle,
-      title: 'TypeScript release with breaking changes'
+      title: 'TypeScript release with breaking changes',
     };
 
     const result = scoreArticle(highArticle);
@@ -74,7 +79,7 @@ describe('scoreArticle', () => {
   it('should include reasons for scoring', () => {
     const article = {
       ...mockArticle,
-      title: 'Playwright security migration guide'
+      title: 'Playwright security migration guide',
     };
 
     const result = scoreArticle(article);
@@ -97,12 +102,12 @@ describe('scoreArticle', () => {
     const now = new Date();
     const recentArticle = {
       ...mockArticle,
-      publishedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString() // 2 hours ago
+      publishedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
     };
 
     const oldArticle = {
       ...mockArticle,
-      publishedAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days ago
+      publishedAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
     };
 
     const recentScore = scoreArticle(recentArticle);
@@ -115,7 +120,7 @@ describe('scoreArticle', () => {
   it('should handle articles without keywords', () => {
     const article = {
       ...mockArticle,
-      title: 'Random article about gardening'
+      title: 'Random article about gardening',
     };
 
     const result = scoreArticle(article);
@@ -129,18 +134,18 @@ describe('scoreArticle', () => {
       weights: {
         base: 100,
         keywords: { 'custom-keyword': 50 },
-        sources: {}
+        sources: {},
       },
       priority: {
         critical: 200,
         high: 150,
-        medium: 100
-      }
+        medium: 100,
+      },
     };
 
     const article = {
       ...mockArticle,
-      title: 'Article with custom-keyword'
+      title: 'Article with custom-keyword',
     };
 
     const result = scoreArticle(article, customConfig);
@@ -152,7 +157,7 @@ describe('scoreArticle', () => {
   it('should handle missing publish date gracefully', () => {
     const article = {
       ...mockArticle,
-      publishedAt: 'invalid-date'
+      publishedAt: 'invalid-date',
     };
 
     // Should not throw
@@ -170,7 +175,7 @@ describe('hasNegativeKeywords', () => {
       source: 'Tech News',
       category: 'article',
       publishedAt: new Date().toISOString(),
-      tags: []
+      tags: [],
     };
 
     expect(hasNegativeKeywords(article)).toBe(true);
@@ -185,7 +190,7 @@ describe('hasNegativeKeywords', () => {
       source: 'Tech News',
       category: 'article',
       publishedAt: new Date().toISOString(),
-      tags: []
+      tags: [],
     };
 
     expect(hasNegativeKeywords(article)).toBe(true);
@@ -200,7 +205,7 @@ describe('hasNegativeKeywords', () => {
       source: 'Tech News',
       category: 'article',
       publishedAt: new Date().toISOString(),
-      tags: []
+      tags: [],
     };
 
     // Should be filtered because 'test' appears but without QA keywords like 'qa engineering'
@@ -216,7 +221,7 @@ describe('hasNegativeKeywords', () => {
       source: 'Tech Blog',
       category: 'article',
       publishedAt: new Date().toISOString(),
-      tags: []
+      tags: [],
     };
 
     // Should NOT be filtered because it has QA keyword 'playwright'
@@ -232,7 +237,7 @@ describe('hasNegativeKeywords', () => {
       source: 'QA Blog',
       category: 'article',
       publishedAt: new Date().toISOString(),
-      tags: []
+      tags: [],
     };
 
     expect(hasNegativeKeywords(article)).toBe(false);
@@ -247,7 +252,7 @@ describe('hasNegativeKeywords', () => {
       source: 'Hardware News',
       category: 'article',
       publishedAt: new Date().toISOString(),
-      tags: []
+      tags: [],
     };
 
     expect(hasNegativeKeywords(article)).toBe(true);
@@ -262,7 +267,7 @@ describe('hasNegativeKeywords', () => {
       source: 'Tech Blog',
       category: 'article',
       publishedAt: new Date().toISOString(),
-      tags: []
+      tags: [],
     };
 
     expect(hasNegativeKeywords(article)).toBe(false);
@@ -279,7 +284,7 @@ describe('scoreArticles', () => {
       source: 'Blog A',
       category: 'article',
       publishedAt: new Date().toISOString(),
-      tags: []
+      tags: [],
     },
     {
       id: 'test-2',
@@ -289,7 +294,7 @@ describe('scoreArticles', () => {
       source: 'Blog B',
       category: 'article',
       publishedAt: new Date().toISOString(),
-      tags: []
+      tags: [],
     },
     {
       id: 'test-3',
@@ -299,15 +304,15 @@ describe('scoreArticles', () => {
       source: 'Blog C',
       category: 'article',
       publishedAt: new Date().toISOString(),
-      tags: []
-    }
+      tags: [],
+    },
   ];
 
   it('should score multiple articles', () => {
     const results = scoreArticles(mockArticles);
 
     expect(results.length).toBe(mockArticles.length);
-    results.forEach(article => {
+    results.forEach((article) => {
       expect(article.score).toBeDefined();
       expect(article.priority).toBeDefined();
       expect(article.reason).toBeDefined();
@@ -349,7 +354,7 @@ describe('scoreArticles', () => {
         source: 'Blog',
         category: 'article',
         publishedAt: new Date().toISOString(),
-        tags: []
+        tags: [],
       },
       {
         id: 'test-ecc',
@@ -359,7 +364,7 @@ describe('scoreArticles', () => {
         source: 'Tech News',
         category: 'article',
         publishedAt: new Date().toISOString(),
-        tags: []
+        tags: [],
       },
       {
         id: 'test-proxies',
@@ -369,8 +374,8 @@ describe('scoreArticles', () => {
         source: 'Tech News',
         category: 'article',
         publishedAt: new Date().toISOString(),
-        tags: []
-      }
+        tags: [],
+      },
     ];
 
     const results = scoreArticles(articlesWithNegative);

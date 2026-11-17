@@ -49,7 +49,7 @@ function storyKey(article: Article): string {
  */
 function dropRepeatedStories(articles: Article[]): Article[] {
   const seen = new Set<string>();
-  return articles.filter(article => {
+  return articles.filter((article) => {
     const key = storyKey(article);
     if (seen.has(key)) return false;
     seen.add(key);
@@ -79,7 +79,7 @@ function dropRepeatedStories(articles: Article[]): Article[] {
  */
 export async function exportLatestNews(
   store: ArticleStore,
-  limit?: number
+  limit?: number,
 ): Promise<LatestNewsExport> {
   // Read all articles from store
   const articles = await store.read();
@@ -90,7 +90,7 @@ export async function exportLatestNews(
   });
 
   const cutoff = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
-  const recent = sorted.filter(article => new Date(article.publishedAt).getTime() >= cutoff);
+  const recent = sorted.filter((article) => new Date(article.publishedAt).getTime() >= cutoff);
   const unique = dropRepeatedStories(recent);
   const latest = limit === undefined ? unique : unique.slice(0, limit);
 
@@ -102,7 +102,7 @@ export async function exportLatestNews(
   return {
     date,
     updatedAt,
-    items: latest.map(withResolvedId)
+    items: latest.map(withResolvedId),
   };
 }
 
@@ -116,13 +116,15 @@ export async function exportLatestNews(
  * @param exportData - Export with items array
  * @returns Public format with articles array (same Article objects)
  */
-export function transformToPublicFormat(
-  exportData: LatestNewsExport
-): { date: string; updatedAt: string; articles: Article[] } {
+export function transformToPublicFormat(exportData: LatestNewsExport): {
+  date: string;
+  updatedAt: string;
+  articles: Article[];
+} {
   return {
     date: exportData.date,
     updatedAt: exportData.updatedAt,
-    articles: exportData.items
+    articles: exportData.items,
   };
 }
 
@@ -137,7 +139,7 @@ export function transformToPublicFormat(
  */
 export async function writePublicLatestNews(
   filePath: string,
-  exportData: LatestNewsExport
+  exportData: LatestNewsExport,
 ): Promise<void> {
   // Transform to public format
   const publicData = transformToPublicFormat(exportData);

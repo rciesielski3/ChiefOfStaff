@@ -20,8 +20,8 @@ describe('QA-News Export Pipeline (E2E)', () => {
           cwd: projectRoot,
           env: process.env,
           encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']  // Capture stdout and stderr separately
-        }
+          stdio: ['pipe', 'pipe', 'pipe'], // Capture stdout and stderr separately
+        },
       );
 
       // Parse the JSON output
@@ -63,8 +63,8 @@ describe('QA-News Export Pipeline (E2E)', () => {
           cwd: projectRoot,
           env: process.env,
           encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']  // Capture stdout and stderr separately
-        }
+          stdio: ['pipe', 'pipe', 'pipe'], // Capture stdout and stderr separately
+        },
       );
 
       // Parse the JSON output
@@ -102,14 +102,11 @@ describe('QA-News Export Pipeline (E2E)', () => {
   test('all three exports (latest, weekly, monthly) can run together', () => {
     try {
       // Note: export-latest-news writes to file, so we just verify it runs
-      execSync(
-        'npx ts-node src/cli/export-latest-news.ts',
-        {
-          cwd: projectRoot,
-          env: process.env,
-          stdio: ['pipe', 'pipe', 'pipe']
-        }
-      );
+      execSync('npx ts-node src/cli/export-latest-news.ts', {
+        cwd: projectRoot,
+        env: process.env,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
 
       // Run weekly and monthly CLIs which output JSON to stdout
       const weeklyOutput = execSync(
@@ -118,8 +115,8 @@ describe('QA-News Export Pipeline (E2E)', () => {
           cwd: projectRoot,
           env: process.env,
           encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        }
+          stdio: ['pipe', 'pipe', 'pipe'],
+        },
       );
 
       const monthlyOutput = execSync(
@@ -128,8 +125,8 @@ describe('QA-News Export Pipeline (E2E)', () => {
           cwd: projectRoot,
           env: process.env,
           encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        }
+          stdio: ['pipe', 'pipe', 'pipe'],
+        },
       );
 
       // Parse weekly and monthly outputs
@@ -157,35 +154,37 @@ describe('QA-News Export Pipeline (E2E)', () => {
   test('CLIs exit with code 0 on success or 1 on empty export', () => {
     // Test latest
     try {
-      execSync(
-        'npx ts-node src/cli/export-latest-news.ts',
-        { cwd: projectRoot, env: process.env, stdio: 'pipe' }
-      );
-      expect(true).toBe(true);  // Success case
+      execSync('npx ts-node src/cli/export-latest-news.ts', {
+        cwd: projectRoot,
+        env: process.env,
+        stdio: 'pipe',
+      });
+      expect(true).toBe(true); // Success case
     } catch (error: any) {
-      expect(error.status).toBe(1);  // Expected exit code for empty export
+      expect(error.status).toBe(1); // Expected exit code for empty export
     }
 
     // Test weekly
     try {
       execSync(
         'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
-        { cwd: projectRoot, env: process.env, stdio: 'pipe' }
+        { cwd: projectRoot, env: process.env, stdio: 'pipe' },
       );
-      expect(true).toBe(true);  // Success case
+      expect(true).toBe(true); // Success case
     } catch (error: any) {
-      expect(error.status).toBe(1);  // Expected exit code for empty export
+      expect(error.status).toBe(1); // Expected exit code for empty export
     }
 
     // Test monthly
     try {
-      execSync(
-        'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-monthly-recap.ts',
-        { cwd: projectRoot, env: process.env, stdio: 'pipe' }
-      );
-      expect(true).toBe(true);  // Success case
+      execSync('npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-monthly-recap.ts', {
+        cwd: projectRoot,
+        env: process.env,
+        stdio: 'pipe',
+      });
+      expect(true).toBe(true); // Success case
     } catch (error: any) {
-      expect(error.status).toBe(1);  // Expected exit code for empty export
+      expect(error.status).toBe(1); // Expected exit code for empty export
     }
   });
 });

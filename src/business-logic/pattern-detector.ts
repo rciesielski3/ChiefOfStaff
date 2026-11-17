@@ -17,7 +17,7 @@ import { EmbeddingsService } from '../services/embeddings';
  */
 export class PatternDetector {
   private embeddingsService: EmbeddingsService;
-  private similarityThreshold: number = 0.70;
+  private similarityThreshold: number = 0.7;
 
   constructor(embeddingsService: EmbeddingsService) {
     this.embeddingsService = embeddingsService;
@@ -34,7 +34,7 @@ export class PatternDetector {
     }
 
     // Embed all facts if not already embedded
-    facts.forEach(fact => {
+    facts.forEach((fact) => {
       this.embeddingsService.embedFact({
         id: fact.id,
         content: fact.content,
@@ -46,8 +46,8 @@ export class PatternDetector {
 
     // Generate insights from clusters
     const insights: Insight[] = clusters
-      .filter(cluster => cluster.length >= 1) // Include single facts and clusters
-      .map(cluster => this.generatePatternInsight(cluster, facts));
+      .filter((cluster) => cluster.length >= 1) // Include single facts and clusters
+      .map((cluster) => this.generatePatternInsight(cluster, facts));
 
     return insights;
   }
@@ -72,7 +72,7 @@ export class PatternDetector {
     const rank = new Map<string, number>();
 
     // Initialize each fact as its own component
-    facts.forEach(fact => {
+    facts.forEach((fact) => {
       parent.set(fact.id, fact.id);
       rank.set(fact.id, 0);
     });
@@ -116,7 +116,7 @@ export class PatternDetector {
 
     // Build clusters from union-find result
     const clusterMap = new Map<string, string[]>();
-    facts.forEach(fact => {
+    facts.forEach((fact) => {
       const root = find(fact.id);
       if (!clusterMap.has(root)) {
         clusterMap.set(root, []);
@@ -152,9 +152,9 @@ export class PatternDetector {
    * @returns Generated PATTERN insight
    */
   private generatePatternInsight(factIds: string[], allFacts: KnowledgeFact[]): Insight {
-    const factMap = new Map(allFacts.map(f => [f.id, f]));
+    const factMap = new Map(allFacts.map((f) => [f.id, f]));
     const clusterFacts = factIds
-      .map(id => factMap.get(id))
+      .map((id) => factMap.get(id))
       .filter((fact): fact is KnowledgeFact => fact !== undefined);
 
     // Generate pattern title from common keywords
@@ -171,11 +171,7 @@ export class PatternDetector {
 
     // Extract domains
     const domains = Array.from(
-      new Set(
-        clusterFacts
-          .filter(f => f.domain)
-          .map(f => f.domain as string)
-      )
+      new Set(clusterFacts.filter((f) => f.domain).map((f) => f.domain as string)),
     );
 
     // Create insight using factory
@@ -184,17 +180,15 @@ export class PatternDetector {
       title,
       summary,
       confidence,
-      relatedFactIds: clusterFacts.map(f => f.id),
+      relatedFactIds: clusterFacts.map((f) => f.id),
       domains: domains.length > 0 ? domains : ['general'],
       tags,
-      supportingEvidence: clusterFacts.map(
-        f => `${f.type}: ${f.content.substring(0, 100)}...`
-      ),
+      supportingEvidence: clusterFacts.map((f) => `${f.type}: ${f.content.substring(0, 100)}...`),
       evolutionStage: 'new',
       metadata: {
         clusterSize: clusterFacts.length,
-        factTypes: Array.from(new Set(clusterFacts.map(f => f.type))),
-        extractionMethods: Array.from(new Set(clusterFacts.map(f => f.extraction_method))),
+        factTypes: Array.from(new Set(clusterFacts.map((f) => f.type))),
+        extractionMethods: Array.from(new Set(clusterFacts.map((f) => f.extraction_method))),
       },
     });
   }
@@ -207,7 +201,7 @@ export class PatternDetector {
   private generatePatternTitle(facts: KnowledgeFact[]): string {
     // Extract all keywords from cluster facts
     const allKeywords: string[] = [];
-    facts.forEach(fact => {
+    facts.forEach((fact) => {
       if (fact.keywords) {
         allKeywords.push(...fact.keywords);
       }
@@ -215,13 +209,13 @@ export class PatternDetector {
       const words = fact.content
         .toLowerCase()
         .split(/\s+/)
-        .filter(w => w.length > 4 && !this.isStopWord(w));
+        .filter((w) => w.length > 4 && !this.isStopWord(w));
       allKeywords.push(...words);
     });
 
     // Count keyword frequencies
     const keywordFreq = new Map<string, number>();
-    allKeywords.forEach(keyword => {
+    allKeywords.forEach((keyword) => {
       const lower = keyword.toLowerCase().replace(/[^\w]/g, '');
       keywordFreq.set(lower, (keywordFreq.get(lower) ?? 0) + 1);
     });
@@ -249,7 +243,7 @@ export class PatternDetector {
    */
   private generatePatternSummary(facts: KnowledgeFact[]): string {
     const factCount = facts.length;
-    const domainSet = new Set(facts.filter(f => f.domain).map(f => f.domain));
+    const domainSet = new Set(facts.filter((f) => f.domain).map((f) => f.domain));
     const domains = Array.from(domainSet).join(', ');
 
     const sourceDomains = domains ? ` from ${domains}` : '';
@@ -265,14 +259,14 @@ export class PatternDetector {
     const tags = new Set<string>();
 
     // Add domains
-    facts.forEach(fact => {
+    facts.forEach((fact) => {
       if (fact.domain) {
         tags.add(`domain:${fact.domain}`);
       }
     });
 
     // Add fact types
-    facts.forEach(fact => {
+    facts.forEach((fact) => {
       tags.add(`type:${fact.type.toLowerCase()}`);
     });
 
@@ -300,12 +294,64 @@ export class PatternDetector {
    */
   private isStopWord(word: string): boolean {
     const stopWords = new Set([
-      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-      'of', 'from', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been',
-      'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
-      'should', 'could', 'may', 'might', 'can', 'must', 'shall', 'this',
-      'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they',
-      'are', 'that', 'which', 'who', 'whom', 'what', 'when', 'where', 'why', 'how',
+      'the',
+      'a',
+      'an',
+      'and',
+      'or',
+      'but',
+      'in',
+      'on',
+      'at',
+      'to',
+      'for',
+      'of',
+      'from',
+      'with',
+      'by',
+      'is',
+      'are',
+      'was',
+      'were',
+      'be',
+      'been',
+      'being',
+      'have',
+      'has',
+      'had',
+      'do',
+      'does',
+      'did',
+      'will',
+      'would',
+      'should',
+      'could',
+      'may',
+      'might',
+      'can',
+      'must',
+      'shall',
+      'this',
+      'that',
+      'these',
+      'those',
+      'i',
+      'you',
+      'he',
+      'she',
+      'it',
+      'we',
+      'they',
+      'are',
+      'that',
+      'which',
+      'who',
+      'whom',
+      'what',
+      'when',
+      'where',
+      'why',
+      'how',
     ]);
     return stopWords.has(word.toLowerCase());
   }

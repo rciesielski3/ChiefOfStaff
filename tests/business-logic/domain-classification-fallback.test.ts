@@ -21,9 +21,7 @@ import {
   ArticleContext,
   FALLBACK_RESULT,
 } from '../../src/business-logic/domain-classification-fallback';
-import {
-  DomainClassificationResult,
-} from '../../src/business-logic/domain-classifier';
+import { DomainClassificationResult } from '../../src/business-logic/domain-classifier';
 import { KnowledgeFact } from '../../src/business-logic/knowledge-types';
 
 /**
@@ -53,7 +51,7 @@ function fixedResponder(domain: string, confidence: number) {
 function createFact(
   content: string,
   type: any = 'DEFINITION',
-  id: string = 'fact_test_1'
+  id: string = 'fact_test_1',
 ): KnowledgeFact {
   return {
     id,
@@ -71,11 +69,31 @@ function createFact(
 const LOW_HEURISTIC: DomainClassificationResult = { domain: 'general', confidence: 0.3 };
 
 const ALL_DOMAINS = [
-  'ai-safety', 'ml-ops', 'nlp', 'computer-vision', 'reinforcement-learning',
-  'llm-applications', 'cloud-infra', 'devops', 'databases', 'networking',
-  'security', 'javascript', 'python', 'rust', 'go', 'other-languages',
-  'web-dev', 'frontend-frameworks', 'css-design', 'accessibility',
-  'cryptography', 'performance', 'testing', 'documentation', 'open-source',
+  'ai-safety',
+  'ml-ops',
+  'nlp',
+  'computer-vision',
+  'reinforcement-learning',
+  'llm-applications',
+  'cloud-infra',
+  'devops',
+  'databases',
+  'networking',
+  'security',
+  'javascript',
+  'python',
+  'rust',
+  'go',
+  'other-languages',
+  'web-dev',
+  'frontend-frameworks',
+  'css-design',
+  'accessibility',
+  'cryptography',
+  'performance',
+  'testing',
+  'documentation',
+  'open-source',
 ];
 
 describe('DomainClassificationFallback', () => {
@@ -91,9 +109,9 @@ describe('DomainClassificationFallback', () => {
 
     it('rejects an invalid model', () => {
       const { client } = makeMockClient(fixedResponder('python', 0.9));
-      expect(
-        () => new DomainClassificationFallback({ client, model: 'gpt-4' })
-      ).toThrow(/Invalid Claude model/);
+      expect(() => new DomainClassificationFallback({ client, model: 'gpt-4' })).toThrow(
+        /Invalid Claude model/,
+      );
     });
 
     it('exposes all 25 non-general valid domains plus general', () => {
@@ -112,7 +130,7 @@ describe('DomainClassificationFallback', () => {
       const fb = new DomainClassificationFallback({ client });
       const result = await fb.classifyAsync(
         createFact(`A fact relating to ${domain}`, 'DEFINITION', `fact_${domain}`),
-        LOW_HEURISTIC
+        LOW_HEURISTIC,
       );
       expect(result.domain).toBe(domain);
       expect(result.confidence).toBe(0.85);
@@ -123,7 +141,7 @@ describe('DomainClassificationFallback', () => {
       const fb = new DomainClassificationFallback({ client });
       const result = await fb.classifyAsync(
         createFact('The weather was sunny today', 'PATTERN'),
-        LOW_HEURISTIC
+        LOW_HEURISTIC,
       );
       expect(result).toEqual(FALLBACK_RESULT);
     });
@@ -138,7 +156,7 @@ describe('DomainClassificationFallback', () => {
       const fb = new DomainClassificationFallback({ client });
       const result = await fb.classifyAsync(
         createFact('Use async/await with promises in Node.js', 'TECHNIQUE'),
-        { domain: 'general', confidence: 0.3 }
+        { domain: 'general', confidence: 0.3 },
       );
       expect(result.domain).toBe('javascript');
       expect(result.confidence).toBeGreaterThanOrEqual(0.7);
@@ -169,7 +187,10 @@ describe('DomainClassificationFallback', () => {
     it('falls back when confidence is above 1.0 (nonsensical)', async () => {
       const { client } = makeMockClient(fixedResponder('python', 1.5));
       const fb = new DomainClassificationFallback({ client });
-      const result = await fb.classifyAsync(createFact('Python decorators explained'), LOW_HEURISTIC);
+      const result = await fb.classifyAsync(
+        createFact('Python decorators explained'),
+        LOW_HEURISTIC,
+      );
       expect(result).toEqual(FALLBACK_RESULT);
     });
   });
@@ -182,7 +203,10 @@ describe('DomainClassificationFallback', () => {
       const { client, state } = makeMockClient(fixedResponder('python', 0.9));
       const fb = new DomainClassificationFallback({ client });
       const heuristic: DomainClassificationResult = { domain: 'devops', confidence: 0.8 };
-      const result = await fb.classifyAsync(createFact('kubernetes deployment tips', 'TECHNIQUE'), heuristic);
+      const result = await fb.classifyAsync(
+        createFact('kubernetes deployment tips', 'TECHNIQUE'),
+        heuristic,
+      );
       expect(result).toEqual(heuristic);
       expect(state.calls).toBe(0);
     });
@@ -192,7 +216,7 @@ describe('DomainClassificationFallback', () => {
       const fb = new DomainClassificationFallback({ client });
       const result = await fb.classifyAsync(
         createFact('Index your columns for faster queries', 'TECHNIQUE'),
-        { domain: 'databases', confidence: 0.59 }
+        { domain: 'databases', confidence: 0.59 },
       );
       expect(state.calls).toBe(1);
       expect(result.domain).toBe('databases');
@@ -223,7 +247,7 @@ describe('DomainClassificationFallback', () => {
       await fb.classifyAsync(
         createFact('Detection accuracy improved significantly', 'BENCHMARK'),
         LOW_HEURISTIC,
-        context
+        context,
       );
       expect(state.lastPrompt).toContain('Advances in Object Detection');
       expect(state.lastPrompt).toContain('modern CNN-based detectors');
@@ -234,7 +258,7 @@ describe('DomainClassificationFallback', () => {
       const fb = new DomainClassificationFallback({ client });
       const result = await fb.classifyAsync(
         createFact('Rotate credentials regularly to reduce exposure', 'WARNING'),
-        LOW_HEURISTIC
+        LOW_HEURISTIC,
       );
       expect(result.domain).toBe('security');
       expect(state.lastPrompt).not.toContain('Article title:');
@@ -245,13 +269,13 @@ describe('DomainClassificationFallback', () => {
       const { client } = makeMockClient((prompt) =>
         prompt.includes('React')
           ? JSON.stringify({ domain: 'frontend-frameworks', confidence: 0.9 })
-          : JSON.stringify({ domain: 'general', confidence: 0.3 })
+          : JSON.stringify({ domain: 'general', confidence: 0.3 }),
       );
       const fb = new DomainClassificationFallback({ client });
       const result = await fb.classifyAsync(
         createFact('State updates trigger a re-render of the component tree', 'DEFINITION'),
         LOW_HEURISTIC,
-        { title: 'Understanding React Hooks' }
+        { title: 'Understanding React Hooks' },
       );
       expect(result.domain).toBe('frontend-frameworks');
     });
@@ -259,10 +283,10 @@ describe('DomainClassificationFallback', () => {
     it('includes the fact type and heuristic guess in the prompt', async () => {
       const { client, state } = makeMockClient(fixedResponder('testing', 0.9));
       const fb = new DomainClassificationFallback({ client });
-      await fb.classifyAsync(
-        createFact('Mock external dependencies in unit tests', 'TECHNIQUE'),
-        { domain: 'general', confidence: 0.3 }
-      );
+      await fb.classifyAsync(createFact('Mock external dependencies in unit tests', 'TECHNIQUE'), {
+        domain: 'general',
+        confidence: 0.3,
+      });
       expect(state.lastPrompt).toContain('Type: TECHNIQUE');
       expect(state.lastPrompt).toContain('Heuristic guess: general');
     });
@@ -300,7 +324,10 @@ describe('DomainClassificationFallback', () => {
       const cache = new InMemoryClassificationCache();
       const { client } = makeMockClient(fixedResponder('python', 0.9));
       const fb = new DomainClassificationFallback({ client, cache });
-      await fb.classifyAsync(createFact('Python asyncio', 'DEFINITION', 'fact_py_1'), LOW_HEURISTIC);
+      await fb.classifyAsync(
+        createFact('Python asyncio', 'DEFINITION', 'fact_py_1'),
+        LOW_HEURISTIC,
+      );
       expect(cache.has('fact_py_1')).toBe(true);
       expect(cache.get('fact_py_1')?.domain).toBe('python');
     });
@@ -308,8 +335,14 @@ describe('DomainClassificationFallback', () => {
     it('classifies distinct fact ids separately', async () => {
       const { client, state } = makeMockClient(fixedResponder('cloud-infra', 0.9));
       const fb = new DomainClassificationFallback({ client });
-      await fb.classifyAsync(createFact('AWS Lambda scales automatically', 'DEFINITION', 'a'), LOW_HEURISTIC);
-      await fb.classifyAsync(createFact('Autoscaling groups adjust capacity', 'DEFINITION', 'b'), LOW_HEURISTIC);
+      await fb.classifyAsync(
+        createFact('AWS Lambda scales automatically', 'DEFINITION', 'a'),
+        LOW_HEURISTIC,
+      );
+      await fb.classifyAsync(
+        createFact('Autoscaling groups adjust capacity', 'DEFINITION', 'b'),
+        LOW_HEURISTIC,
+      );
       expect(state.calls).toBe(2);
     });
   });
@@ -336,7 +369,11 @@ describe('DomainClassificationFallback', () => {
   describe('resilience', () => {
     it('falls back on an API error', async () => {
       const client: MessageCreatingClient = {
-        messages: { create: async () => { throw new Error('rate limited'); } },
+        messages: {
+          create: async () => {
+            throw new Error('rate limited');
+          },
+        },
       };
       const fb = new DomainClassificationFallback({ client });
       const result = await fb.classifyAsync(createFact('some fact', 'DEFINITION'), LOW_HEURISTIC);
@@ -361,10 +398,13 @@ describe('DomainClassificationFallback', () => {
 
     it('extracts JSON even when wrapped in prose', async () => {
       const { client } = makeMockClient(
-        () => 'Here is my answer: {"domain": "nlp", "confidence": 0.88} — hope that helps!'
+        () => 'Here is my answer: {"domain": "nlp", "confidence": 0.88} — hope that helps!',
       );
       const fb = new DomainClassificationFallback({ client });
-      const result = await fb.classifyAsync(createFact('Tokenization splits text', 'DEFINITION'), LOW_HEURISTIC);
+      const result = await fb.classifyAsync(
+        createFact('Tokenization splits text', 'DEFINITION'),
+        LOW_HEURISTIC,
+      );
       expect(result.domain).toBe('nlp');
       expect(result.confidence).toBe(0.88);
     });
@@ -383,7 +423,10 @@ describe('DomainClassificationFallback', () => {
       // cache hit (same id)
       await fb.classifyAsync(createFact('Python fact', 'DEFINITION', 'f1'), LOW_HEURISTIC);
       // short-circuit (high heuristic)
-      await fb.classifyAsync(createFact('x', 'DEFINITION', 'f2'), { domain: 'go', confidence: 0.9 });
+      await fb.classifyAsync(createFact('x', 'DEFINITION', 'f2'), {
+        domain: 'go',
+        confidence: 0.9,
+      });
 
       const stats = fb.getStats();
       expect(stats.apiCalls).toBe(1);
@@ -396,7 +439,10 @@ describe('DomainClassificationFallback', () => {
       const fb = new DomainClassificationFallback({ client });
       // ~30% of a 50-article feed's facts needing fallback ~= 15 calls/day.
       for (let i = 0; i < 15; i++) {
-        await fb.classifyAsync(createFact(`fact number ${i}`, 'DEFINITION', `f${i}`), LOW_HEURISTIC);
+        await fb.classifyAsync(
+          createFact(`fact number ${i}`, 'DEFINITION', `f${i}`),
+          LOW_HEURISTIC,
+        );
       }
       const stats = fb.getStats();
       expect(stats.apiCalls).toBe(15);

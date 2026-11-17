@@ -4,7 +4,12 @@ jest.mock('@anthropic-ai/sdk', () => {
   return jest.fn(() => ({
     messages: {
       create: jest.fn().mockResolvedValue({
-        content: [{ type: 'text', text: '{"sensitivity": "UNCERTAIN", "confidence": 0.5, "reason": "Claude assessment"}' }],
+        content: [
+          {
+            type: 'text',
+            text: '{"sensitivity": "UNCERTAIN", "confidence": 0.5, "reason": "Claude assessment"}',
+          },
+        ],
       }),
     },
   }));
@@ -25,7 +30,7 @@ describe('SensitivityAssessor', () => {
     });
     expect(result.sensitivity).toBe('PRIVATE');
     expect(result.confidence).toBeGreaterThan(0.4);
-    expect(result.reasons.some(r => r.includes('email'))).toBe(true);
+    expect(result.reasons.some((r) => r.includes('email'))).toBe(true);
   });
 
   test('Phone numbers marked PRIVATE', async () => {
@@ -35,7 +40,7 @@ describe('SensitivityAssessor', () => {
       type: 'QUOTE',
     });
     expect(result.sensitivity).toBe('PRIVATE');
-    expect(result.reasons.some(r => r.includes('phone'))).toBe(true);
+    expect(result.reasons.some((r) => r.includes('phone'))).toBe(true);
   });
 
   test('SSN marked PRIVATE', async () => {
@@ -54,7 +59,7 @@ describe('SensitivityAssessor', () => {
       type: 'DEFINITION',
     });
     expect(result.sensitivity).toBe('PRIVATE');
-    expect(result.reasons.some(r => r.includes('confidential'))).toBe(true);
+    expect(result.reasons.some((r) => r.includes('confidential'))).toBe(true);
   });
 
   test('Generic facts marked PUBLIC', async () => {
@@ -74,8 +79,8 @@ describe('SensitivityAssessor', () => {
       { id: 'pii4', content: 'internal memo - not for distribution', type: 'QUOTE' },
     ];
 
-    const results = await Promise.all(piiTestSet.map(f => assessor.assessFact(f)));
-    results.forEach(result => {
+    const results = await Promise.all(piiTestSet.map((f) => assessor.assessFact(f)));
+    results.forEach((result) => {
       expect(result.sensitivity).not.toBe('PUBLIC');
     });
   });

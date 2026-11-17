@@ -45,7 +45,7 @@ export function articleToQANews(article: Article): QANewsArticle {
     source: article.source,
     category: primaryCategory,
     publishedAt: article.publishedAt,
-    tags: qaNewsTags(article)
+    tags: qaNewsTags(article),
   };
 }
 
@@ -63,7 +63,7 @@ export function articleToQANews(article: Article): QANewsArticle {
  * @returns QA-News export envelope
  */
 export function exportQANews(articles: Article[], limit: number = 50): QANewsExport {
-  const validArticles = articles.filter(a => {
+  const validArticles = articles.filter((a) => {
     // Filter out placeholder URLs
     return !a.url.includes('example.com') && a.url.startsWith('http');
   });
@@ -75,6 +75,6 @@ export function exportQANews(articles: Article[], limit: number = 50): QANewsExp
   const latest = sorted.slice(0, limit);
 
   return {
-    articles: latest.map(articleToQANews)
+    articles: latest.map(articleToQANews),
   };
 }

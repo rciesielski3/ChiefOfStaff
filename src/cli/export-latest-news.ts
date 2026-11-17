@@ -3,7 +3,11 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { resolveProjectRoot } from './project-root';
-import { exportLatestNews, LatestNewsExport, writePublicLatestNews } from '../business-logic/export-latest-news';
+import {
+  exportLatestNews,
+  LatestNewsExport,
+  writePublicLatestNews,
+} from '../business-logic/export-latest-news';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { withQANewsDisplayFields } from '../business-logic/categorize-article';
 
@@ -28,7 +32,6 @@ function logStructured(stage: string, data: Record<string, any>): void {
   console.error(`[${timestamp}] [${stage}] ${fields}`);
 }
 
-
 async function main(): Promise<void> {
   const workflowStartTime = Date.now();
   try {
@@ -41,7 +44,7 @@ async function main(): Promise<void> {
     logStructured('PATHS_RESOLVED', {
       projectRoot,
       storeFilePath,
-      outputDir: 'qa-news/data'
+      outputDir: 'qa-news/data',
     });
 
     // Create article store
@@ -59,14 +62,16 @@ async function main(): Promise<void> {
     logStructured('EXPORT_COMPLETE', {
       articleCount: latest.items.length,
       exportDate: latest.date,
-      durationMs: exportDuration
+      durationMs: exportDuration,
     });
 
     // Validation: Detect empty store (CRITICAL #3)
     if (latest.items.length === 0) {
       console.warn('[Export Latest News] ⚠️  WARNING: Export produced 0 articles');
       console.warn('[Export Latest News] Store may be empty or not yet populated by daily-brief');
-      console.warn('[Export Latest News] Check: data/canonical_articles.ndjson exists and has content');
+      console.warn(
+        '[Export Latest News] Check: data/canonical_articles.ndjson exists and has content',
+      );
 
       // Additional diagnostics
       try {
@@ -80,21 +85,21 @@ async function main(): Promise<void> {
         reason: 'empty_export',
         expectedMinArticles: 1,
         actualArticles: 0,
-        storeFilePath
+        storeFilePath,
       });
-      process.exit(1);  // Fail workflow so operators notice
+      process.exit(1); // Fail workflow so operators notice
     }
 
     // Write JSON export to qa-news/data directory
     const writeStartTime = Date.now();
     logStructured('WRITE_START', {
-      articleCount: latest.items.length
+      articleCount: latest.items.length,
     });
 
     // Map article categories to QA-News valid categories
     const mappedData: LatestNewsExport = {
       ...latest,
-      items: latest.items.map(withQANewsDisplayFields)
+      items: latest.items.map(withQANewsDisplayFields),
     };
 
     const dataPath = path.join(projectRoot, 'qa-news/data/latest-news.json');
@@ -113,7 +118,7 @@ async function main(): Promise<void> {
     const writeDuration = Date.now() - writeStartTime;
     logStructured('WRITE_COMPLETE', {
       durationMs: writeDuration,
-      dataPath
+      dataPath,
     });
 
     // The export is written to disk above; log only its size
@@ -123,14 +128,14 @@ async function main(): Promise<void> {
     logStructured('WORKFLOW_COMPLETE', {
       totalDurationMs: totalDuration,
       articleCount: latest.items.length,
-      dataPath
+      dataPath,
     });
   } catch (error) {
     const totalDuration = Date.now() - workflowStartTime;
     console.error('✗ Export failed:', error instanceof Error ? error.message : error);
     logStructured('WORKFLOW_ERROR', {
       error: error instanceof Error ? error.message : String(error),
-      totalDurationMs: totalDuration
+      totalDurationMs: totalDuration,
     });
     process.exit(1);
   }
@@ -140,7 +145,7 @@ async function main(): Promise<void> {
 main().catch((error) => {
   console.error('[Export Latest News] ❌ Error:', error);
   logStructured('WORKFLOW_ERROR_UNCAUGHT', {
-    error: error instanceof Error ? error.message : String(error)
+    error: error instanceof Error ? error.message : String(error),
   });
   process.exit(1);
 });

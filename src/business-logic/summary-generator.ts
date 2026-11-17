@@ -32,8 +32,8 @@ export class SummaryGenerator {
 
     try {
       // Extract titles and categories from articles
-      const titles = articles.map(a => a.title);
-      const categories = [...new Set(articles.map(a => a.category))];
+      const titles = articles.map((a) => a.title);
+      const categories = [...new Set(articles.map((a) => a.category))];
 
       // Build the prompt
       const articlesText = titles.map((title, i) => `${i + 1}. ${title}`).join('\n');
@@ -50,9 +50,9 @@ Write a concise 1-2 sentence summary that captures the key themes and topics fro
         messages: [
           {
             role: 'user',
-            content: prompt
-          }
-        ]
+            content: prompt,
+          },
+        ],
       });
 
       // Extract text from response

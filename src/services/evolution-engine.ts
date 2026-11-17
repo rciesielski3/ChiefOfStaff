@@ -69,7 +69,7 @@ export class EvolutionEngine {
       }
     }
 
-    if (topMatch.similarity > 0.70) {
+    if (topMatch.similarity > 0.7) {
       this.relateCount++;
       const relatedFact: Fact = {
         ...newFact,
@@ -83,9 +83,7 @@ export class EvolutionEngine {
     return { action: 'new', fact: newFact };
   }
 
-  private findRelatedFacts(
-    fact: Fact
-  ): { fact: Fact; similarity: number }[] {
+  private findRelatedFacts(fact: Fact): { fact: Fact; similarity: number }[] {
     this.embeddingsService.embedFact({ id: fact.id, content: fact.content });
     const similarityResults = this.embeddingsService.similaritySearch(fact.id, 5);
 

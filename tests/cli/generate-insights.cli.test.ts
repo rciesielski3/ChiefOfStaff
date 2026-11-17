@@ -31,7 +31,7 @@ describe('Generate Insights CLI - Non-Blocking Validation', () => {
     // Clean up temp directory and files
     if (fs.existsSync(tempDir)) {
       const files = fs.readdirSync(tempDir);
-      files.forEach(file => {
+      files.forEach((file) => {
         fs.unlinkSync(path.join(tempDir, file));
       });
       fs.rmdirSync(tempDir);
@@ -50,11 +50,44 @@ describe('Generate Insights CLI - Non-Blocking Validation', () => {
     // Create temp facts file with 3 valid facts
     const tempFactsPath = path.join(tempDir, 'facts.ndjson');
     const factContent = [
-      { id: 'fact-1', article_id: 'art-1', content: 'This is a detailed fact about AI development that contains sufficient content to meet the minimum length requirement for a fact entry.', type: 'DEFINITION', confidence: 0.95, extraction_method: 'claude', extracted_at: '2026-07-23T00:00:00Z', version: 1, status: 'active' },
-      { id: 'fact-2', article_id: 'art-2', content: 'Another important fact about machine learning practices that should be at least fifty characters long for validity in the knowledge system.', type: 'TECHNIQUE', confidence: 0.88, extraction_method: 'claude', extracted_at: '2026-07-23T00:00:00Z', version: 1, status: 'active' },
-      { id: 'fact-3', article_id: 'art-3', content: 'A benchmark measurement showing that system performance improved significantly in the latest release with substantial gains across all metrics.', type: 'BENCHMARK', confidence: 0.92, extraction_method: 'claude', extracted_at: '2026-07-23T00:00:00Z', version: 1, status: 'active' },
+      {
+        id: 'fact-1',
+        article_id: 'art-1',
+        content:
+          'This is a detailed fact about AI development that contains sufficient content to meet the minimum length requirement for a fact entry.',
+        type: 'DEFINITION',
+        confidence: 0.95,
+        extraction_method: 'claude',
+        extracted_at: '2026-07-23T00:00:00Z',
+        version: 1,
+        status: 'active',
+      },
+      {
+        id: 'fact-2',
+        article_id: 'art-2',
+        content:
+          'Another important fact about machine learning practices that should be at least fifty characters long for validity in the knowledge system.',
+        type: 'TECHNIQUE',
+        confidence: 0.88,
+        extraction_method: 'claude',
+        extracted_at: '2026-07-23T00:00:00Z',
+        version: 1,
+        status: 'active',
+      },
+      {
+        id: 'fact-3',
+        article_id: 'art-3',
+        content:
+          'A benchmark measurement showing that system performance improved significantly in the latest release with substantial gains across all metrics.',
+        type: 'BENCHMARK',
+        confidence: 0.92,
+        extraction_method: 'claude',
+        extracted_at: '2026-07-23T00:00:00Z',
+        version: 1,
+        status: 'active',
+      },
     ];
-    factContent.forEach(fact => {
+    factContent.forEach((fact) => {
       fs.appendFileSync(tempFactsPath, JSON.stringify(fact) + '\n');
     });
 
@@ -108,11 +141,44 @@ describe('Generate Insights CLI - Non-Blocking Validation', () => {
     // Create temp facts file with 3 valid facts
     const tempFactsPath = path.join(tempDir, 'facts.ndjson');
     const factContent = [
-      { id: 'fact-1', article_id: 'art-1', content: 'This is a detailed fact about AI development that contains sufficient content to meet the minimum length requirement for a fact entry.', type: 'DEFINITION', confidence: 0.95, extraction_method: 'claude', extracted_at: '2026-07-23T00:00:00Z', version: 1, status: 'active' },
-      { id: 'fact-2', article_id: 'art-2', content: 'Another important fact about machine learning practices that should be at least fifty characters long for validity in the knowledge system.', type: 'TECHNIQUE', confidence: 0.88, extraction_method: 'claude', extracted_at: '2026-07-23T00:00:00Z', version: 1, status: 'active' },
-      { id: 'fact-3', article_id: 'art-3', content: 'A benchmark measurement showing that system performance improved significantly in the latest release with substantial gains across all metrics.', type: 'BENCHMARK', confidence: 0.92, extraction_method: 'claude', extracted_at: '2026-07-23T00:00:00Z', version: 1, status: 'active' },
+      {
+        id: 'fact-1',
+        article_id: 'art-1',
+        content:
+          'This is a detailed fact about AI development that contains sufficient content to meet the minimum length requirement for a fact entry.',
+        type: 'DEFINITION',
+        confidence: 0.95,
+        extraction_method: 'claude',
+        extracted_at: '2026-07-23T00:00:00Z',
+        version: 1,
+        status: 'active',
+      },
+      {
+        id: 'fact-2',
+        article_id: 'art-2',
+        content:
+          'Another important fact about machine learning practices that should be at least fifty characters long for validity in the knowledge system.',
+        type: 'TECHNIQUE',
+        confidence: 0.88,
+        extraction_method: 'claude',
+        extracted_at: '2026-07-23T00:00:00Z',
+        version: 1,
+        status: 'active',
+      },
+      {
+        id: 'fact-3',
+        article_id: 'art-3',
+        content:
+          'A benchmark measurement showing that system performance improved significantly in the latest release with substantial gains across all metrics.',
+        type: 'BENCHMARK',
+        confidence: 0.92,
+        extraction_method: 'claude',
+        extracted_at: '2026-07-23T00:00:00Z',
+        version: 1,
+        status: 'active',
+      },
     ];
-    factContent.forEach(fact => {
+    factContent.forEach((fact) => {
       fs.appendFileSync(tempFactsPath, JSON.stringify(fact) + '\n');
     });
 

@@ -24,10 +24,10 @@ export function generateBrief(articles: ScoredArticle[], count: number = 10): st
 
   // Group by priority
   const byPriority = {
-    CRITICAL: topArticles.filter(a => a.priority === 'CRITICAL'),
-    HIGH: topArticles.filter(a => a.priority === 'HIGH'),
-    MEDIUM: topArticles.filter(a => a.priority === 'MEDIUM'),
-    LOW: topArticles.filter(a => a.priority === 'LOW')
+    CRITICAL: topArticles.filter((a) => a.priority === 'CRITICAL'),
+    HIGH: topArticles.filter((a) => a.priority === 'HIGH'),
+    MEDIUM: topArticles.filter((a) => a.priority === 'MEDIUM'),
+    LOW: topArticles.filter((a) => a.priority === 'LOW'),
   };
 
   // Build markdown
@@ -71,9 +71,7 @@ export function generateBrief(articles: ScoredArticle[], count: number = 10): st
  * @returns Markdown list
  */
 function formatArticleList(articles: ScoredArticle[]): string {
-  return articles
-    .map((article, index) => formatArticleItem(article, index + 1))
-    .join('\n');
+  return articles.map((article, index) => formatArticleItem(article, index + 1)).join('\n');
 }
 
 /**
@@ -88,7 +86,7 @@ function formatArticleItem(article: ScoredArticle, number: number): string {
   item += `   - ${article.summary}\n`;
 
   if (article.tags.length > 0) {
-    item += `   - Tags: ${article.tags.map(t => `\`${t}\``).join(', ')}\n`;
+    item += `   - Tags: ${article.tags.map((t) => `\`${t}\``).join(', ')}\n`;
   }
 
   item += `   - Reason: ${article.reason.join(', ')}\n`;
@@ -105,10 +103,10 @@ function formatArticleItem(article: ScoredArticle, number: number): string {
  */
 export function generatePlainTextBrief(markdownBrief: string): string {
   return markdownBrief
-    .replace(/\*\*/g, '')           // Remove bold
-    .replace(/#+\s/g, '')            // Remove heading markers
-    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Convert links to plain text
-    .replace(/`/g, '')               // Remove code markers
-    .replace(/[\n\n]+/g, '\n')       // Normalize line breaks
+    .replace(/\*\*/g, '') // Remove bold
+    .replace(/#+\s/g, '') // Remove heading markers
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert links to plain text
+    .replace(/`/g, '') // Remove code markers
+    .replace(/[\n\n]+/g, '\n') // Normalize line breaks
     .trim();
 }

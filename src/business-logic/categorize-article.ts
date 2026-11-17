@@ -105,8 +105,8 @@ export function primaryQANewsCategory(article: Article): string {
   let bestHits = 0;
   for (const [categoryId, rules] of Object.entries(config.categories)) {
     const { keywords } = rules as CategoryRules;
-    const hits = keywords.filter(keyword =>
-      new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(text)
+    const hits = keywords.filter((keyword) =>
+      new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(text),
     ).length;
     if (hits > bestHits) {
       bestHits = hits;
@@ -119,7 +119,7 @@ export function primaryQANewsCategory(article: Article): string {
 
   for (const [categoryId, rules] of Object.entries(config.categories)) {
     const { sourceMatches } = rules as CategoryRules;
-    if (sourceMatches.some(match => matchesWholeWord(article.source, match))) {
+    if (sourceMatches.some((match) => matchesWholeWord(article.source, match))) {
       return categoryId;
     }
   }
@@ -133,7 +133,7 @@ export function primaryQANewsCategory(article: Article): string {
  * (older stored articles got it from any text containing "release").
  */
 export function qaNewsTags(article: Article): string[] {
-  const tags = (article.tags ?? []).filter(tag => tag !== RELEASE_TAG);
+  const tags = (article.tags ?? []).filter((tag) => tag !== RELEASE_TAG);
   return isReleaseSource(article.source) ? [...tags, RELEASE_TAG] : tags;
 }
 

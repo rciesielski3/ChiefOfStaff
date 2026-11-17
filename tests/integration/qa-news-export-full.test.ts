@@ -36,15 +36,12 @@ describe('QA-News Full Export Integration', () => {
     const latestPath = path.join(outputRoot(), 'qa-news/data/latest-news.json');
 
     try {
-      execSync(
-        'npx ts-node src/cli/export-latest-news.ts',
-        {
-          cwd: projectRoot,
-          env: process.env,
-          encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe'] // Suppress stderr
-        }
-      );
+      execSync('npx ts-node src/cli/export-latest-news.ts', {
+        cwd: projectRoot,
+        env: process.env,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'], // Suppress stderr
+      });
     } catch (error: any) {
       // If data store is empty, skip but don't fail the structure test
       if (error.status === 1) {
@@ -89,8 +86,8 @@ describe('QA-News Full Export Integration', () => {
           cwd: projectRoot,
           env: process.env,
           encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        }
+          stdio: ['pipe', 'pipe', 'pipe'],
+        },
       );
     } catch (error: any) {
       if (error.status === 1 && error.stderr?.includes('empty_export')) {
@@ -135,8 +132,8 @@ describe('QA-News Full Export Integration', () => {
           cwd: projectRoot,
           env: process.env,
           encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        }
+          stdio: ['pipe', 'pipe', 'pipe'],
+        },
       );
     } catch (error: any) {
       if (error.status === 1 && error.stderr?.includes('empty_export')) {
@@ -190,8 +187,8 @@ describe('QA-News Full Export Integration', () => {
           cwd: projectRoot,
           env: process.env,
           encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        }
+          stdio: ['pipe', 'pipe', 'pipe'],
+        },
       );
     } catch (error: any) {
       if (error.status === 1) {
@@ -209,8 +206,8 @@ describe('QA-News Full Export Integration', () => {
           cwd: projectRoot,
           env: process.env,
           encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        }
+          stdio: ['pipe', 'pipe', 'pipe'],
+        },
       );
     } catch (error: any) {
       if (error.status === 1) {
@@ -226,11 +223,11 @@ describe('QA-News Full Export Integration', () => {
     // Count total articles in each export
     const weeklyTotalArticles = weekly.weeks.reduce(
       (sum: number, w: any) => sum + (w.items?.length || 0),
-      0
+      0,
     );
     const monthlyTotalArticles = monthly.months.reduce(
       (sum: number, m: any) => sum + (m.items?.length || 0),
-      0
+      0,
     );
 
     // Weekly should include more articles (it's comprehensive)
@@ -250,15 +247,12 @@ describe('QA-News Full Export Integration', () => {
     const latestPath = path.join(outputRoot(), 'qa-news/data/latest-news.json');
 
     try {
-      execSync(
-        'npx ts-node src/cli/export-latest-news.ts',
-        {
-          cwd: projectRoot,
-          env: process.env,
-          encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        }
-      );
+      execSync('npx ts-node src/cli/export-latest-news.ts', {
+        cwd: projectRoot,
+        env: process.env,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
     } catch (error: any) {
       if (error.status === 1) {
         // Empty store, skip test
@@ -272,15 +266,12 @@ describe('QA-News Full Export Integration', () => {
     const latestParsed1 = JSON.parse(latest1Content);
 
     try {
-      execSync(
-        'npx ts-node src/cli/export-latest-news.ts',
-        {
-          cwd: projectRoot,
-          env: process.env,
-          encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        }
-      );
+      execSync('npx ts-node src/cli/export-latest-news.ts', {
+        cwd: projectRoot,
+        env: process.env,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
     } catch (error: any) {
       if (error.status === 1) {
         expect(true).toBe(true);
@@ -314,8 +305,8 @@ describe('QA-News Full Export Integration', () => {
           cwd: projectRoot,
           env: process.env,
           encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        }
+          stdio: ['pipe', 'pipe', 'pipe'],
+        },
       );
     } catch (error: any) {
       if (error.status === 1) {
@@ -332,8 +323,8 @@ describe('QA-News Full Export Integration', () => {
           cwd: projectRoot,
           env: process.env,
           encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        }
+          stdio: ['pipe', 'pipe', 'pipe'],
+        },
       );
     } catch (error: any) {
       if (error.status === 1) {
@@ -353,15 +344,11 @@ describe('QA-News Full Export Integration', () => {
     if (weeklyParsed1.weeks.length > 0) {
       weeklyParsed1.weeks.forEach((week: any, weekIndex: number) => {
         expect(week.weekOf).toBe(weeklyParsed2.weeks[weekIndex].weekOf);
-        expect(week.items.length).toBe(
-          weeklyParsed2.weeks[weekIndex].items.length
-        );
+        expect(week.items.length).toBe(weeklyParsed2.weeks[weekIndex].items.length);
 
         // Verify items in order
         week.items.forEach((item: any, itemIndex: number) => {
-          expect(item.id).toBe(
-            weeklyParsed2.weeks[weekIndex].items[itemIndex].id
-          );
+          expect(item.id).toBe(weeklyParsed2.weeks[weekIndex].items[itemIndex].id);
         });
       });
     }
@@ -377,8 +364,8 @@ describe('QA-News Full Export Integration', () => {
           cwd: projectRoot,
           env: process.env,
           encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        }
+          stdio: ['pipe', 'pipe', 'pipe'],
+        },
       );
     } catch (error: any) {
       if (error.status === 1) {
@@ -395,8 +382,8 @@ describe('QA-News Full Export Integration', () => {
           cwd: projectRoot,
           env: process.env,
           encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        }
+          stdio: ['pipe', 'pipe', 'pipe'],
+        },
       );
     } catch (error: any) {
       if (error.status === 1) {
@@ -416,15 +403,11 @@ describe('QA-News Full Export Integration', () => {
     if (monthlyParsed1.months.length > 0) {
       monthlyParsed1.months.forEach((month: any, monthIndex: number) => {
         expect(month.monthOf).toBe(monthlyParsed2.months[monthIndex].monthOf);
-        expect(month.items.length).toBe(
-          monthlyParsed2.months[monthIndex].items.length
-        );
+        expect(month.items.length).toBe(monthlyParsed2.months[monthIndex].items.length);
 
         // Verify items in order
         month.items.forEach((item: any, itemIndex: number) => {
-          expect(item.id).toBe(
-            monthlyParsed2.months[monthIndex].items[itemIndex].id
-          );
+          expect(item.id).toBe(monthlyParsed2.months[monthIndex].items[itemIndex].id);
         });
       });
     }
@@ -443,15 +426,12 @@ describe('QA-News Full Export Integration', () => {
     const latestPath = path.join(outputRoot(), 'qa-news/data/latest-news.json');
 
     try {
-      execSync(
-        'npx ts-node src/cli/export-latest-news.ts',
-        {
-          cwd: projectRoot,
-          env: process.env,
-          encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        }
-      );
+      execSync('npx ts-node src/cli/export-latest-news.ts', {
+        cwd: projectRoot,
+        env: process.env,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
     } catch (error: any) {
       if (error.status === 1) {
         // Empty store, skip
@@ -476,8 +456,8 @@ describe('QA-News Full Export Integration', () => {
           cwd: projectRoot,
           env: process.env,
           encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        }
+          stdio: ['pipe', 'pipe', 'pipe'],
+        },
       );
     } catch (error: any) {
       if (error.status === 1) {
@@ -507,8 +487,8 @@ describe('QA-News Full Export Integration', () => {
           cwd: projectRoot,
           env: process.env,
           encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        }
+          stdio: ['pipe', 'pipe', 'pipe'],
+        },
       );
     } catch (error: any) {
       if (error.status === 1) {
@@ -528,9 +508,7 @@ describe('QA-News Full Export Integration', () => {
 
         // Log for reference (typical is 10-15+ per week depending on source data)
         if (index === 0) {
-          console.log(
-            `First week (${week.weekOf}) has ${week.items.length} articles`
-          );
+          console.log(`First week (${week.weekOf}) has ${week.items.length} articles`);
         }
       });
     }

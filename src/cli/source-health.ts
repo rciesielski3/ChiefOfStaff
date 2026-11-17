@@ -57,14 +57,14 @@ async function checkFeeds(names: string[]): Promise<Map<string, FeedCheck>> {
       try {
         const items = filterExcludedPaths(
           await fetchRSS(source.url, source.name),
-          source.excludePathPrefixes
+          source.excludePathPrefixes,
         );
         return [source.name, summarizeFeedItems(items)];
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         return [source.name, { ok: false, error: message }];
       }
-    })
+    }),
   );
   return new Map(checks);
 }
@@ -79,7 +79,7 @@ async function main(): Promise<void> {
   } catch (error) {
     console.error(
       `[Source Health] ❌ Cannot read ${storeFilePath}:`,
-      error instanceof Error ? error.message : error
+      error instanceof Error ? error.message : error,
     );
     process.exit(1);
   }
@@ -105,4 +105,4 @@ async function main(): Promise<void> {
   console.log(formatSourceHealthReport(report, feedChecks));
 }
 
-main();
+void main();

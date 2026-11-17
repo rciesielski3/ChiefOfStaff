@@ -13,7 +13,7 @@ describe('export-qa-news — Data Integrity', () => {
 
     const output = execSync(
       'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
-      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], env }
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], env },
     );
 
     const json = JSON.parse(output);
@@ -35,13 +35,13 @@ describe('export-qa-news — Data Integrity', () => {
 
     const weeklyOutput = execSync(
       'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
-      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], env }
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], env },
     );
     const weeklyJson = JSON.parse(weeklyOutput);
 
     const monthlyOutput = execSync(
       'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-monthly-recap.ts',
-      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], env }
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], env },
     );
     const monthlyJson = JSON.parse(monthlyOutput);
 
@@ -59,14 +59,14 @@ describe('export-qa-news — Data Integrity', () => {
 
     const weeklyOutput = execSync(
       'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
-      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], env }
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], env },
     );
     const weeklyJson = JSON.parse(weeklyOutput);
 
     // Check week structure
     const week = weeklyJson.weeks[0];
     const requiredWeekFields = ['weekOf', 'items', 'summary'];
-    requiredWeekFields.forEach(field => {
+    requiredWeekFields.forEach((field) => {
       expect(week).toHaveProperty(field);
     });
 
@@ -74,7 +74,7 @@ describe('export-qa-news — Data Integrity', () => {
     if (week.items.length > 0) {
       const article = week.items[0];
       const requiredArticleFields = ['title', 'url', 'source', 'category'];
-      requiredArticleFields.forEach(field => {
+      requiredArticleFields.forEach((field) => {
         expect(article).toHaveProperty(field);
       });
     }
@@ -86,7 +86,7 @@ describe('export-qa-news — Data Integrity', () => {
 
     const output = execSync(
       'npx ts-node -r ./tests/helpers/stub-anthropic.ts src/cli/export-weekly-highlights.ts',
-      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], env }
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], env },
     );
 
     const json = JSON.parse(output);

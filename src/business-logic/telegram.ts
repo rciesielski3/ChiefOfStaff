@@ -34,7 +34,7 @@ export async function sendTelegram(
   message: string,
   botToken: string,
   chatId: string,
-  parseMode: 'HTML' | 'Markdown' | 'MarkdownV2' = 'Markdown'
+  parseMode: 'HTML' | 'Markdown' | 'MarkdownV2' = 'Markdown',
 ): Promise<void> {
   // Validate inputs
   if (!botToken || botToken.trim() === '') {
@@ -53,29 +53,25 @@ export async function sendTelegram(
     chat_id: chatId,
     text: message,
     parse_mode: parseMode,
-    disable_web_page_preview: false
+    disable_web_page_preview: false,
   };
 
   try {
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
-    const data = await response.json() as TelegramResponse;
+    const data = (await response.json()) as TelegramResponse;
 
     if (!data.ok) {
-      throw new Error(
-        `Telegram API error (${data.error_code}): ${data.description}`
-      );
+      throw new Error(`Telegram API error (${data.error_code}): ${data.description}`);
     }
 
-    console.log(
-      `[Telegram] Message sent successfully. Message ID: ${data.result?.message_id}`
-    );
+    console.log(`[Telegram] Message sent successfully. Message ID: ${data.result?.message_id}`);
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to send Telegram message: ${error.message}`);
@@ -91,7 +87,7 @@ export async function sendTelegram(
 export async function sendTelegramHTML(
   message: string,
   botToken: string,
-  chatId: string
+  chatId: string,
 ): Promise<void> {
   await sendTelegram(message, botToken, chatId, 'HTML');
 }
@@ -103,7 +99,7 @@ export async function sendTelegramHTML(
 export async function sendTelegramMarkdown(
   message: string,
   botToken: string,
-  chatId: string
+  chatId: string,
 ): Promise<void> {
   await sendTelegram(message, botToken, chatId, 'Markdown');
 }
@@ -115,7 +111,7 @@ export async function sendTelegramMarkdown(
 export async function sendTelegramMock(
   message: string,
   botToken: string,
-  chatId: string
+  chatId: string,
 ): Promise<void> {
   console.log('[Telegram Mock]');
   console.log(`Token: ${botToken.substring(0, 10)}...`);

@@ -17,7 +17,7 @@ describe('generateBrief', () => {
       tags: ['playwright', 'testing', 'release'],
       score: 110,
       priority: 'CRITICAL',
-      reason: ['playwright', 'release', 'testing']
+      reason: ['playwright', 'release', 'testing'],
     },
     {
       id: 'test-2',
@@ -30,7 +30,7 @@ describe('generateBrief', () => {
       tags: ['typescript', 'release'],
       score: 85,
       priority: 'HIGH',
-      reason: ['typescript', 'release']
+      reason: ['typescript', 'release'],
     },
     {
       id: 'test-3',
@@ -43,7 +43,7 @@ describe('generateBrief', () => {
       tags: ['security'],
       score: 120,
       priority: 'CRITICAL',
-      reason: ['security', 'breaking']
+      reason: ['security', 'breaking'],
     },
     {
       id: 'test-4',
@@ -56,7 +56,7 @@ describe('generateBrief', () => {
       tags: ['react'],
       score: 65,
       priority: 'MEDIUM',
-      reason: ['react']
+      reason: ['react'],
     },
     {
       id: 'test-5',
@@ -69,8 +69,8 @@ describe('generateBrief', () => {
       tags: ['docker', 'devops'],
       score: 45,
       priority: 'MEDIUM',
-      reason: ['docker']
-    }
+      reason: ['docker'],
+    },
   ];
 
   it('should select top N articles by score', () => {

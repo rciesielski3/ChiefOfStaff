@@ -13,9 +13,6 @@
  * - ANTHROPIC_API_KEY: Claude API key (required)
  */
 
-import path from 'path';
-import * as fs from 'fs/promises';
-import * as fsSync from 'fs';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { KnowledgeExtractionService } from '../business-logic/knowledge-extraction';
 import { FactStore } from '../business-logic/knowledge-store';
@@ -52,7 +49,7 @@ async function main() {
       extractCount,
       articlesPath,
       knowledgeFactsPath,
-      cacheSnapshotPath
+      cacheSnapshotPath,
     });
     console.log('');
 
@@ -82,11 +79,13 @@ async function main() {
     console.log(`[Knowledge Extraction] Loaded ${allArticles.length} articles`);
     logStructured('READ_COMPLETE', {
       articleCount: allArticles.length,
-      durationMs: readDuration
+      durationMs: readDuration,
     });
 
     if (allArticles.length === 0) {
-      console.warn('[Knowledge Extraction] ⚠️  No articles found in canonical store, skipping extraction');
+      console.warn(
+        '[Knowledge Extraction] ⚠️  No articles found in canonical store, skipping extraction',
+      );
       logStructured('EXTRACTION_SKIPPED', { reason: 'no_articles' });
       return;
     }
@@ -96,10 +95,10 @@ async function main() {
     console.log(`[Knowledge Extraction] Extracting from top ${topArticles.length} articles\n`);
     logStructured('ARTICLE_SELECTION', {
       selectedCount: topArticles.length,
-      totalAvailable: allArticles.length
+      totalAvailable: allArticles.length,
     });
 
-    const extractionRequests: FactExtractionRequest[] = topArticles.map(article => {
+    const extractionRequests: FactExtractionRequest[] = topArticles.map((article) => {
       if (!article.summary) {
         console.warn(`[Knowledge Extraction] Article ${article.id} has no summary`);
       }
@@ -124,7 +123,7 @@ async function main() {
     console.log('[Knowledge Extraction] Extracting facts from articles...');
     logStructured('EXTRACTION_BATCH_START', {
       articleCount: extractionRequests.length,
-      concurrency: 3
+      concurrency: 3,
     });
 
     // Extract with concurrency control
@@ -137,7 +136,7 @@ async function main() {
       console.log(`[Knowledge Extraction] Processing batch ${batchNum}/${totalBatches}...`);
 
       const batchResults = await Promise.all(
-        batch.map(req => extractionService.extractFacts(req))
+        batch.map((req) => extractionService.extractFacts(req)),
       );
 
       // Store facts from this batch
@@ -146,13 +145,11 @@ async function main() {
 
         if (result.error) {
           failedExtractions++;
-          console.warn(
-            `  ⚠️  Error extracting from article ${result.article_id}: ${result.error}`
-          );
+          console.warn(`  ⚠️  Error extracting from article ${result.article_id}: ${result.error}`);
           logStructured('EXTRACTION_ERROR', {
             article_id: result.article_id,
             error: result.error,
-            extractionTimeMs: result.extraction_time_ms
+            extractionTimeMs: result.extraction_time_ms,
           });
         } else {
           if (result.facts.length > 0) {
@@ -162,15 +159,15 @@ async function main() {
 
             console.log(
               `  ✓ Article ${result.article_id}: ${result.facts.length} facts extracted ` +
-              `(${storeResult.stored} stored, ${storeResult.deduplicated} deduplicated, ` +
-              `${result.extraction_time_ms}ms)`
+                `(${storeResult.stored} stored, ${storeResult.deduplicated} deduplicated, ` +
+                `${result.extraction_time_ms}ms)`,
             );
             logStructured('EXTRACTION_COMPLETE', {
               article_id: result.article_id,
               factsExtracted: result.facts.length,
               factsStored: storeResult.stored,
               factsDeduplicated: storeResult.deduplicated,
-              extractionTimeMs: result.extraction_time_ms
+              extractionTimeMs: result.extraction_time_ms,
             });
           } else {
             console.log(`  - Article ${result.article_id}: no facts extracted`);
@@ -180,7 +177,7 @@ async function main() {
 
       // Small delay between batches to respect rate limits
       if (i + CONCURRENCY < extractionRequests.length) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
 
@@ -192,7 +189,7 @@ async function main() {
       factsStored: totalFactsStored,
       factsDeduplicated: totalFactsDeduplicated,
       failedExtractions,
-      durationMs: extractionDuration
+      durationMs: extractionDuration,
     });
 
     // Save classifier caches for next run
@@ -219,7 +216,7 @@ async function main() {
       avgConfidence: stats.avgConfidence,
       byType: stats.byType,
       byStatus: stats.byStatus,
-      durationMs: statsDuration
+      durationMs: statsDuration,
     });
 
     const totalDuration = Date.now() - workflowStartTime;
@@ -232,14 +229,14 @@ async function main() {
       factsDeduplicated: totalFactsDeduplicated,
       failedExtractions,
       totalFactsInStore: stats.total,
-      avgConfidence: stats.avgConfidence
+      avgConfidence: stats.avgConfidence,
     });
   } catch (error) {
     const totalDuration = Date.now() - workflowStartTime;
     console.error('[Knowledge Extraction] ❌ Error:', error);
     logStructured('EXTRACTION_ERROR_FATAL', {
       error: error instanceof Error ? error.message : String(error),
-      totalDurationMs: totalDuration
+      totalDurationMs: totalDuration,
     });
     process.exit(1);
   }
@@ -249,7 +246,7 @@ async function main() {
 main().catch((error) => {
   console.error('[Knowledge Extraction] ❌ Uncaught error:', error);
   logStructured('EXTRACTION_ERROR_UNCAUGHT', {
-    error: error instanceof Error ? error.message : String(error)
+    error: error instanceof Error ? error.message : String(error),
   });
   process.exit(1);
 });

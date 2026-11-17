@@ -12,18 +12,22 @@ describe('SummaryGenerator', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockCreate = jest.fn();
-    (Anthropic as jest.MockedClass<typeof Anthropic>).mockImplementation(() => ({
-      messages: {
-        create: mockCreate
-      }
-    } as any));
+    (Anthropic as jest.MockedClass<typeof Anthropic>).mockImplementation(
+      () =>
+        ({
+          messages: {
+            create: mockCreate,
+          },
+        }) as any,
+    );
     generator = new SummaryGenerator(mockApiKey);
   });
 
   it('should generate a 1-2 sentence summary from articles (20-300 chars)', async () => {
-    const mockSummary = 'This week featured releases in testing automation and container orchestration, alongside industry surveys on web development trends.';
+    const mockSummary =
+      'This week featured releases in testing automation and container orchestration, alongside industry surveys on web development trends.';
     mockCreate.mockResolvedValue({
-      content: [{ type: 'text', text: mockSummary }]
+      content: [{ type: 'text', text: mockSummary }],
     });
 
     const articles: Article[] = [
@@ -35,7 +39,7 @@ describe('SummaryGenerator', () => {
         source: 'Playwright Blog',
         category: 'release',
         publishedAt: '2026-07-20T10:00:00Z',
-        tags: ['playwright', 'testing', 'automation']
+        tags: ['playwright', 'testing', 'automation'],
       },
       {
         id: 'test-2',
@@ -45,7 +49,7 @@ describe('SummaryGenerator', () => {
         source: 'Kubernetes Blog',
         category: 'release',
         publishedAt: '2026-07-20T11:00:00Z',
-        tags: ['kubernetes', 'devops']
+        tags: ['kubernetes', 'devops'],
       },
       {
         id: 'test-3',
@@ -55,8 +59,8 @@ describe('SummaryGenerator', () => {
         source: 'Developer News',
         category: 'news',
         publishedAt: '2026-07-20T12:00:00Z',
-        tags: ['survey', 'web-development']
-      }
+        tags: ['survey', 'web-development'],
+      },
     ];
 
     const summary = await generator.generateSummary(articles);
@@ -78,8 +82,8 @@ describe('SummaryGenerator', () => {
       expect.objectContaining({
         model: 'claude-opus-4-1-20250805',
         max_tokens: 150,
-        messages: expect.any(Array)
-      })
+        messages: expect.any(Array),
+      }),
     );
   });
 
@@ -92,9 +96,10 @@ describe('SummaryGenerator', () => {
   });
 
   it('should mention key themes from articles in summary', async () => {
-    const mockSummary = 'This week explored AI agents and LLM prompt engineering, with discussion of advanced coding patterns used in AI development.';
+    const mockSummary =
+      'This week explored AI agents and LLM prompt engineering, with discussion of advanced coding patterns used in AI development.';
     mockCreate.mockResolvedValue({
-      content: [{ type: 'text', text: mockSummary }]
+      content: [{ type: 'text', text: mockSummary }],
     });
 
     const articles: Article[] = [
@@ -106,7 +111,7 @@ describe('SummaryGenerator', () => {
         source: 'Tech Blog',
         category: 'article',
         publishedAt: '2026-07-20T10:00:00Z',
-        tags: ['ai', 'llm', 'node.js', 'coding']
+        tags: ['ai', 'llm', 'node.js', 'coding'],
       },
       {
         id: 'ai-2',
@@ -116,7 +121,7 @@ describe('SummaryGenerator', () => {
         source: 'AI Research',
         category: 'article',
         publishedAt: '2026-07-20T11:00:00Z',
-        tags: ['ai', 'llm', 'machine-learning']
+        tags: ['ai', 'llm', 'machine-learning'],
       },
       {
         id: 'ai-3',
@@ -126,8 +131,8 @@ describe('SummaryGenerator', () => {
         source: 'Developer Guide',
         category: 'article',
         publishedAt: '2026-07-20T12:00:00Z',
-        tags: ['coding', 'ai', 'development']
-      }
+        tags: ['coding', 'ai', 'development'],
+      },
     ];
 
     const summary = await generator.generateSummary(articles);

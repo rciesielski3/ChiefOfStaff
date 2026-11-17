@@ -17,9 +17,6 @@
  * - ANTHROPIC_API_KEY: Claude API key (required for embeddings)
  */
 
-import path from 'path';
-import * as fs from 'fs/promises';
-import * as fsSync from 'fs';
 import { FactStore } from '../business-logic/knowledge-store';
 import { PatternDetector } from '../business-logic/pattern-detector';
 import { SynthesisEngine } from '../business-logic/synthesis-engine';
@@ -77,7 +74,10 @@ export async function main() {
     // Note: ANTHROPIC_API_KEY is not required for current mock-based embeddings
     // but will be needed when real embeddings are implemented (M6.5+)
     if (!process.env.ANTHROPIC_API_KEY) {
-      logVerbose('[Insight Generation] ℹ️  Note: ANTHROPIC_API_KEY not set (using mock embeddings)', verbose);
+      logVerbose(
+        '[Insight Generation] ℹ️  Note: ANTHROPIC_API_KEY not set (using mock embeddings)',
+        verbose,
+      );
     }
 
     // Initialize services
@@ -126,7 +126,7 @@ export async function main() {
     console.log(`[Insight Generation] Detected ${patterns.length} patterns`);
     logVerbose(`  - Pattern detection time: ${patternDuration}ms`, verbose);
     if (patterns.length > 0 && verbose) {
-      console.log(`  - Pattern types: ${patterns.map(p => p.type).join(', ')}`);
+      console.log(`  - Pattern types: ${patterns.map((p) => p.type).join(', ')}`);
     }
     logStructured('PATTERN_DETECTION_COMPLETE', {
       patternCount: patterns.length,
@@ -145,7 +145,7 @@ export async function main() {
     console.log(`[Insight Generation] Synthesized ${synthesizedInsights.length} insights`);
     logVerbose(`  - Synthesis time: ${synthesisDuration}ms`, verbose);
     if (synthesizedInsights.length > 0 && verbose) {
-      console.log(`  - Insight types: ${synthesizedInsights.map(i => i.type).join(', ')}`);
+      console.log(`  - Insight types: ${synthesizedInsights.map((i) => i.type).join(', ')}`);
     }
     logStructured('SYNTHESIS_COMPLETE', {
       insightCount: synthesizedInsights.length,
@@ -188,16 +188,18 @@ export async function main() {
     console.log(`  - By type: ${JSON.stringify(validationResult.metrics.by_type)}`);
     console.log(
       `  - Confidence: min=${validationResult.metrics.confidence_min.toFixed(2)}, ` +
-      `mean=${validationResult.metrics.confidence_mean.toFixed(2)}, ` +
-      `max=${validationResult.metrics.confidence_max.toFixed(2)}`
+        `mean=${validationResult.metrics.confidence_mean.toFixed(2)}, ` +
+        `max=${validationResult.metrics.confidence_max.toFixed(2)}`,
     );
-    console.log(`  - Facts per insight: ${validationResult.metrics.facts_per_insight_mean.toFixed(2)} avg`);
+    console.log(
+      `  - Facts per insight: ${validationResult.metrics.facts_per_insight_mean.toFixed(2)} avg`,
+    );
     console.log(`  - No hallucinations: ${validationResult.metrics.no_hallucinations ? '✓' : '✗'}`);
     console.log(`  - All valid types: ${validationResult.metrics.all_valid_types ? '✓' : '✗'}`);
 
     if (!validationResult.passed && validationResult.failures.length > 0) {
       console.log('  - Failures:');
-      validationResult.failures.forEach(failure => {
+      validationResult.failures.forEach((failure) => {
         console.log(`    - ${failure}`);
       });
     }
@@ -229,7 +231,7 @@ export async function main() {
     // Log validation failures as warnings, but don't fail the pipeline
     if (!validationResult.passed) {
       console.warn('[Insight Generation] ⚠️  Validation warnings detected:');
-      validationResult.failures.forEach(failure => {
+      validationResult.failures.forEach((failure) => {
         console.warn(`  - ${failure}`);
       });
       console.warn('[Insight Generation] Continuing pipeline despite validation warnings');

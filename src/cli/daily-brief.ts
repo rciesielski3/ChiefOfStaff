@@ -55,7 +55,7 @@ async function main() {
     console.log(`  - Sources: ${RSS_SOURCES.length}`);
     logStructured('CONFIG_LOADED', {
       briefCount,
-      sourceCount: RSS_SOURCES.length
+      sourceCount: RSS_SOURCES.length,
     });
     console.log('');
 
@@ -70,14 +70,14 @@ async function main() {
       articles: allRawArticles,
       results: fetchResults,
       successCount,
-      failureCount
+      failureCount,
     } = await fetchAllSources(RSS_SOURCES);
 
     const fetchDuration = Date.now() - fetchStartTime;
     console.log(`[Daily Brief] Total raw articles: ${allRawArticles.length}\n`);
     logStructured('FETCH_COMPLETE', {
       totalArticles: allRawArticles.length,
-      durationMs: fetchDuration
+      durationMs: fetchDuration,
     });
 
     // Report fetch summary: how many sources succeeded/failed and total
@@ -87,8 +87,8 @@ async function main() {
     if (failureCount > 0) {
       console.log(`  - Failed sources: ${failureCount}/${RSS_SOURCES.length}`);
       fetchResults
-        .filter(r => !r.success)
-        .forEach(r => {
+        .filter((r) => !r.success)
+        .forEach((r) => {
           console.log(`    - ${r.source}: ${r.error}`);
         });
     }
@@ -97,7 +97,7 @@ async function main() {
       successCount,
       failureCount,
       totalSources: RSS_SOURCES.length,
-      totalArticles: allRawArticles.length
+      totalArticles: allRawArticles.length,
     });
 
     // Only genuine total failure (no articles from any source) short-circuits
@@ -106,7 +106,7 @@ async function main() {
     if (allRawArticles.length === 0) {
       console.warn('[Daily Brief] ⚠️  No articles fetched from any source');
       logStructured('WORKFLOW_COMPLETE_NO_ARTICLES', {
-        totalDurationMs: Date.now() - workflowStartTime
+        totalDurationMs: Date.now() - workflowStartTime,
       });
       process.exit(0);
     }
@@ -120,7 +120,7 @@ async function main() {
     console.log(`[Daily Brief] Normalized: ${articles.length} articles\n`);
     logStructured('NORMALIZE_COMPLETE', {
       articleCount: articles.length,
-      durationMs: normalizeDuration
+      durationMs: normalizeDuration,
     });
 
     // Score articles
@@ -131,12 +131,12 @@ async function main() {
     const scoreDuration = Date.now() - scoreStartTime;
     const topScore = scoredArticles[0]?.score || 0;
     console.log(
-      `[Daily Brief] Scored: ${scoredArticles.length} articles (top score: ${topScore})\n`
+      `[Daily Brief] Scored: ${scoredArticles.length} articles (top score: ${topScore})\n`,
     );
     logStructured('SCORE_COMPLETE', {
       articleCount: scoredArticles.length,
       topScore,
-      durationMs: scoreDuration
+      durationMs: scoreDuration,
     });
 
     // Generate brief
@@ -144,14 +144,14 @@ async function main() {
     console.log('[Daily Brief] Generating markdown brief...');
     logStructured('GENERATE_START', {
       articleCount: scoredArticles.length,
-      briefCount
+      briefCount,
     });
     const markdownBrief = generateBrief(scoredArticles, briefCount);
     const generateDuration = Date.now() - generateStartTime;
     console.log(`[Daily Brief] Generated brief (${markdownBrief.length} chars)\n`);
     logStructured('GENERATE_COMPLETE', {
       briefLength: markdownBrief.length,
-      durationMs: generateDuration
+      durationMs: generateDuration,
     });
 
     // Persist articles to canonical store (CRITICAL FIX #1)
@@ -159,7 +159,7 @@ async function main() {
     const storeFilePath = path.join(process.cwd(), 'data/canonical_articles.ndjson');
     logStructured('PERSIST_START', {
       articleCount: scoredArticles.length,
-      storeFilePath
+      storeFilePath,
     });
     const store = new NdJsonArticleStore(storeFilePath);
     await persistArticles(scoredArticles, store);
@@ -167,7 +167,7 @@ async function main() {
     console.log(`[Daily Brief] Persisted ${scoredArticles.length} articles to store`);
     logStructured('PERSIST_COMPLETE', {
       articleCount: scoredArticles.length,
-      durationMs: persistDuration
+      durationMs: persistDuration,
     });
 
     // Telegram notifications are now handled by the notify.yml workflow
@@ -176,7 +176,7 @@ async function main() {
     console.log('[Daily Brief] Telegram notifications are handled by notify.yml workflow');
     logStructured('TELEGRAM_SKIPPED', {
       reason: 'delegated_to_notify_workflow',
-      info: 'Notifications are sent by notify.yml after this workflow completes'
+      info: 'Notifications are sent by notify.yml after this workflow completes',
     });
 
     const totalDuration = Date.now() - workflowStartTime;
@@ -185,15 +185,14 @@ async function main() {
       totalDurationMs: totalDuration,
       articlesFetched: allRawArticles.length,
       articlesScored: scoredArticles.length,
-      briefGenerated: true
+      briefGenerated: true,
     });
-
   } catch (error) {
     const totalDuration = Date.now() - workflowStartTime;
     console.error('[Daily Brief] ❌ Error:', error);
     logStructured('WORKFLOW_ERROR', {
       error: error instanceof Error ? error.message : String(error),
-      totalDurationMs: totalDuration
+      totalDurationMs: totalDuration,
     });
     process.exit(1);
   }
@@ -203,7 +202,7 @@ async function main() {
 main().catch((error) => {
   console.error('[Daily Brief] ❌ Error:', error);
   logStructured('WORKFLOW_ERROR_UNCAUGHT', {
-    error: error instanceof Error ? error.message : String(error)
+    error: error instanceof Error ? error.message : String(error),
   });
   process.exit(1);
 });

@@ -73,7 +73,8 @@ describe('FactStore', () => {
       const similar: KnowledgeFact = {
         ...mockFact,
         id: 'fact_003',
-        content: 'KUBERNETES   AUTOMATES   CONTAINER   ORCHESTRATION   AND   DEPLOYMENT   ACROSS   CLUSTERS',
+        content:
+          'KUBERNETES   AUTOMATES   CONTAINER   ORCHESTRATION   AND   DEPLOYMENT   ACROSS   CLUSTERS',
       };
 
       const result = await store.append([similar]);
@@ -171,17 +172,17 @@ describe('FactStore', () => {
       const lowConfidence: KnowledgeFact = {
         ...mockFact,
         id: 'fact_002',
-        confidence: 0.60,
+        confidence: 0.6,
         content: 'Lower confidence fact with different content text',
       };
 
       await store.append([highConfidence, lowConfidence]);
 
-      const highFacts = await store.getByMinConfidence(0.90);
+      const highFacts = await store.getByMinConfidence(0.9);
       expect(highFacts).toHaveLength(1);
       expect(highFacts[0].confidence).toBe(0.95);
 
-      const allFacts = await store.getByMinConfidence(0.50);
+      const allFacts = await store.getByMinConfidence(0.5);
       expect(allFacts).toHaveLength(2);
     });
 
@@ -195,9 +196,15 @@ describe('FactStore', () => {
     it('should calculate statistics', async () => {
       const facts: KnowledgeFact[] = [
         { ...mockFact, type: 'DEFINITION', confidence: 0.9 },
-        { ...mockFact, id: 'f2', type: 'DEFINITION', confidence: 0.95, content: 'Technique fact 1' },
+        {
+          ...mockFact,
+          id: 'f2',
+          type: 'DEFINITION',
+          confidence: 0.95,
+          content: 'Technique fact 1',
+        },
         { ...mockFact, id: 'f3', type: 'TECHNIQUE', confidence: 0.85, content: 'Technique fact 2' },
-        { ...mockFact, id: 'f4', type: 'PATTERN', confidence: 0.80, content: 'Pattern fact 1' },
+        { ...mockFact, id: 'f4', type: 'PATTERN', confidence: 0.8, content: 'Pattern fact 1' },
       ];
 
       await store.append(facts);
@@ -229,7 +236,11 @@ describe('FactStore', () => {
     it('should handle malformed JSON in store gracefully', async () => {
       // Manually write malformed line
       await fs.mkdir(path.dirname(testFilePath), { recursive: true });
-      await fs.writeFile(testFilePath, 'not valid json\n' + JSON.stringify(mockFact) + '\n', 'utf-8');
+      await fs.writeFile(
+        testFilePath,
+        'not valid json\n' + JSON.stringify(mockFact) + '\n',
+        'utf-8',
+      );
 
       // Should skip malformed line and read valid one
       const facts = await store.readAll();

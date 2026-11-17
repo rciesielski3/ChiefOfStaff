@@ -1,5 +1,10 @@
 import { promises as fs } from 'fs';
-import { exportLatestNews, LatestNewsExport, transformToPublicFormat, writePublicLatestNews } from '../../src/business-logic/export-latest-news';
+import {
+  exportLatestNews,
+  LatestNewsExport,
+  transformToPublicFormat,
+  writePublicLatestNews,
+} from '../../src/business-logic/export-latest-news';
 import { ArticleStore } from '../../src/business-logic/article-store';
 import { Article } from '../../src/business-logic/normalize-article';
 
@@ -44,7 +49,7 @@ describe('exportLatestNews', () => {
       category: 'news',
       publishedAt: new Date().toISOString(),
       tags: ['test'],
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -56,7 +61,7 @@ describe('exportLatestNews', () => {
     date.setDate(date.getDate() - daysAgo);
     return createArticle({
       publishedAt: date.toISOString(),
-      ...overrides
+      ...overrides,
     });
   }
 
@@ -84,7 +89,7 @@ describe('exportLatestNews', () => {
     const articles = [
       createArticleWithDate(2, { id: 'oldest', title: 'Oldest' }),
       createArticleWithDate(0, { id: 'newest', title: 'Newest' }),
-      createArticleWithDate(1, { id: 'middle', title: 'Middle' })
+      createArticleWithDate(1, { id: 'middle', title: 'Middle' }),
     ];
     const store = new MockArticleStore(articles);
 
@@ -98,7 +103,7 @@ describe('exportLatestNews', () => {
 
   it('exports every stored article by default (store keeps 30 days)', async () => {
     const articles = Array.from({ length: 100 }, (_, i) =>
-      createArticleWithDate(i % 30, { id: `article-${i}` })
+      createArticleWithDate(i % 30, { id: `article-${i}` }),
     );
     const store = new MockArticleStore(articles);
 
@@ -113,7 +118,7 @@ describe('exportLatestNews', () => {
     const articles = [
       createArticleWithDate(0, { id: 'a1' }),
       createArticleWithDate(1, { id: 'a2' }),
-      createArticleWithDate(2, { id: 'a3' })
+      createArticleWithDate(2, { id: 'a3' }),
     ];
     const store = new MockArticleStore(articles);
 
@@ -124,7 +129,7 @@ describe('exportLatestNews', () => {
 
   it('should export correct number when limit is specified', async () => {
     const articles = Array.from({ length: 30 }, (_, i) =>
-      createArticleWithDate(i, { id: `article-${i}` })
+      createArticleWithDate(i, { id: `article-${i}` }),
     );
     const store = new MockArticleStore(articles);
 
@@ -155,7 +160,7 @@ describe('exportLatestNews', () => {
     const article = createArticle();
     const store = new MockArticleStore([article]);
 
-    const result = await exportLatestNews(store) as LatestNewsExport;
+    const result = (await exportLatestNews(store)) as LatestNewsExport;
 
     expect(result).toHaveProperty('date');
     expect(result).toHaveProperty('updatedAt');
@@ -168,7 +173,7 @@ describe('exportLatestNews', () => {
       title: 'Complete Article',
       summary: 'Full summary with details',
       tags: ['typescript', 'testing'],
-      score: 95
+      score: 95,
     });
     const store = new MockArticleStore([article]);
 
@@ -196,7 +201,7 @@ describe('exportLatestNews', () => {
       createArticleWithDate(100, { id: 'very-old' }),
       createArticleWithDate(50, { id: 'old' }),
       createArticleWithDate(0, { id: 'newest-1' }),
-      createArticleWithDate(1, { id: 'newest-2' })
+      createArticleWithDate(1, { id: 'newest-2' }),
     ];
     const store = new MockArticleStore(articles);
 
@@ -212,7 +217,7 @@ describe('exportLatestNews', () => {
     const articles = [
       createArticle({ id: 'a1', publishedAt: now }),
       createArticle({ id: 'a2', publishedAt: now }),
-      createArticle({ id: 'a3', publishedAt: now })
+      createArticle({ id: 'a3', publishedAt: now }),
     ];
     const store = new MockArticleStore(articles);
 
@@ -231,7 +236,7 @@ describe('exportLatestNews', () => {
     const afterRead = await store.read();
 
     expect(afterRead).toHaveLength(beforeRead.length);
-    expect(afterRead.map(a => a.id)).toEqual(beforeRead.map(a => a.id));
+    expect(afterRead.map((a) => a.id)).toEqual(beforeRead.map((a) => a.id));
   });
 
   it('should export with various article categories', async () => {
@@ -239,24 +244,24 @@ describe('exportLatestNews', () => {
       createArticleWithDate(0, { id: 'news', category: 'news' }),
       createArticleWithDate(1, { id: 'release', category: 'release' }),
       createArticleWithDate(2, { id: 'article', category: 'article' }),
-      createArticleWithDate(3, { id: 'tutorial', category: 'tutorial' })
+      createArticleWithDate(3, { id: 'tutorial', category: 'tutorial' }),
     ];
     const store = new MockArticleStore(articles);
 
     const result = await exportLatestNews(store, 10);
 
     expect(result.items).toHaveLength(4);
-    expect(result.items.some(a => a.category === 'news')).toBe(true);
-    expect(result.items.some(a => a.category === 'release')).toBe(true);
-    expect(result.items.some(a => a.category === 'article')).toBe(true);
-    expect(result.items.some(a => a.category === 'tutorial')).toBe(true);
+    expect(result.items.some((a) => a.category === 'news')).toBe(true);
+    expect(result.items.some((a) => a.category === 'release')).toBe(true);
+    expect(result.items.some((a) => a.category === 'article')).toBe(true);
+    expect(result.items.some((a) => a.category === 'tutorial')).toBe(true);
   });
 
   it('should export with correct sorting stability', async () => {
     const articles = [
       createArticleWithDate(0, { id: 'a1', title: 'Article 1' }),
       createArticleWithDate(0, { id: 'a2', title: 'Article 2' }),
-      createArticleWithDate(0, { id: 'a3', title: 'Article 3' })
+      createArticleWithDate(0, { id: 'a3', title: 'Article 3' }),
     ];
     const store = new MockArticleStore(articles);
 
@@ -278,62 +283,100 @@ describe('exportLatestNews', () => {
   it('drops repeated stories: same source and URL without fragment or utm_ params, keeps the newest', async () => {
     const story = 'https://www.infoq.com/news/yelp-ui/';
     const store = new MockArticleStore([
-      createArticleWithDate(3, { id: 'old', source: 'InfoQ', title: 'Yelp Combines UI for Its App', url: `${story}?utm_source=infoq&utm_medium=feed` }),
-      createArticleWithDate(1, { id: 'new', source: 'InfoQ', title: 'Yelp combines UI for its app', url: `${story}?utm_campaign=x#top` }),
-      createArticleWithDate(2, { id: 'other-source', source: 'Cloudflare', title: 'Yelp Combines UI', url: story })
+      createArticleWithDate(3, {
+        id: 'old',
+        source: 'InfoQ',
+        title: 'Yelp Combines UI for Its App',
+        url: `${story}?utm_source=infoq&utm_medium=feed`,
+      }),
+      createArticleWithDate(1, {
+        id: 'new',
+        source: 'InfoQ',
+        title: 'Yelp combines UI for its app',
+        url: `${story}?utm_campaign=x#top`,
+      }),
+      createArticleWithDate(2, {
+        id: 'other-source',
+        source: 'Cloudflare',
+        title: 'Yelp Combines UI',
+        url: story,
+      }),
     ]);
 
     const result = await exportLatestNews(store);
 
-    expect(result.items.map(a => a.id)).toEqual(['new', 'other-source']);
+    expect(result.items.map((a) => a.id)).toEqual(['new', 'other-source']);
   });
 
   it('treats a URL and the same URL plus utm_ params as one story even with "~" in the query', async () => {
     const store = new MockArticleStore([
-      createArticleWithDate(1, { id: 'tracked', url: 'https://example.org/story?topic=qa~news&utm_source=feed' }),
-      createArticleWithDate(2, { id: 'plain', url: 'https://example.org/story?topic=qa~news' })
+      createArticleWithDate(1, {
+        id: 'tracked',
+        url: 'https://example.org/story?topic=qa~news&utm_source=feed',
+      }),
+      createArticleWithDate(2, { id: 'plain', url: 'https://example.org/story?topic=qa~news' }),
     ]);
 
     const result = await exportLatestNews(store);
 
-    expect(result.items.map(a => a.id)).toEqual(['tracked']);
+    expect(result.items.map((a) => a.id)).toEqual(['tracked']);
   });
 
   it('keeps different stories that share a title', async () => {
     const store = new MockArticleStore([
-      createArticleWithDate(1, { id: 'k6', source: 'Grafana k6 Releases', title: 'v1.8.3', url: 'https://github.com/grafana/k6/releases/tag/v1.8.3' }),
-      createArticleWithDate(2, { id: 'vitest', source: 'Vitest Releases', title: 'v1.8.3', url: 'https://github.com/vitest-dev/vitest/releases/tag/v1.8.3' }),
-      createArticleWithDate(3, { id: 'roundup-1', source: 'InfoQ', title: 'Java News Roundup', url: 'https://www.infoq.com/news/roundup-1/' }),
-      createArticleWithDate(4, { id: 'roundup-2', source: 'InfoQ', title: 'Java News Roundup', url: 'https://www.infoq.com/news/roundup-2/' })
+      createArticleWithDate(1, {
+        id: 'k6',
+        source: 'Grafana k6 Releases',
+        title: 'v1.8.3',
+        url: 'https://github.com/grafana/k6/releases/tag/v1.8.3',
+      }),
+      createArticleWithDate(2, {
+        id: 'vitest',
+        source: 'Vitest Releases',
+        title: 'v1.8.3',
+        url: 'https://github.com/vitest-dev/vitest/releases/tag/v1.8.3',
+      }),
+      createArticleWithDate(3, {
+        id: 'roundup-1',
+        source: 'InfoQ',
+        title: 'Java News Roundup',
+        url: 'https://www.infoq.com/news/roundup-1/',
+      }),
+      createArticleWithDate(4, {
+        id: 'roundup-2',
+        source: 'InfoQ',
+        title: 'Java News Roundup',
+        url: 'https://www.infoq.com/news/roundup-2/',
+      }),
     ]);
 
     const result = await exportLatestNews(store);
 
-    expect(result.items.map(a => a.id)).toEqual(['k6', 'vitest', 'roundup-1', 'roundup-2']);
+    expect(result.items.map((a) => a.id)).toEqual(['k6', 'vitest', 'roundup-1', 'roundup-2']);
   });
 
   it('leaves out articles older than the retention window', async () => {
     const store = new MockArticleStore([
       createArticleWithDate(1, { id: 'recent' }),
       createArticleWithDate(29, { id: 'edge' }),
-      createArticleWithDate(45, { id: 'stale' })
+      createArticleWithDate(45, { id: 'stale' }),
     ]);
 
     const result = await exportLatestNews(store);
 
-    expect(result.items.map(a => a.id)).toEqual(['recent', 'edge']);
+    expect(result.items.map((a) => a.id)).toEqual(['recent', 'edge']);
   });
 
   it('applies the limit after dropping repeated stories', async () => {
     const store = new MockArticleStore([
       createArticleWithDate(1, { id: 'a', url: 'https://example.org/a' }),
       createArticleWithDate(2, { id: 'a-copy', url: 'https://example.org/a?utm_source=feed' }),
-      createArticleWithDate(3, { id: 'b', url: 'https://example.org/b' })
+      createArticleWithDate(3, { id: 'b', url: 'https://example.org/b' }),
     ]);
 
     const result = await exportLatestNews(store, 2);
 
-    expect(result.items.map(a => a.id)).toEqual(['a', 'b']);
+    expect(result.items.map((a) => a.id)).toEqual(['a', 'b']);
   });
 });
 
@@ -351,9 +394,9 @@ describe('transformToPublicFormat', () => {
           source: 'Test Source',
           category: 'news',
           publishedAt: '2026-07-31T08:00:00Z',
-          tags: ['test']
-        }
-      ]
+          tags: ['test'],
+        },
+      ],
     };
 
     const output = transformToPublicFormat(input);
@@ -361,7 +404,7 @@ describe('transformToPublicFormat', () => {
     expect(output).toEqual({
       date: '2026-07-31',
       updatedAt: '2026-07-31T10:00:00Z',
-      articles: input.items
+      articles: input.items,
     });
 
     // Verify articles and items point to same objects
@@ -382,9 +425,9 @@ describe('transformToPublicFormat', () => {
           source: 'Test Source',
           category: 'news',
           publishedAt: '2026-07-31T08:00:00Z',
-          tags: []
-        }
-      ]
+          tags: [],
+        },
+      ],
     };
 
     const output = transformToPublicFormat(input);
@@ -396,7 +439,7 @@ describe('transformToPublicFormat', () => {
     const input = {
       date: '2026-07-31',
       updatedAt: '2026-07-31T10:00:00Z',
-      items: []
+      items: [],
     };
 
     const output = transformToPublicFormat(input);
@@ -422,9 +465,9 @@ describe('writePublicLatestNews', () => {
           source: 'Test',
           category: 'news',
           publishedAt: '2026-07-31T08:00:00Z',
-          tags: []
-        }
-      ]
+          tags: [],
+        },
+      ],
     };
 
     await writePublicLatestNews(filePath, testData);
@@ -445,7 +488,7 @@ describe('writePublicLatestNews', () => {
     const testData = {
       date: '2026-07-31',
       updatedAt: '2026-07-31T10:00:00Z',
-      items: []
+      items: [],
     };
 
     await writePublicLatestNews(filePath, testData);
