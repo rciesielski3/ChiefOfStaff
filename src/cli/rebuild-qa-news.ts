@@ -32,7 +32,7 @@ const RSS_SOURCES = getEnabledSources();
  * 1. Fetch articles from all 8 RSS sources
  * 2. Normalize articles
  * 3. Score articles
- * 4. Export latest-news.json (top 50)
+ * 4. Export latest-news.json (every stored article)
  * 5. Export weekly-highlights.json (grouped by week)
  * 6. Export monthly-recap.json (grouped by month, top 25 each)
  * 7. Write all exports to qa-news/data/ directory
@@ -171,7 +171,6 @@ async function main(): Promise<void> {
     const projectRoot = resolveProjectRoot();
     const latestExport = await exportLatestNews(
       new NdJsonArticleStore(path.join(projectRoot, 'data/canonical_articles.ndjson')),
-      50,
     );
     const weeklyExport = exportWeeklyHighlights(scoredArticles);
     const monthlyExport = exportMonthlyRecap(scoredArticles, 25);
