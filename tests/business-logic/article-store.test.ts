@@ -682,6 +682,18 @@ describe('NdJsonArticleStore', () => {
         expect(await store.read()).toHaveLength(1);
       });
 
+      it('keeps a recent duplicate when the first stored copy is expired', async () => {
+        const store = new NdJsonArticleStore(testFile);
+        await store.write([
+          mk({ id: 'old', summary: 'old copy', publishedAt: '2026-06-01T10:00:00Z' }),
+          mk({ id: 'recent', summary: 'recent copy', publishedAt: '2026-07-14T10:00:00Z' }),
+        ]);
+        const merged = await store.dedupAndMerge([]);
+        expect(merged).toHaveLength(1);
+        expect(merged[0].id).toBe('old');
+        expect(merged[0].summary).toBe('recent copy');
+      });
+
       it('falls back to the title when the URL is empty', async () => {
         const store = new NdJsonArticleStore(testFile);
         await store.write([mk({ id: 'one', url: '', title: 'One' })]);

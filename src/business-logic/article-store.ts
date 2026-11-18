@@ -101,13 +101,15 @@ export class NdJsonArticleStore implements ArticleStore {
     // Read existing articles
     const existing = await this.read();
 
-    // Create dedup map from existing articles. First wins: if the store already
-    // holds duplicates, keep the first stored ID, which knowledge facts reference.
+    // Create dedup map from existing articles. If the store already holds
+    // duplicates, keep the first stored ID (knowledge facts reference it) but
+    // the last record's content, so an expired first copy cannot drop a recent one.
     const dedupMap = new Map<string, Article>();
 
     for (const article of existing) {
       const key = storyKey(article);
-      if (!dedupMap.has(key)) dedupMap.set(key, article);
+      const first = dedupMap.get(key);
+      dedupMap.set(key, first ? { ...article, id: first.id } : article);
     }
 
     // Merge with new articles
