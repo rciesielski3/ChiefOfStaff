@@ -5,7 +5,7 @@ import * as path from 'path';
 import { fetchGitHubTrends } from '../business-logic/github-trends';
 
 /**
- * CLI: Export fast-growing QA and AI repositories from GitHub search.
+ * CLI: Export new and notable QA and AI-testing repositories from GitHub search.
  *
  * Usage: npx ts-node src/cli/export-github-trends.ts [--out <path>]
  *
@@ -40,7 +40,7 @@ async function main(): Promise<void> {
   console.error(`[GitHub Trends] Wrote ${items.length} items to ${outPath}`);
 }
 
-main().catch(error => {
+main().catch((error) => {
   const message = error instanceof Error ? error.message : String(error);
   console.error(`[GitHub Trends] Export failed: ${message}`);
   process.exitCode = 1;

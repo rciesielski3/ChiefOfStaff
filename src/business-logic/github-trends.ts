@@ -1,19 +1,25 @@
 import { Article, buildArticleId } from './normalize-article';
 
 /**
- * Fast-growing GitHub repositories for QA and AI-testing topics.
- * To add a topic, append it here and map it to a category in TOPIC_CATEGORY.
+ * New and notable GitHub repositories for QA and AI-testing topics: recently created
+ * repos above a star threshold. No growth rate is measured.
+ *
+ * Topics were chosen from live search results (2026-11-18): `llm-evaluation`, `evals`,
+ * `testing`, `playwright` and `qa` returned too many off-topic or spam repos.
+ * Order matters: a repo found under several topics keeps the category of the first one.
+ * To add a topic, append it here and map it to a QA-News category in TOPIC_CATEGORY.
  */
-export const GITHUB_TREND_TOPICS = ['test-automation', 'llm-evaluation'] as const;
+export const GITHUB_TREND_TOPICS = ['test-automation', 'e2e-testing', 'ai-testing'] as const;
 export type GitHubTrendTopic = (typeof GITHUB_TREND_TOPICS)[number];
 
 const TOPIC_CATEGORY: Record<GitHubTrendTopic, string> = {
   'test-automation': 'test-automation',
-  'llm-evaluation': 'ai'
+  'e2e-testing': 'test-automation',
+  'ai-testing': 'ai',
 };
 
-export const GITHUB_TREND_MIN_STARS = 200;
-export const GITHUB_TREND_WINDOW_DAYS = 30;
+export const GITHUB_TREND_MIN_STARS = 50;
+export const GITHUB_TREND_WINDOW_DAYS = 60;
 export const GITHUB_TREND_PER_PAGE = 20;
 const SEARCH_URL = 'https://api.github.com/search/repositories';
 const USER_AGENT = 'qa-news-trends/1.0';
@@ -40,7 +46,11 @@ export function windowStart(now: Date, days: number = GITHUB_TREND_WINDOW_DAYS):
 }
 
 /** Build the repository search query for one topic. Forks and archived repos are excluded. */
-export function buildTrendQuery(topic: GitHubTrendTopic, since: Date, minStars: number = GITHUB_TREND_MIN_STARS): string {
+export function buildTrendQuery(
+  topic: GitHubTrendTopic,
+  since: Date,
+  minStars: number = GITHUB_TREND_MIN_STARS,
+): string {
   return `topic:${topic} created:>${formatSearchDate(since)} stars:>=${minStars} fork:false archived:false`;
 }
 
@@ -62,21 +72,25 @@ export function repoToArticle(repo: GitHubRepo, topic: GitHubTrendTopic): Articl
     source: 'GitHub',
     category: TOPIC_CATEGORY[topic],
     publishedAt: repo.created_at,
-    tags: [topic, `stars:${repo.stargazers_count}`]
+    tags: [topic],
+    stars: repo.stargazers_count,
   };
 }
 
 /** Keep the first article for each URL, preserving order. Pure. */
 export function dedupeByUrl(articles: Article[]): Article[] {
   const seen = new Set<string>();
-  return articles.filter(article => {
+  return articles.filter((article) => {
     if (seen.has(article.url)) return false;
     seen.add(article.url);
     return true;
   });
 }
 
-export type FetchLike = (url: string, init?: { headers?: Record<string, string> }) => Promise<{
+export type FetchLike = (
+  url: string,
+  init?: { headers?: Record<string, string> },
+) => Promise<{
   ok: boolean;
   status: number;
   statusText: string;
@@ -87,33 +101,45 @@ export interface FetchTrendsOptions {
   now?: Date;
   token?: string;
   fetchImpl?: FetchLike;
+  /** Receives non-fatal warnings, e.g. incomplete search results. Defaults to console.warn. */
+  warn?: (message: string) => void;
 }
 
 /** Query GitHub search for one topic. Throws with status code on HTTP errors. Never includes the token in errors. */
-async function searchTopic(topic: GitHubTrendTopic, since: Date, opts: FetchTrendsOptions): Promise<GitHubRepo[]> {
-  const fetchImpl = opts.fetchImpl ?? (fetch as unknown as FetchLike);
+async function searchTopic(
+  topic: GitHubTrendTopic,
+  since: Date,
+  opts: FetchTrendsOptions,
+): Promise<GitHubRepo[]> {
+  const fetchImpl = opts.fetchImpl ?? fetch;
   const params = new URLSearchParams({
     q: buildTrendQuery(topic, since),
     sort: 'stars',
     order: 'desc',
-    per_page: String(GITHUB_TREND_PER_PAGE)
+    per_page: String(GITHUB_TREND_PER_PAGE),
   });
   const headers: Record<string, string> = {
     'User-Agent': USER_AGENT,
-    Accept: 'application/vnd.github+json'
+    Accept: 'application/vnd.github+json',
   };
   if (opts.token) headers.Authorization = `Bearer ${opts.token}`;
 
   const response = await fetchImpl(`${SEARCH_URL}?${params.toString()}`, { headers });
   if (!response.ok) {
-    throw new Error(`GitHub search failed for topic "${topic}": HTTP ${response.status} ${response.statusText}`);
+    throw new Error(
+      `GitHub search failed for topic "${topic}": HTTP ${response.status} ${response.statusText}`,
+    );
   }
-  const body = (await response.json()) as { items?: GitHubRepo[] };
+  const body = (await response.json()) as { items?: GitHubRepo[]; incomplete_results?: boolean };
+  if (body.incomplete_results) {
+    // GitHub timed out part of the search; the items returned are still valid, so keep them.
+    (opts.warn ?? console.warn)(`GitHub search for topic "${topic}" returned incomplete results`);
+  }
   return body.items ?? [];
 }
 
 /**
- * Fetch fast-growing repositories for every configured topic (sequentially, to stay
+ * Fetch new and notable repositories for every configured topic (sequentially, to stay
  * within the search rate limit), map them to Articles and dedupe by URL.
  */
 export async function fetchGitHubTrends(opts: FetchTrendsOptions = {}): Promise<Article[]> {
@@ -121,7 +147,7 @@ export async function fetchGitHubTrends(opts: FetchTrendsOptions = {}): Promise<
   const articles: Article[] = [];
   for (const topic of GITHUB_TREND_TOPICS) {
     const repos = (await searchTopic(topic, since, opts)).filter(hasDescription);
-    articles.push(...repos.map(repo => repoToArticle(repo, topic)));
+    articles.push(...repos.map((repo) => repoToArticle(repo, topic)));
   }
   return dedupeByUrl(articles);
 }
