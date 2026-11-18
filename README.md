@@ -43,19 +43,15 @@ npx ts-node src/cli/export-latest-news.ts
 QA-News is a downstream Next.js application that consumes the curated article knowledge base:
 
 - **Daily View** — Top 50 most recent articles, refreshed daily
-- **Weekly View** — All articles grouped by ISO week with auto-generated theme summaries
-- **Monthly View** — Top 25 curated articles per month with auto-generated monthly recaps
-- **Auto-generated Summaries** — Claude-powered theme extraction from article metadata
+- **Weekly / Monthly Views** — Filtered client-side from `latest.json` (no separate exports)
 - **Fresh Data** — Synced automatically from ChiefofStaff exports after daily brief completes
 - **Offline Ready** — All data stored as local JSON files for zero-latency access
 
 ### Data Architecture
 
-The QA-News app loads data from three auto-generated JSON files synced daily via GitHub Actions:
+The QA-News app loads a single auto-generated JSON file synced daily via GitHub Actions:
 
-- `latest.json` — Top 50 articles (used by daily view)
-- `weekly-highlights.json` — Articles grouped by week with summaries
-- `monthly-recap.json` — Top 25 articles per month with summaries
+- `latest.json` — Articles from the last 30 days; the daily, weekly and monthly views are all filtered client-side from it
 
 See `docs/knowledge/qa-news-sync-design.md` for the full architecture, including data schemas, export algorithms, and troubleshooting.
 

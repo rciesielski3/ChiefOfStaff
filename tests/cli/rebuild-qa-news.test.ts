@@ -45,35 +45,23 @@ describe('rebuild-qa-news CLI — Integration Tests', () => {
     expect(output).toContain('WORKFLOW_COMPLETE');
   });
 
-  it('should regenerate all export files (latest.json, weekly.json, monthly.json)', () => {
+  it('should regenerate the latest export (latest-news.json)', () => {
     // Run rebuild
     runRebuild();
 
-    // Verify all three export files were created
+    // Verify the export file was created
     const latestPath = path.join(projectRoot(), 'qa-news/data/latest-news.json');
-    const weeklyPath = path.join(projectRoot(), 'qa-news/data/weekly-highlights.json');
-    const monthlyPath = path.join(projectRoot(), 'qa-news/data/monthly-recap.json');
 
     expect(fs.existsSync(latestPath)).toBe(true);
-    expect(fs.existsSync(weeklyPath)).toBe(true);
-    expect(fs.existsSync(monthlyPath)).toBe(true);
 
-    // Verify files are valid JSON
+    // Verify file is valid JSON
     const latest = JSON.parse(fs.readFileSync(latestPath, 'utf-8'));
-    const weekly = JSON.parse(fs.readFileSync(weeklyPath, 'utf-8'));
-    const monthly = JSON.parse(fs.readFileSync(monthlyPath, 'utf-8'));
 
     // Verify structure
     expect(latest).toHaveProperty('date');
     expect(latest).toHaveProperty('updatedAt');
     expect(latest).toHaveProperty('items');
     expect(Array.isArray(latest.items)).toBe(true);
-
-    expect(weekly).toHaveProperty('weeks');
-    expect(Array.isArray(weekly.weeks)).toBe(true);
-
-    expect(monthly).toHaveProperty('months');
-    expect(Array.isArray(monthly.months)).toBe(true);
 
     // Verify we have content (assuming RSS sources have articles)
     if (latest.items.length > 0) {
