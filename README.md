@@ -18,7 +18,7 @@ npm install
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your API keys (TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, CLAUDE_API_KEY)
+# Edit .env with your API keys (ANTHROPIC_API_KEY, optionally TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)
 
 # Run tests
 npm test
