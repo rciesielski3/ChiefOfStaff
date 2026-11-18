@@ -53,7 +53,6 @@ describe('AtomicFileWriter', () => {
     });
 
     it('should clean up temp files on error', async () => {
-      const testFile2 = path.join(testDir, `test-error-${Date.now()}.json`);
       // Make directory read-only to simulate write error
       const readOnlyDir = path.join(testDir, 'readonly');
       await fs.mkdir(readOnlyDir, { recursive: true });

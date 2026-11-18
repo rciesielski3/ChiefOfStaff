@@ -1,4 +1,4 @@
-import { Insight, InsightType, InsightFactory } from '../../src/business-logic/insight';
+import { InsightType, InsightFactory } from '../../src/business-logic/insight';
 
 describe('Insight Data Model', () => {
   describe('InsightFactory - Create valid insight', () => {

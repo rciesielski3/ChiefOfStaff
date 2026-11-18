@@ -5,7 +5,6 @@
  */
 
 import * as fs from 'fs/promises';
-import * as fsSync from 'fs';
 import * as path from 'path';
 import { NdJsonArticleStore } from '../../src/business-logic/article-store';
 import { FactStore } from '../../src/business-logic/knowledge-store';

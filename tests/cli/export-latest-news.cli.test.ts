@@ -1,5 +1,4 @@
 import * as path from 'path';
-import * as fs from 'fs';
 
 /**
  * Tests for export-latest-news CLI
@@ -12,19 +11,16 @@ import * as fs from 'fs';
  */
 describe('Export Latest News CLI', () => {
   let originalExit: (code?: number) => never;
-  let exitCode: number | undefined;
   let errorLogs: string[] = [];
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
     // Mock process.exit to capture exit code without actually exiting
     originalExit = process.exit;
-    exitCode = undefined;
     errorLogs = [];
 
     // @ts-ignore - allow overriding process.exit for testing
-    process.exit = jest.fn((code?: number) => {
-      exitCode = code;
+    process.exit = jest.fn(() => {
       throw new Error('Process exit called');
     });
 

@@ -1,4 +1,4 @@
-import { FactStore, getFactStore, resetFactStore } from '../../src/business-logic/knowledge-store';
+import { FactStore, resetFactStore } from '../../src/business-logic/knowledge-store';
 import { KnowledgeFact } from '../../src/business-logic/knowledge-types';
 import * as fs from 'fs/promises';
 import * as path from 'path';
