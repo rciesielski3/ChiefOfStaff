@@ -1,12 +1,13 @@
 # Only GitHub Actions: workflow actions are pinned to commit SHAs, which go stale
 # without updates. npm is intentionally not tracked (production deps are audited in
 # security.yml; dev-tooling advisories have no non-breaking fix).
+# Monthly cadence keeps bot PRs rare (at most one grouped PR per month).
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
     commit-message:
       prefix: 'ci(deps)'
     groups:
