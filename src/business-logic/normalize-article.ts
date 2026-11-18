@@ -251,3 +251,32 @@ function extractTags(title: string, content: string): string[] {
 
   return commonTags.filter((tag) => text.includes(tag));
 }
+
+/**
+ * Identity of a story: source plus URL without fragment and `utm_*` tracking
+ * parameters. InfoQ posts one story twice with different tracking parameters
+ * or title case, and the store can hold one URL under an old and a new ID.
+ * Keying on the URL (not the title) keeps different stories that share a
+ * recurring title, and different projects' "v1.8.3" releases, apart.
+ * Articles without a URL fall back to source plus title.
+ */
+export function storyKey(article: Article): string {
+  let url = String(article.url ?? '');
+  // Without a URL there is nothing to key on but the title.
+  if (url.trim() === '') return `${article.source}\u0000title:${article.title}`;
+  try {
+    const parsed = new URL(url);
+    parsed.hash = '';
+    // Rebuild the query for every URL so the kept parameters are always
+    // encoded the same way (URLSearchParams encodes "~" as "%7E").
+    const kept = new URLSearchParams();
+    parsed.searchParams.forEach((value, key) => {
+      if (!key.toLowerCase().startsWith('utm_')) kept.append(key, value);
+    });
+    parsed.search = kept.toString();
+    url = parsed.toString();
+  } catch {
+    // Not an absolute URL: compare it as written.
+  }
+  return `${article.source}\u0000${url}`;
+}

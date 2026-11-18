@@ -235,7 +235,7 @@ describe('NdJsonArticleStore', () => {
       jest.useRealTimers();
     });
 
-    it('should deduplicate articles by source + title hash', async () => {
+    it('should keep recurring titles with different URLs as separate articles', async () => {
       const article1: Article = {
         id: 'test-1-v1',
         title: 'Test Article',
@@ -249,7 +249,7 @@ describe('NdJsonArticleStore', () => {
 
       const article2: Article = {
         id: 'test-1-v2',
-        title: 'Test Article', // Same title, same source
+        title: 'Test Article', // Same title, same source, different URL
         summary: 'Version 2',
         url: 'https://example.com/test-v2',
         source: 'Reddit',
@@ -262,8 +262,8 @@ describe('NdJsonArticleStore', () => {
       await store.write([article1]);
       const merged = await store.dedupAndMerge([article2]);
 
-      expect(merged).toHaveLength(1);
-      expect(merged[0].url).toBe('https://example.com/test-v2'); // Should be the newer version
+      expect(merged).toHaveLength(2);
+      expect(merged.map((a) => a.id).sort()).toEqual(['test-1-v1', 'test-1-v2']);
     });
 
     it('should keep articles with different titles from same source', async () => {
@@ -512,7 +512,7 @@ describe('NdJsonArticleStore', () => {
         id: 'test-1-v1',
         title: 'Duplicate Article',
         summary: 'Version 1',
-        url: 'https://example.com/v1',
+        url: 'https://example.com/story',
         source: 'Source A',
         category: 'news',
         publishedAt: '2026-07-14T10:00:00Z',
@@ -521,10 +521,10 @@ describe('NdJsonArticleStore', () => {
 
       const article2: Article = {
         id: 'test-1-v2',
-        title: 'Duplicate Article', // Same title
+        title: 'Duplicate Article',
         summary: 'Version 2',
-        url: 'https://example.com/v2',
-        source: 'Source A', // Same source
+        url: 'https://example.com/story?utm_source=rss',
+        source: 'Source A',
         category: 'news',
         publishedAt: '2026-07-14T11:00:00Z',
         tags: [],
@@ -532,10 +532,10 @@ describe('NdJsonArticleStore', () => {
 
       const article3: Article = {
         id: 'test-1-v3',
-        title: 'Duplicate Article', // Same title
+        title: 'Duplicate Article',
         summary: 'Version 3',
-        url: 'https://example.com/v3',
-        source: 'Source A', // Same source
+        url: 'https://example.com/story?utm_medium=feed#comments',
+        source: 'Source A',
         category: 'news',
         publishedAt: '2026-07-14T12:00:00Z',
         tags: [],
@@ -546,7 +546,8 @@ describe('NdJsonArticleStore', () => {
       const merged = await store.dedupAndMerge([article2, article3]);
 
       expect(merged).toHaveLength(1);
-      expect(merged[0].url).toBe('https://example.com/v3'); // Should be latest
+      expect(merged[0].id).toBe('test-1-v1'); // Stored ID kept
+      expect(merged[0].summary).toBe('Version 3'); // Latest content
     });
 
     it('should handle mixed scenario: dedup, merge, retain', async () => {
@@ -589,9 +590,9 @@ describe('NdJsonArticleStore', () => {
 
       const new2: Article = {
         id: 'exist-2-v2',
-        title: 'Duplicate With New', // Duplicate with existing2
+        title: 'Duplicate with new', // Duplicate with existing2 (same URL, title case changed)
         summary: 'Version 2',
-        url: 'https://example.com/exist2-v2',
+        url: 'https://example.com/exist2?utm_source=rss',
         source: 'Source B', // Same source
         category: 'news',
         publishedAt: '2026-07-14T11:00:00Z',
@@ -605,8 +606,106 @@ describe('NdJsonArticleStore', () => {
       // Should have: new1 (new), new2 (merged/deduped), existing1 (old/filtered)
       expect(merged).toHaveLength(2);
       expect(merged.some((a) => a.url === 'https://example.com/new1')).toBe(true);
-      expect(merged.some((a) => a.url === 'https://example.com/exist2-v2')).toBe(true);
+      const deduped = merged.find((a) => a.url === 'https://example.com/exist2?utm_source=rss');
+      expect(deduped?.id).toBe('exist-2'); // Stored ID kept
+      expect(deduped?.summary).toBe('Version 2');
       expect(merged.some((a) => a.url === 'https://example.com/exist1')).toBe(false);
+    });
+
+    describe('story identity (source + normalized URL)', () => {
+      const mk = (over: Partial<Article>): Article => ({
+        id: 'id',
+        title: 'Title',
+        summary: 's',
+        url: 'https://example.com/a',
+        source: 'Src',
+        category: 'news',
+        publishedAt: '2026-07-14T10:00:00Z',
+        tags: [],
+        ...over,
+      });
+
+      it('collapses the same URL with a different title case, keeping the stored id', async () => {
+        const store = new NdJsonArticleStore(testFile);
+        await store.write([mk({ id: 'stored', title: 'Hello World' })]);
+        const merged = await store.dedupAndMerge([mk({ id: 'fresh', title: 'Hello world' })]);
+        expect(merged).toHaveLength(1);
+        expect(merged[0].id).toBe('stored');
+        expect(merged[0].title).toBe('Hello world');
+      });
+
+      it('collapses utm parameters and fragment with the plain URL', async () => {
+        const store = new NdJsonArticleStore(testFile);
+        await store.write([mk({ id: 'stored', url: 'https://example.com/a' })]);
+        const merged = await store.dedupAndMerge([
+          mk({ id: 'fresh', url: 'https://example.com/a?utm_source=x&utm_campaign=y#top' }),
+        ]);
+        expect(merged).toHaveLength(1);
+        expect(merged[0].id).toBe('stored');
+      });
+
+      it('treats "~" and "%7E" in kept parameters as the same story', async () => {
+        const store = new NdJsonArticleStore(testFile);
+        await store.write([mk({ id: 'stored', url: 'https://example.com/a?topic=qa~news' })]);
+        const merged = await store.dedupAndMerge([
+          mk({ id: 'fresh', url: 'https://example.com/a?topic=qa%7Enews&utm_source=x' }),
+        ]);
+        expect(merged).toHaveLength(1);
+        expect(merged[0].id).toBe('stored');
+      });
+
+      it('keeps URLs that differ in a non-tracking parameter apart', async () => {
+        const store = new NdJsonArticleStore(testFile);
+        await store.write([mk({ id: 'one', url: 'https://example.com/a?id=1' })]);
+        const merged = await store.dedupAndMerge([
+          mk({ id: 'two', url: 'https://example.com/a?id=2' }),
+        ]);
+        expect(merged).toHaveLength(2);
+      });
+
+      it('keeps the same URL from different sources apart', async () => {
+        const store = new NdJsonArticleStore(testFile);
+        await store.write([mk({ id: 'one', source: 'A' })]);
+        const merged = await store.dedupAndMerge([mk({ id: 'two', source: 'B' })]);
+        expect(merged).toHaveLength(2);
+      });
+
+      it('collapses duplicates already in the store to the first stored id', async () => {
+        const store = new NdJsonArticleStore(testFile);
+        await store.write([
+          mk({ id: 'first', title: 'Hello World', publishedAt: '2026-07-14T10:00:00Z' }),
+          mk({ id: 'second', title: 'Hello world', publishedAt: '2026-07-14T09:00:00Z' }),
+        ]);
+        const merged = await store.dedupAndMerge([]);
+        expect(merged).toHaveLength(1);
+        expect(merged[0].id).toBe('first');
+        expect(await store.read()).toHaveLength(1);
+      });
+
+      it('keeps a recent duplicate when the first stored copy is expired', async () => {
+        const store = new NdJsonArticleStore(testFile);
+        await store.write([
+          mk({ id: 'old', summary: 'old copy', publishedAt: '2026-06-01T10:00:00Z' }),
+          mk({ id: 'recent', summary: 'recent copy', publishedAt: '2026-07-14T10:00:00Z' }),
+        ]);
+        const merged = await store.dedupAndMerge([]);
+        expect(merged).toHaveLength(1);
+        expect(merged[0].id).toBe('old');
+        expect(merged[0].summary).toBe('recent copy');
+      });
+
+      it('falls back to the title when the URL is empty', async () => {
+        const store = new NdJsonArticleStore(testFile);
+        await store.write([mk({ id: 'one', url: '', title: 'One' })]);
+        const merged = await store.dedupAndMerge([
+          mk({ id: 'two', url: '', title: 'Two' }),
+          mk({ id: 'one-again', url: '', title: 'One', summary: 'updated' }),
+        ]);
+        expect(merged).toHaveLength(2);
+        const one = merged.find((a) => a.title === 'One');
+        expect(one?.id).toBe('one');
+        expect(one?.summary).toBe('updated');
+      });
     });
   });
 
