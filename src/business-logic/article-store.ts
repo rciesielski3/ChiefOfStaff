@@ -1,8 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { createHash } from 'crypto';
 import * as lockfile from 'proper-lockfile';
-import { Article } from './normalize-article';
+import { Article, storyKey } from './normalize-article';
 
 /**
  * Interface for article storage with deduplication and merging
@@ -31,7 +30,7 @@ export const RETENTION_DAYS = 30;
  * NDJSON-based article store with deduplication and file locking for concurrency
  *
  * - Reads/writes articles as newline-delimited JSON (one article per line)
- * - Deduplicates by source + title hash
+ * - Deduplicates by story identity: source + normalized URL (see storyKey)
  * - Retains articles from the last 30 days
  * - Uses proper-lockfile for atomic, cross-platform file locking
  */
@@ -102,17 +101,18 @@ export class NdJsonArticleStore implements ArticleStore {
     // Read existing articles
     const existing = await this.read();
 
-    // Create dedup map from existing articles
+    // Create dedup map from existing articles. First wins: if the store already
+    // holds duplicates, keep the first stored ID, which knowledge facts reference.
     const dedupMap = new Map<string, Article>();
 
     for (const article of existing) {
-      const key = this.generateDedupKey(article);
-      dedupMap.set(key, article);
+      const key = storyKey(article);
+      if (!dedupMap.has(key)) dedupMap.set(key, article);
     }
 
     // Merge with new articles
     for (const article of newArticles) {
-      const key = this.generateDedupKey(article);
+      const key = storyKey(article);
 
       const existingArticle = dedupMap.get(key);
       if (existingArticle) {
@@ -142,14 +142,6 @@ export class NdJsonArticleStore implements ArticleStore {
     await this.write(merged);
 
     return merged;
-  }
-
-  /**
-   * Generate deduplication key from article source and title
-   */
-  private generateDedupKey(article: Article): string {
-    const titleHash = createHash('sha256').update(article.title).digest('hex').slice(0, 12);
-    return `${article.source}::${titleHash}`;
   }
 
   /**

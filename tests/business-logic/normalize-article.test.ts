@@ -5,6 +5,8 @@ import {
   buildArticleId,
   assertUniqueArticleIds,
   InvalidPublishDateError,
+  storyKey,
+  Article,
 } from '../../src/business-logic/normalize-article';
 import { RawArticle } from '../../src/business-logic/rss-fetch';
 
@@ -439,5 +441,59 @@ describe('truncateDescription', () => {
 
     expect(result.length).toBeLessThanOrEqual(15);
     expect(result).toBe('One two...');
+  });
+});
+
+describe('storyKey', () => {
+  const art = (over: Partial<Article>): Article => ({
+    id: 'id',
+    title: 'Title',
+    summary: '',
+    url: 'https://example.com/a',
+    source: 'Src',
+    category: 'news',
+    publishedAt: '2026-07-14T10:00:00Z',
+    tags: [],
+    ...over,
+  });
+
+  it('ignores the fragment and utm_* parameters (case-insensitive)', () => {
+    const plain = storyKey(art({ url: 'https://example.com/a' }));
+    expect(storyKey(art({ url: 'https://example.com/a#comments' }))).toBe(plain);
+    expect(storyKey(art({ url: 'https://example.com/a?utm_source=x&UTM_Medium=y' }))).toBe(plain);
+  });
+
+  it('treats "~" and "%7E" in kept parameters as the same', () => {
+    expect(storyKey(art({ url: 'https://example.com/a?topic=qa~news' }))).toBe(
+      storyKey(art({ url: 'https://example.com/a?topic=qa%7Enews&utm_source=x' })),
+    );
+  });
+
+  it('keeps non-tracking query parameters apart', () => {
+    expect(storyKey(art({ url: 'https://example.com/a?id=1' }))).not.toBe(
+      storyKey(art({ url: 'https://example.com/a?id=2' })),
+    );
+  });
+
+  it('ignores the title when a URL is present', () => {
+    expect(storyKey(art({ title: 'Hello World' }))).toBe(storyKey(art({ title: 'hello world' })));
+  });
+
+  it('includes the source', () => {
+    expect(storyKey(art({ source: 'A' }))).not.toBe(storyKey(art({ source: 'B' })));
+  });
+
+  it('compares a non-absolute URL as written', () => {
+    expect(storyKey(art({ url: '/relative/path' }))).toBe('Src\u0000/relative/path');
+  });
+
+  it('falls back to the title when the URL is empty', () => {
+    expect(storyKey(art({ url: '', title: 'One' }))).not.toBe(
+      storyKey(art({ url: '  ', title: 'Two' })),
+    );
+    expect(storyKey(art({ url: '', title: 'One' }))).toBe(
+      storyKey(art({ url: '   ', title: 'One' })),
+    );
+    expect(storyKey(art({ url: '', title: 'One' }))).toBe('Src\u0000title:One');
   });
 });
