@@ -8,8 +8,6 @@ import {
   writePublicLatestNews,
   LatestNewsExport,
 } from '../business-logic/export-latest-news';
-import { exportWeeklyHighlights } from '../business-logic/export-weekly-highlights';
-import { exportMonthlyRecap } from '../business-logic/export-monthly-recap';
 import { NdJsonArticleStore } from '../business-logic/article-store';
 import { getEnabledSources } from '../config/rss-sources.config';
 import * as path from 'path';
@@ -33,10 +31,10 @@ const RSS_SOURCES = getEnabledSources();
  * 2. Normalize articles
  * 3. Score articles
  * 4. Export latest-news.json (every stored article)
- * 5. Export weekly-highlights.json (grouped by week)
- * 6. Export monthly-recap.json (grouped by month, top 25 each)
- * 7. Write all exports to qa-news/data/ directory
- * 8. Exit with code 0 on success, 1 on failure
+ * 5. Write qa-news/public/latest.json and qa-news/data/latest-news.json
+ * 6. Exit with code 0 on success, 1 on failure
+ *
+ * Weekly/monthly views on the site are filtered client-side from latest.json.
  */
 
 // Helper function for structured logging with timestamps
@@ -161,7 +159,7 @@ async function main(): Promise<void> {
       durationMs: scoreDuration,
     });
 
-    // Export latest, weekly, monthly
+    // Export latest
     const exportStartTime = Date.now();
     if (verbose) {
       console.log('[Rebuild QA News] Exporting articles...');
@@ -172,20 +170,14 @@ async function main(): Promise<void> {
     const latestExport = await exportLatestNews(
       new NdJsonArticleStore(path.join(projectRoot, 'data/canonical_articles.ndjson')),
     );
-    const weeklyExport = exportWeeklyHighlights(scoredArticles);
-    const monthlyExport = exportMonthlyRecap(scoredArticles, 25);
 
     const exportDuration = Date.now() - exportStartTime;
     if (verbose) {
       console.log(`[Rebuild QA News] Generated exports in ${exportDuration}ms`);
-      console.log(`  - latest.json: ${latestExport.items.length} articles`);
-      console.log(`  - weekly.json: ${weeklyExport.weeks.length} weeks`);
-      console.log(`  - monthly.json: ${monthlyExport.months.length} months\n`);
+      console.log(`  - latest.json: ${latestExport.items.length} articles\n`);
     }
     logStructured('EXPORT_COMPLETE', {
       latestArticles: latestExport.items.length,
-      weekCount: weeklyExport.weeks.length,
-      monthCount: monthlyExport.months.length,
       durationMs: exportDuration,
     });
 
@@ -196,8 +188,6 @@ async function main(): Promise<void> {
     }
     logStructured('WRITE_START', {
       latestArticles: latestExport.items.length,
-      weekCount: weeklyExport.weeks.length,
-      monthCount: monthlyExport.months.length,
     });
 
     // Map article categories for latest export
@@ -214,28 +204,20 @@ async function main(): Promise<void> {
 
     const dataDir = path.join(projectRoot, 'qa-news/data');
     const latestPath = path.join(dataDir, 'latest-news.json');
-    const weeklyPath = path.join(dataDir, 'weekly-highlights.json');
-    const monthlyPath = path.join(dataDir, 'monthly-recap.json');
 
     // Ensure data directory exists
     await fs.mkdir(dataDir, { recursive: true });
 
-    // Write files to data directory
+    // Write file to data directory
     await fs.writeFile(latestPath, JSON.stringify(mappedLatestExport, null, 2), 'utf-8');
-    await fs.writeFile(weeklyPath, JSON.stringify(weeklyExport, null, 2), 'utf-8');
-    await fs.writeFile(monthlyPath, JSON.stringify(monthlyExport, null, 2), 'utf-8');
 
     const writeDuration = Date.now() - writeStartTime;
     if (verbose) {
       console.log(`[Rebuild QA News] ✓ Wrote exports in ${writeDuration}ms`);
-      console.log(`  - ${latestPath}`);
-      console.log(`  - ${weeklyPath}`);
-      console.log(`  - ${monthlyPath}\n`);
+      console.log(`  - ${latestPath}\n`);
     }
     logStructured('WRITE_COMPLETE', {
       latestPath,
-      weeklyPath,
-      monthlyPath,
       durationMs: writeDuration,
     });
 
@@ -248,8 +230,6 @@ async function main(): Promise<void> {
       articlesFetched: allRawArticles.length,
       articlesScored: scoredArticles.length,
       latestExported: latestExport.items.length,
-      weeksExported: weeklyExport.weeks.length,
-      monthsExported: monthlyExport.months.length,
     });
   } catch (error) {
     const totalDuration = Date.now() - workflowStartTime;

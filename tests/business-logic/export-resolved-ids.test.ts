@@ -1,7 +1,5 @@
 import { exportLatestNews } from '../../src/business-logic/export-latest-news';
 import { exportDailyBrief } from '../../src/business-logic/export-daily-brief';
-import { exportWeeklyHighlights } from '../../src/business-logic/export-weekly-highlights';
-import { exportMonthlyRecap } from '../../src/business-logic/export-monthly-recap';
 import { Article, buildLegacyArticleId } from '../../src/business-logic/normalize-article';
 import { ArticleStore } from '../../src/business-logic/article-store';
 
@@ -42,47 +40,8 @@ describe('exporters emit distinct IDs for legacy-colliding articles', () => {
     expect(new Set(ids).size).toBe(3);
   });
 
-  it('exportWeeklyHighlights (weekly.json)', () => {
-    const result = exportWeeklyHighlights(legacyRows);
-    const ids = result.weeks.flatMap((w) => w.items.map((a) => a.id));
-    expect(new Set(ids).size).toBe(3);
-  });
-
-  it('exportMonthlyRecap (monthly.json)', () => {
-    const result = exportMonthlyRecap(legacyRows);
-    const ids = result.months.flatMap((m) => m.items.map((a) => a.id));
-    expect(new Set(ids).size).toBe(3);
-  });
-
   it('does not mutate the stored articles', async () => {
     await exportLatestNews(fakeStore, 50);
     expect(legacyRows[0].id).toBe(buildLegacyArticleId('InfoQ', legacyRows[0].url));
-  });
-});
-
-describe('weekly and monthly exports fail loudly on an ID collision', () => {
-  // Non-legacy IDs are kept as stored, so two different URLs sharing one ID must throw.
-  const clashing = (url: string): Article => ({
-    id: 'infoq-0000000000000000',
-    title: url,
-    summary: 'summary',
-    url,
-    source: 'InfoQ',
-    category: 'news',
-    publishedAt: now,
-    tags: [],
-    score: 50,
-  });
-  const clashRows = [
-    clashing('https://www.infoq.com/news/x/'),
-    clashing('https://www.infoq.com/news/y/'),
-  ];
-
-  it('exportWeeklyHighlights throws', () => {
-    expect(() => exportWeeklyHighlights(clashRows)).toThrow(/Article ID collision/);
-  });
-
-  it('exportMonthlyRecap throws', () => {
-    expect(() => exportMonthlyRecap(clashRows)).toThrow(/Article ID collision/);
   });
 });
