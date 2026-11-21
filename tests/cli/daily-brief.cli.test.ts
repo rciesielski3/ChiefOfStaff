@@ -15,19 +15,16 @@ import { REPO_ROOT, TS_NODE_BIN, createTempProjectRoot } from '../helpers/temp-p
  */
 describe('Daily Brief CLI Error Handling', () => {
   let originalExit: (code?: number) => never;
-  let exitCode: number | undefined;
   let errorLogs: string[] = [];
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
     // Mock process.exit to capture exit code without actually exiting
     originalExit = process.exit;
-    exitCode = undefined;
     errorLogs = [];
 
     // @ts-ignore - allow overriding process.exit for testing
-    process.exit = jest.fn((code?: number) => {
-      exitCode = code;
+    process.exit = jest.fn(() => {
       throw new Error('Process exit called');
     });
 

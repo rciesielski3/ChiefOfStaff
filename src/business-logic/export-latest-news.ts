@@ -1,4 +1,4 @@
-import { Article, storyKey, withResolvedId } from './normalize-article';
+import { Article, assertUniqueArticleIds, storyKey, withResolvedId } from './normalize-article';
 import { ArticleStore, RETENTION_DAYS } from './article-store';
 import { promises as fs } from 'fs';
 import { dirname } from 'path';
@@ -40,7 +40,8 @@ function dropRepeatedStories(articles: Article[]): Article[] {
  * 3. Drop articles older than RETENTION_DAYS and repeated stories (same
  *    source + URL), keeping the newest
  * 4. Keep the newest `limit` articles; without a limit keep all of them
- * 5. Return with metadata (export date/time)
+ * 5. Resolve IDs and fail loudly if two different URLs share one ID
+ * 6. Return with metadata (export date/time)
  *
  * QA-News derives its today / week / month views from this one export, so
  * the default is the whole retention window. Retention is applied here too:
@@ -67,6 +68,8 @@ export async function exportLatestNews(
   const recent = sorted.filter((article) => new Date(article.publishedAt).getTime() >= cutoff);
   const unique = dropRepeatedStories(recent);
   const latest = limit === undefined ? unique : unique.slice(0, limit);
+  const items = latest.map(withResolvedId);
+  assertUniqueArticleIds(items);
 
   // Generate export metadata
   const now = new Date();
@@ -76,7 +79,7 @@ export async function exportLatestNews(
   return {
     date,
     updatedAt,
-    items: latest.map(withResolvedId),
+    items,
   };
 }
 

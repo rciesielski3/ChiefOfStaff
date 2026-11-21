@@ -144,7 +144,6 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
 
     try {
       let output = '';
-      let exitCode = 0;
 
       try {
         output = execFileSync(TS_NODE_BIN, [cli('generate-insights.ts')], {
@@ -155,7 +154,6 @@ describe('Workflow Integration — Daily Brief Insights Pipeline', () => {
         });
       } catch (e: any) {
         output = e.stdout || '';
-        exitCode = e.status || 1;
       }
 
       // Validate pipeline stages all completed

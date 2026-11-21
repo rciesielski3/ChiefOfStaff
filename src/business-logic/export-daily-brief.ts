@@ -1,4 +1,4 @@
-import { Article, withResolvedId } from './normalize-article';
+import { Article, assertUniqueArticleIds, withResolvedId } from './normalize-article';
 import { ArticleStore } from './article-store';
 import { promises as fs } from 'fs';
 import { dirname } from 'path';
@@ -31,7 +31,8 @@ export interface DailyBriefExport {
  * 2. Filter articles from today
  * 3. Sort by score (descending)
  * 4. Slice to top N articles (default 10)
- * 5. Return with metadata
+ * 5. Resolve IDs and fail loudly if two different URLs share one ID
+ * 6. Return with metadata
  *
  * @param store - Article store to read from
  * @param limit - Number of articles to export (default: 10)
@@ -55,6 +56,8 @@ export async function exportDailyBrief(
 
   // Take top N articles
   const topArticles = sorted.slice(0, limit);
+  const items = topArticles.map(withResolvedId);
+  assertUniqueArticleIds(items);
 
   // Generate export metadata
   const now = new Date();
@@ -74,7 +77,7 @@ export async function exportDailyBrief(
     sourcesScanned: sourceCount,
     storiesSelected: topArticles.length,
     lede,
-    items: topArticles.map(withResolvedId),
+    items,
   };
 }
 

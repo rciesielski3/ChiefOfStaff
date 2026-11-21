@@ -1,4 +1,4 @@
-import { EvolutionEngine, EvolutionResult, Fact } from '../../src/services/evolution-engine';
+import { EvolutionEngine, Fact } from '../../src/services/evolution-engine';
 import { EmbeddingsService } from '../../src/services/embeddings';
 
 describe('EvolutionEngine', () => {

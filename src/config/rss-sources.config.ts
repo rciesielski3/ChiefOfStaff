@@ -84,7 +84,7 @@ export const RSS_SOURCES: RSSSourceConfig[] = [
  * Returns sources where enabled !== false (undefined defaults to true).
  */
 export function getEnabledSources(): RSSSourceConfig[] {
-  return RSS_SOURCES.filter((source) => (source as any).enabled !== false);
+  return RSS_SOURCES.filter((source) => source.enabled !== false);
 }
 
 /** Tag and category that QA-News uses for tool releases. */

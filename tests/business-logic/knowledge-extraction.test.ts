@@ -1,33 +1,14 @@
-import {
-  KnowledgeExtractionService,
-  extractFactsBatch,
-} from '../../src/business-logic/knowledge-extraction';
+import { KnowledgeExtractionService } from '../../src/business-logic/knowledge-extraction';
 import {
   KnowledgeFact,
-  FactExtractionRequest,
   validateFact,
   CONFIDENCE_THRESHOLDS,
   meetsConfidenceThreshold,
 } from '../../src/business-logic/knowledge-types';
 import { InMemoryClassificationCache } from '../../src/business-logic/domain-classification-fallback';
 import * as fs from 'fs';
-import * as path from 'path';
 
 describe('KnowledgeExtractionService', () => {
-  const mockRequest: FactExtractionRequest = {
-    article_id: 'article_001',
-    title: 'Understanding Kubernetes',
-    summary: 'A deep dive into container orchestration',
-    url: 'https://example.com/k8s',
-    full_text: `Kubernetes is a container orchestration platform that automates deployment, scaling, and management of containerized applications. It was originally developed by Google and is now maintained by the Cloud Native Computing Foundation.
-
-Key concepts include Pods, Services, Deployments, and Namespaces. A Pod is the smallest deployable unit in Kubernetes. Services provide stable network endpoints for Pods. Deployments manage ReplicaSets and Pods with rolling updates.
-
-Best practices include setting resource requests and limits for Pods to ensure proper scheduling and prevent node overload. Always use namespaces to organize resources and implement RBAC for security.
-
-Common mistakes include not setting resource limits, using default namespaces in production, and not implementing network policies for Pod-to-Pod communication.`,
-  };
-
   describe('fact schema validation', () => {
     const validFact: KnowledgeFact = {
       id: 'fact_001',

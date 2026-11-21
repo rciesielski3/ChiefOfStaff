@@ -263,7 +263,7 @@ describe('InsightStore', () => {
       }
 
       // Verify both exist
-      let all = await store.findByType('TREND');
+      const all = await store.findByType('TREND');
       expect(all.length + (await store.findByType('SYNTHESIS')).length).toBe(2);
 
       // Delete first insight

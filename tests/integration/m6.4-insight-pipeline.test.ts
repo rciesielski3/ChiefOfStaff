@@ -2,7 +2,7 @@ import { PatternDetector } from '../../src/business-logic/pattern-detector';
 import { SynthesisEngine } from '../../src/business-logic/synthesis-engine';
 import { InsightStore } from '../../src/business-logic/insight-store';
 import { KnowledgeFact } from '../../src/business-logic/knowledge-types';
-import { Insight, InsightType } from '../../src/business-logic/insight';
+import { InsightType } from '../../src/business-logic/insight';
 import { EmbeddingsService } from '../../src/services/embeddings';
 import { NdJsonArticleStore } from '../../src/business-logic/article-store';
 import { KnowledgeExtractionService } from '../../src/business-logic/knowledge-extraction';
