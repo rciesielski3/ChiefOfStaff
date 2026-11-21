@@ -16,6 +16,8 @@ export interface Article {
   publishedAt: string;
   tags: string[];
   score?: number;
+  /** GitHub star count, set only for repository items (GitHub trends). */
+  stars?: number;
 }
 
 /**

@@ -70,6 +70,16 @@ jobs:
           set -e
           npx ts-node src/cli/export-latest-news.ts
 
+      # Optional: GitHub trends for the "New & notable repos" section. A failure keeps
+      # the previous public/trending.json (the CLI writes atomically, only on success).
+      - name: Export GitHub trends
+        continue-on-error: true
+        run: |
+          set -e
+          npx ts-node src/cli/export-github-trends.ts --out qa-news/public/trending.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Validate exports in data directory
         run: |
           set -e
@@ -90,6 +100,17 @@ jobs:
           echo "  Daily: $DAILY_COUNT articles"
           echo "  Latest: $LATEST_COUNT articles"
 
+          # Non-fatal: trends are optional and the site hides the section if invalid
+          if [ -f qa-news/public/trending.json ]; then
+            if jq -e '.items | type == "array"' qa-news/public/trending.json > /dev/null 2>&1; then
+              echo "  Trending: $(jq '.items | length' qa-news/public/trending.json) repos"
+            else
+              echo "::warning::qa-news/public/trending.json is not valid trends JSON"
+            fi
+          else
+            echo "  Trending: no trending.json (skipped)"
+          fi
+
       - name: Commit data updates
         id: commit
         run: |
@@ -99,6 +120,10 @@ jobs:
 
           git add data/daily-brief.json data/latest-news.json \
                   public/daily.json public/latest.json
+          # Optional file: only add it if the trends export has produced it
+          if [ -f public/trending.json ]; then
+            git add public/trending.json
+          fi
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
@@ -176,4 +201,4 @@ jobs:
         run: |
           echo "Export QA-News Data workflow completed"
           echo "Synced files:"
-          ls -lh qa-news/data/*.json qa-news/public/latest.json 2>/dev/null || true
+          ls -lh qa-news/data/*.json qa-news/public/latest.json qa-news/public/trending.json 2>/dev/null || true
