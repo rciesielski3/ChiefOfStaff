@@ -107,7 +107,7 @@ export class PatternDetector {
     for (let i = 0; i < facts.length; i++) {
       const similarities = this.embeddingsService.similaritySearch(facts[i].id, facts.length);
 
-      similarities.forEach((sim: any) => {
+      similarities.forEach((sim) => {
         if (sim.similarity_score >= this.similarityThreshold) {
           union(facts[i].id, sim.related_fact_id);
         }

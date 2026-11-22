@@ -11,7 +11,6 @@ import type {
   FetchAllSourcesResult,
 } from '../../src/business-logic/rss-fetch';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const rssFetch = require('../../src/business-logic/rss-fetch');
 
 const now = Date.now();

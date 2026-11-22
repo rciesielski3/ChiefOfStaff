@@ -1,5 +1,4 @@
 import * as fs from 'fs/promises';
-import * as fsSync from 'fs';
 import * as path from 'path';
 import { NdJsonArticleStore } from '../../src/business-logic/article-store';
 import { FactStore } from '../../src/business-logic/knowledge-store';
@@ -411,7 +410,7 @@ Confidence Median: ${metrics.confidenceStats.median.toFixed(2)}
 
     it('should generate JSON output of metrics', async () => {
       const factStore = new FactStore(factsFile);
-      const facts = await factStore.readAll();
+      await factStore.readAll();
 
       const metricsJson = {
         articlesProcessed: 4,

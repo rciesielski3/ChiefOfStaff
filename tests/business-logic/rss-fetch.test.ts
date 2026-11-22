@@ -2,7 +2,6 @@ import {
   fetchRSS,
   fetchAllSources,
   fetchWithRetry,
-  RawArticle,
   DEFAULT_FEED_TIMEOUT_MS,
   DEFAULT_MAX_ATTEMPTS,
   filterExcludedPaths,

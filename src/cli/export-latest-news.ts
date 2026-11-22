@@ -24,7 +24,7 @@ import { withQANewsDisplayFields } from '../business-logic/categorize-article';
  */
 
 // Helper function for structured logging with timestamps
-function logStructured(stage: string, data: Record<string, any>): void {
+function logStructured(stage: string, data: Record<string, unknown>): void {
   const timestamp = new Date().toISOString();
   const fields = Object.entries(data)
     .map(([key, value]) => `${key}=${JSON.stringify(value)}`)
