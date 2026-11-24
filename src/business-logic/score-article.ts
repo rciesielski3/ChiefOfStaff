@@ -97,7 +97,8 @@ export interface ScoredArticle extends Article {
  * 1. Start with base score (50)
  * 2. Add keyword weights if found in title/summary
  * 3. Add source weight based on source name
- * 4. Apply freshness bonus: newer articles get +5 per day (max 20)
+ * 4. Apply freshness bonus: articles under 24h old get up to +4 points
+ *    (ceil((24 - ageHours) / 6)); older articles get none
  * 5. Classify priority based on score thresholds
  * 6. Track scoring reasons for transparency
  *
