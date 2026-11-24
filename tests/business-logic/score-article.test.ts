@@ -3,6 +3,8 @@ import {
   scoreArticles,
   DEFAULT_CONFIG,
   hasNegativeKeywords,
+  isListicleTitle,
+  LISTICLE_PENALTY,
 } from '../../src/business-logic/score-article';
 import { Article } from '../../src/business-logic/normalize-article';
 
@@ -588,5 +590,100 @@ describe('hasNegativeKeywords - AI/infra posts survive', () => {
     ['ECC and DDR5 Memory Performance Comparison', ''],
   ])('still drops hardware headline %s', (title, summary) => {
     expect(hasNegativeKeywords(mk(title, summary))).toBe(true);
+  });
+});
+
+describe('listicle penalty', () => {
+  const mk = (title: string, summary = 'x'): Article => ({
+    id: 'l',
+    title,
+    summary,
+    url: 'https://example.com/l',
+    source: 'Some Blog',
+    category: 'article',
+    publishedAt: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(),
+    tags: [],
+  });
+
+  it.each([
+    '12 BEST AI Test Automation Tools for 2026 The Third Wave',
+    '10 Best Test Management Tools',
+    'Top 15 Testing Frameworks in 2026',
+    'Best API testing tools for startups',
+    '7 top CI/CD platforms compared',
+  ])('detects listicle title: %s', (title) => {
+    expect(isListicleTitle(title)).toBe(true);
+    const r = scoreArticle(mk(title));
+    expect(r.reason).toContain('listicle');
+  });
+
+  it.each([
+    '5 lessons from running a flaky test suite',
+    'Top-down vs bottom-up testing',
+    'Best practices for code review',
+    'The best things in open source are built together',
+    'Tests as data: ensuring generated code does what we want',
+    'We timed 50 end-to-end tests on Playwright, Selenium, Cypress',
+  ])('does not flag legitimate title: %s', (title) => {
+    expect(isListicleTitle(title)).toBe(false);
+    expect(scoreArticle(mk(title)).reason).not.toContain('listicle');
+  });
+
+  it('subtracts the penalty only for listicles, title only', () => {
+    const plain = scoreArticle(mk('Tools for 2026', 'x'));
+    const list = scoreArticle(mk('10 Best Tools for 2026', 'x'));
+    expect(list.score).toBe(plain.score - LISTICLE_PENALTY);
+    // summary text alone never triggers it
+    expect(scoreArticle(mk('Weekly notes', '10 best tools for 2026')).reason).not.toContain(
+      'listicle',
+    );
+  });
+
+  it('a listicle no longer outranks a normal strong QA post', () => {
+    const list = scoreArticle(mk('12 BEST AI Test Automation Tools for 2026'));
+    const normal = scoreArticle(mk('Test automation strategy and flaky agents'));
+    expect(normal.score).toBeGreaterThan(list.score);
+  });
+});
+
+describe('engineering source priors', () => {
+  const mk = (source: string): Article => ({
+    id: 's',
+    title: 'x',
+    summary: 'y',
+    url: 'https://example.com/s',
+    source,
+    category: 'article',
+    publishedAt: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(),
+    tags: [],
+  });
+
+  it.each(['Pragmatic Engineer', 'Netflix TechBlog', 'Kent Beck'])('%s gets a small prior', (s) => {
+    const bonus = scoreArticle(mk(s)).score - DEFAULT_CONFIG.weights.base;
+    expect(bonus).toBeGreaterThanOrEqual(5);
+    expect(bonus).toBeLessThanOrEqual(10);
+  });
+
+  it('priors do not collide with other configured source names', () => {
+    const keys = ['pragmatic engineer', 'netflix', 'kent beck'];
+    const others = [
+      'Ministry of Testing',
+      'Google Testing Blog',
+      'InfoQ',
+      'Martin Fowler',
+      'Cypress',
+      'Playwright',
+      'OpenAI',
+      'Cloudflare',
+      'Test Guild',
+      'GitHub Blog',
+      'MCP Blog',
+      'Simon Willison',
+      'Checkly',
+      'DevelopSense',
+    ];
+    for (const o of others) {
+      for (const k of keys) expect(o.toLowerCase().includes(k)).toBe(false);
+    }
   });
 });

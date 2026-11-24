@@ -88,6 +88,11 @@ export const DEFAULT_CONFIG: ScoringConfig = {
       // High signal, but ~44% of the corpus: volume already supplies candidates,
       // so the prior is deliberately the smallest.
       'Ministry of Testing': 5,
+      // Low-volume engineering voices: without a prior their (keyword-poor) titles
+      // sit at the base score and can never reach a top-3 slot.
+      'Pragmatic Engineer': 10,
+      Netflix: 10, // only matches the 'Netflix TechBlog' source name
+      'Kent Beck': 10,
     },
   },
   priority: {
@@ -96,6 +101,25 @@ export const DEFAULT_CONFIG: ScoringConfig = {
     medium: 45,
   },
 };
+
+/**
+ * SEO product-list titles ("12 BEST AI Test Automation Tools for 2026") stack
+ * generic testing keywords and would otherwise take the #1 slot. Matched on the
+ * TITLE only. Requires a number next to best/top, or "best ... tools for", so
+ * "Best practices for ...", "Top-down ..." and "5 lessons from ..." are untouched.
+ */
+const LISTICLE_NOUNS = '(?:tools?|frameworks?|platforms?|software|libraries|plugins?)';
+export const LISTICLE_TITLE_PATTERNS: RegExp[] = [
+  new RegExp(`\\b\\d+\\s+(?:best|top)\\b[^:]*\\b${LISTICLE_NOUNS}\\b`, 'i'),
+  new RegExp(`\\btop\\s+\\d+\\b[^:]*\\b${LISTICLE_NOUNS}\\b`, 'i'),
+  new RegExp(`\\bbest\\b[^:]*\\b${LISTICLE_NOUNS}\\s+for\\b`, 'i'),
+];
+/** Points subtracted from a listicle: keeps it a normal item, not a winner. */
+export const LISTICLE_PENALTY = 40;
+
+export function isListicleTitle(title: string): boolean {
+  return LISTICLE_TITLE_PATTERNS.some((p) => p.test(title));
+}
 
 export type Priority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
@@ -156,6 +180,11 @@ export function scoreArticle(
         reason.push(sourceName);
       }
     }
+  }
+
+  if (isListicleTitle(article.title)) {
+    score -= LISTICLE_PENALTY;
+    reason.push('listicle');
   }
 
   // Freshness bonus: articles from last 24 hours get extra points
