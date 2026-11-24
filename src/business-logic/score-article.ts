@@ -48,7 +48,7 @@ export const DEFAULT_CONFIG: ScoringConfig = {
 
       // Existing (keep)
       breaking: 35,
-      security: 40,
+      security: 30, // lowered from 40: the CVE stream saturated top picks
       migration: 25,
       playwright: 20,
       typescript: 15,
@@ -56,6 +56,24 @@ export const DEFAULT_CONFIG: ScoringConfig = {
       agent: 20,
       'ci/cd': 15,
       release: 20,
+
+      // Engineering practice (site scope: QA + AI + engineering).
+      // Substring-matched: avoid bare 'eval' ('retrieval') and bare 'ai'.
+      'code review': 20,
+      observability: 20,
+      reliab: 20, // stem: reliable / reliably / reliability
+      incident: 20,
+      refactoring: 20,
+      'developer experience': 20,
+      architecture: 15,
+      'software engineering': 15,
+      tdd: 20,
+
+      // AI engineering
+      'ai testing': 40,
+      flaky: 30,
+      evals: 25,
+      llm: 20,
     },
     // Source weights are a small prior about source quality, NOT a ranking driver:
     // every value stays well below the strongest keyword weight (a third at most),
@@ -70,6 +88,11 @@ export const DEFAULT_CONFIG: ScoringConfig = {
       // High signal, but ~44% of the corpus: volume already supplies candidates,
       // so the prior is deliberately the smallest.
       'Ministry of Testing': 5,
+      // Low-volume engineering voices: without a prior their (keyword-poor) titles
+      // sit at the base score and can never reach a top-3 slot.
+      'Pragmatic Engineer': 10,
+      Netflix: 10, // only matches the 'Netflix TechBlog' source name
+      'Kent Beck': 10,
     },
   },
   priority: {
@@ -78,6 +101,25 @@ export const DEFAULT_CONFIG: ScoringConfig = {
     medium: 45,
   },
 };
+
+/**
+ * SEO product-list titles ("12 BEST AI Test Automation Tools for 2026") stack
+ * generic testing keywords and would otherwise take the #1 slot. Matched on the
+ * TITLE only. Requires a number next to best/top, or "best ... tools for", so
+ * "Best practices for ...", "Top-down ..." and "5 lessons from ..." are untouched.
+ */
+const LISTICLE_NOUNS = '(?:tools?|frameworks?|platforms?|software|libraries|plugins?)';
+export const LISTICLE_TITLE_PATTERNS: RegExp[] = [
+  new RegExp(`\\b\\d+\\s+(?:best|top)\\b[^:]*\\b${LISTICLE_NOUNS}\\b`, 'i'),
+  new RegExp(`\\btop\\s+\\d+\\b[^:]*\\b${LISTICLE_NOUNS}\\b`, 'i'),
+  new RegExp(`\\bbest\\b[^:]*\\b${LISTICLE_NOUNS}\\s+for\\b`, 'i'),
+];
+/** Points subtracted from a listicle: keeps it a normal item, not a winner. */
+export const LISTICLE_PENALTY = 40;
+
+export function isListicleTitle(title: string): boolean {
+  return LISTICLE_TITLE_PATTERNS.some((p) => p.test(title));
+}
 
 export type Priority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
@@ -140,6 +182,11 @@ export function scoreArticle(
     }
   }
 
+  if (isListicleTitle(article.title)) {
+    score -= LISTICLE_PENALTY;
+    reason.push('listicle');
+  }
+
   // Freshness bonus: articles from last 24 hours get extra points
   const publishDate = new Date(article.publishedAt).getTime();
   const now = new Date().getTime();
@@ -180,7 +227,9 @@ export function scoreArticle(
  *
  * Filters out articles about hardware/networking topics UNLESS they're explicitly
  * about QA/testing methodologies. Uses a QA keyword whitelist to determine context:
- * - If article mentions negative keywords (ecc, memory, gpu, etc) but has QA keywords
+ * - memory/gpu/cpu/processor are "soft": kept when AI/infra context words
+ *   (agent, llm, inference, engineering...) are present
+ * - If article mentions negative keywords (ecc, ddr5, hardware, etc) but has QA keywords
  *   (playwright, testing, automation, etc), it's kept (testing context)
  * - If article mentions negative keywords without QA keywords, it's filtered out
  *
@@ -196,10 +245,6 @@ export function hasNegativeKeywords(article: Article): boolean {
   const negativeKeywords = [
     'ecc',
     'ddr5',
-    'memory',
-    'gpu',
-    'cpu',
-    'processor',
     'hardware',
     'smart tv',
     'iot device',
@@ -237,6 +282,28 @@ export function hasNegativeKeywords(article: Article): boolean {
     'qa',
     'automation',
   ];
+
+  // Hardware terms that are ambiguous: also used by AI/infra engineering posts
+  // ('agent memory', 'GPU inference'). They only filter when no AI/infra context
+  // word is present. Unambiguous hardware/networking spam stays unconditional.
+  const softNegativeKeywords = ['memory', 'gpu', 'cpu', 'processor'];
+  const aiInfraContext = [
+    'agent',
+    'llm',
+    'inference',
+    'engineering',
+    'architecture',
+    'machine learning',
+    'container',
+    'kubernetes',
+  ];
+  if (
+    softNegativeKeywords.some((k) => text.includes(k)) &&
+    !aiInfraContext.some((c) => text.includes(c)) &&
+    !qaKeywords.some((qa) => text.includes(qa))
+  ) {
+    return true;
+  }
 
   for (const keyword of negativeKeywords) {
     if (text.includes(keyword)) {
