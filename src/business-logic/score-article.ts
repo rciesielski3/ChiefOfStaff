@@ -48,7 +48,7 @@ export const DEFAULT_CONFIG: ScoringConfig = {
 
       // Existing (keep)
       breaking: 35,
-      security: 40,
+      security: 30, // lowered from 40: the CVE stream saturated top picks
       migration: 25,
       playwright: 20,
       typescript: 15,
@@ -56,6 +56,24 @@ export const DEFAULT_CONFIG: ScoringConfig = {
       agent: 20,
       'ci/cd': 15,
       release: 20,
+
+      // Engineering practice (site scope: QA + AI + engineering).
+      // Substring-matched: avoid bare 'eval' ('retrieval') and bare 'ai'.
+      'code review': 20,
+      observability: 20,
+      reliab: 20, // stem: reliable / reliably / reliability
+      incident: 20,
+      refactoring: 20,
+      'developer experience': 20,
+      architecture: 15,
+      'software engineering': 15,
+      tdd: 20,
+
+      // AI engineering
+      'ai testing': 40,
+      flaky: 30,
+      evals: 25,
+      llm: 20,
     },
     // Source weights are a small prior about source quality, NOT a ranking driver:
     // every value stays well below the strongest keyword weight (a third at most),
@@ -180,7 +198,9 @@ export function scoreArticle(
  *
  * Filters out articles about hardware/networking topics UNLESS they're explicitly
  * about QA/testing methodologies. Uses a QA keyword whitelist to determine context:
- * - If article mentions negative keywords (ecc, memory, gpu, etc) but has QA keywords
+ * - memory/gpu/cpu/processor are "soft": kept when AI/infra context words
+ *   (agent, llm, inference, engineering...) are present
+ * - If article mentions negative keywords (ecc, ddr5, hardware, etc) but has QA keywords
  *   (playwright, testing, automation, etc), it's kept (testing context)
  * - If article mentions negative keywords without QA keywords, it's filtered out
  *
@@ -196,10 +216,6 @@ export function hasNegativeKeywords(article: Article): boolean {
   const negativeKeywords = [
     'ecc',
     'ddr5',
-    'memory',
-    'gpu',
-    'cpu',
-    'processor',
     'hardware',
     'smart tv',
     'iot device',
@@ -237,6 +253,28 @@ export function hasNegativeKeywords(article: Article): boolean {
     'qa',
     'automation',
   ];
+
+  // Hardware terms that are ambiguous: also used by AI/infra engineering posts
+  // ('agent memory', 'GPU inference'). They only filter when no AI/infra context
+  // word is present. Unambiguous hardware/networking spam stays unconditional.
+  const softNegativeKeywords = ['memory', 'gpu', 'cpu', 'processor'];
+  const aiInfraContext = [
+    'agent',
+    'llm',
+    'inference',
+    'engineering',
+    'architecture',
+    'machine learning',
+    'container',
+    'kubernetes',
+  ];
+  if (
+    softNegativeKeywords.some((k) => text.includes(k)) &&
+    !aiInfraContext.some((c) => text.includes(c)) &&
+    !qaKeywords.some((qa) => text.includes(qa))
+  ) {
+    return true;
+  }
 
   for (const keyword of negativeKeywords) {
     if (text.includes(keyword)) {

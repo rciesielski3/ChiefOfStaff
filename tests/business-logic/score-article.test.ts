@@ -500,3 +500,93 @@ describe('scoreArticles', () => {
     expect(results[0].id).toBe('test-valid');
   });
 });
+
+describe('engineering / AI scoring intent', () => {
+  const old = new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString();
+  const art = (title: string, summary = 'x', source = 'Some Blog'): Article => ({
+    id: 'e',
+    title,
+    summary,
+    url: 'https://example.com/e',
+    source,
+    category: 'article',
+    publishedAt: old,
+    tags: [],
+  });
+
+  it('a bare post scores the base', () => {
+    expect(scoreArticle(art('A walk through our week')).score).toBe(DEFAULT_CONFIG.weights.base);
+  });
+
+  it.each([
+    'Reliability lessons from a multi-region outage',
+    'Making failure diagnosis reliable',
+    'Software engineering after code becomes cheap',
+    'Observability for event-driven systems',
+    'Rethinking our architecture after 10 years',
+    'What an incident review taught us',
+    'Refactoring a legacy payment module',
+    'Improving developer experience at scale',
+    'Evals for LLM applications',
+    'Code review at scale',
+    'TDD in practice',
+  ])('engineering/AI post outscores a bare post: %s', (title) => {
+    expect(scoreArticle(art(title)).score).toBeGreaterThan(DEFAULT_CONFIG.weights.base);
+  });
+
+  it('keywords do not fire on unrelated words', () => {
+    // "retrieval" must not match evals/eval; "outdated" must not match tdd
+    const r = scoreArticle(art('Retrieval of outdated documents', 'plain text'));
+    expect(r.score).toBe(DEFAULT_CONFIG.weights.base);
+  });
+
+  it('a security CVE post no longer outranks a strong QA post by default', () => {
+    const cve = scoreArticle(art('Security advisory: critical CVE in a popular library'));
+    const qa = scoreArticle(art('Test automation strategy with Playwright'));
+    expect(qa.score).toBeGreaterThan(cve.score);
+    // A lone 'security' hit (plus 'critical cve' style noise) must not beat a mid QA keyword stack
+    const midQa = scoreArticle(art('Unit testing tips'));
+    const secOnly = scoreArticle(art('Security update'));
+    expect(DEFAULT_CONFIG.weights.keywords.security).toBe(30);
+    expect(midQa.score).toBeGreaterThanOrEqual(secOnly.score);
+  });
+
+  it('strong engineering post beats a bare CVE-free post and a lone security keyword', () => {
+    const eng = scoreArticle(
+      art('Observability and reliability architecture for incident response'),
+    );
+    const sec = scoreArticle(art('Security notes'));
+    expect(eng.score).toBeGreaterThan(sec.score);
+  });
+});
+
+describe('hasNegativeKeywords - AI/infra posts survive', () => {
+  const mk = (title: string, summary = ''): Article => ({
+    id: 'n',
+    title,
+    summary,
+    url: 'https://example.com/n',
+    source: 'Blog',
+    category: 'article',
+    publishedAt: new Date().toISOString(),
+    tags: [],
+  });
+
+  it.each([
+    ['The components of agent memory', ''],
+    ['Inference engineering for software engineers', 'GPU and memory budgets'],
+    ['Your .NET parallel loop can become serial in a one-CPU container', ''],
+    ['Scaling LLM training across a GPU cluster', ''],
+  ])('keeps %s', (title, summary) => {
+    expect(hasNegativeKeywords(mk(title, summary))).toBe(false);
+  });
+
+  it.each([
+    ['Nvidia GPU prices fall again', 'Graphics cards are cheaper this quarter'],
+    ['Intel unveils a faster CPU', 'New processor benchmarks'],
+    ['Best memory kits for your gaming PC', 'Faster RAM'],
+    ['ECC and DDR5 Memory Performance Comparison', ''],
+  ])('still drops hardware headline %s', (title, summary) => {
+    expect(hasNegativeKeywords(mk(title, summary))).toBe(true);
+  });
+});
