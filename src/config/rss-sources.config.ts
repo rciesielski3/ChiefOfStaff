@@ -18,6 +18,8 @@ export const RSS_SOURCES: RSSSourceConfig[] = [
   {
     name: 'InfoQ',
     url: 'https://feed.infoq.com/',
+    // Conference talks and podcast episodes are not news items.
+    excludePathPrefixes: ['/presentations/', '/podcasts/'],
   },
   {
     name: 'Martin Fowler',
@@ -76,6 +78,49 @@ export const RSS_SOURCES: RSSSourceConfig[] = [
   {
     name: 'Storybook Releases',
     url: 'https://github.com/storybookjs/storybook/releases.atom',
+  },
+  // --- QA / test automation ---
+  {
+    name: 'Test Guild',
+    url: 'https://testguild.com/feed/',
+  },
+  {
+    name: 'DevelopSense',
+    url: 'https://developsense.com/blog/feed',
+  },
+  {
+    name: 'Checkly',
+    url: 'https://www.checklyhq.com/rss.xml',
+  },
+  // --- AI engineering ---
+  {
+    name: 'Simon Willison',
+    // entries only: /atom/everything/ adds ~23 link/quote posts a month
+    url: 'https://simonwillison.net/atom/entries/',
+  },
+  {
+    name: 'GitHub Blog',
+    url: 'https://github.blog/feed/',
+    // company news is not engineering content
+    excludePathPrefixes: ['/news-insights/'],
+  },
+  {
+    name: 'MCP Blog',
+    url: 'https://blog.modelcontextprotocol.io/index.xml',
+  },
+  // --- Engineering practice ---
+  {
+    name: 'Pragmatic Engineer',
+    url: 'https://newsletter.pragmaticengineer.com/feed',
+  },
+  {
+    name: 'Netflix TechBlog',
+    url: 'https://netflixtechblog.com/feed',
+  },
+  {
+    name: 'Kent Beck',
+    // 301 target of tidyfirst.substack.com/feed
+    url: 'https://newsletter.kentbeck.com/feed',
   },
 ];
 

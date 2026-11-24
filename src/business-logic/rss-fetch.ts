@@ -155,13 +155,23 @@ export async function fetchRSS(
     // Items without a usable publish date are dropped: stamping them with the
     // fetch time would make them look fresh and earn the "recent" bonus.
     return (feed.items || [])
-      .map((item) => ({
-        link: item.link || '',
-        title: item.title || '',
-        pubDate: item.pubDate || item.isoDate || '',
-        content: (item as any).content || item.contentSnippet || (item as any).description || '',
-        source: sourceName,
-      }))
+      .map((item) => {
+        // rss-parser maps the text of an entry to different fields depending on the
+        // feed: content, contentSnippet, description or (Atom) summary.
+        const entry = item as Parser.Item & {
+          content?: string;
+          description?: string;
+          summary?: string;
+        };
+        return {
+          link: entry.link || '',
+          title: entry.title || '',
+          pubDate: entry.pubDate || entry.isoDate || '',
+          content:
+            entry.content || entry.contentSnippet || entry.description || entry.summary || '',
+          source: sourceName,
+        };
+      })
       .filter((item) => {
         const valid = item.pubDate !== '' && !Number.isNaN(Date.parse(item.pubDate));
         if (!valid) {
