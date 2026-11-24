@@ -130,10 +130,15 @@ export function scoreArticle(
     }
   }
 
-  // Match source name and add weight
-  const sourceUpper = article.source.toLowerCase();
+  // Match source name and add weight.
+  // Both the article source and the configured keys are normalised (lowercase +
+  // trim). Matching stays SUBSTRING-based on purpose: keys like 'Google Testing'
+  // must match the real source 'Google Testing Blog', and existing tests/config
+  // rely on 'openai' matching 'OpenAI Blog'. Exact matching would break both.
+  const normalizedSource = article.source.toLowerCase().trim();
   for (const [sourceName, weight] of Object.entries(config.weights.sources)) {
-    if (sourceUpper.includes(sourceName)) {
+    const key = sourceName.toLowerCase().trim();
+    if (key && normalizedSource.includes(key)) {
       score += weight;
       if (!reason.includes(sourceName)) {
         reason.push(sourceName);

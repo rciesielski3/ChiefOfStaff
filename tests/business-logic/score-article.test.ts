@@ -51,6 +51,61 @@ describe('scoreArticle', () => {
     expect(result.reason).toContain('openai');
   });
 
+  describe('source weight matching', () => {
+    const cfg = (sources: Record<string, number>) => ({
+      ...DEFAULT_CONFIG,
+      weights: { base: 0, keywords: {}, sources },
+    });
+    const old = new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString();
+    const base = {
+      ...mockArticle,
+      title: 'x',
+      summary: 'y',
+      publishedAt: old,
+    };
+
+    it('applies a source weight configured with a capitalised key', () => {
+      const result = scoreArticle(
+        { ...base, source: 'Ministry of Testing' },
+        cfg({
+          'Ministry of Testing': 50,
+        }),
+      );
+      expect(result.score).toBe(50);
+      expect(result.reason).toContain('Ministry of Testing');
+    });
+
+    it('matches case-insensitively and ignores surrounding whitespace', () => {
+      const result = scoreArticle({ ...base, source: '  CYPRESS ' }, cfg({ ' Cypress ': 40 }));
+      expect(result.score).toBe(40);
+    });
+
+    it('still matches by substring (key "Google Testing" vs source "Google Testing Blog")', () => {
+      const result = scoreArticle(
+        { ...base, source: 'Google Testing Blog' },
+        cfg({
+          'Google Testing': 45,
+        }),
+      );
+      expect(result.score).toBe(45);
+    });
+
+    it('does not apply an unrelated source weight', () => {
+      const result = scoreArticle({ ...base, source: 'InfoQ' }, cfg({ Cypress: 40 }));
+      expect(result.score).toBe(0);
+    });
+
+    it('ignores empty source keys', () => {
+      const result = scoreArticle({ ...base, source: 'InfoQ' }, cfg({ '  ': 99 }));
+      expect(result.score).toBe(0);
+    });
+
+    it('applies the default weight for real capitalised sources', () => {
+      const result = scoreArticle({ ...base, source: 'Ministry of Testing' });
+      expect(result.score).toBe(DEFAULT_CONFIG.weights.base + 50);
+    });
+  });
+
   it('should classify priority based on score', () => {
     const criticalArticle = {
       ...mockArticle,
