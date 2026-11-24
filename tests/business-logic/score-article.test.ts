@@ -41,14 +41,18 @@ describe('scoreArticle', () => {
   it('should add weight for matching source name', () => {
     const article = {
       ...mockArticle,
-      source: 'OpenAI Blog',
+      title: 'x',
+      summary: 'y',
+      publishedAt: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(),
+      source: 'Google Testing Blog',
     };
 
     const result = scoreArticle(article);
 
-    // Should have matched OpenAI as a source
-    expect(result.score).toBeGreaterThan(DEFAULT_CONFIG.weights.base);
-    expect(result.reason).toContain('openai');
+    expect(result.score).toBe(
+      DEFAULT_CONFIG.weights.base + DEFAULT_CONFIG.weights.sources['Google Testing'],
+    );
+    expect(result.reason).toContain('Google Testing');
   });
 
   describe('source weight matching', () => {
@@ -102,7 +106,63 @@ describe('scoreArticle', () => {
 
     it('applies the default weight for real capitalised sources', () => {
       const result = scoreArticle({ ...base, source: 'Ministry of Testing' });
-      expect(result.score).toBe(DEFAULT_CONFIG.weights.base + 50);
+      expect(result.score).toBe(
+        DEFAULT_CONFIG.weights.base + DEFAULT_CONFIG.weights.sources['Ministry of Testing'],
+      );
+    });
+  });
+
+  describe('default source weights are a modest prior', () => {
+    const { keywords, sources } = DEFAULT_CONFIG.weights;
+    const strongestKeyword = Math.max(...Object.values(keywords));
+    const old = new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString();
+    const art = (title: string, source: string): Article => ({
+      ...mockArticle,
+      title,
+      summary: '',
+      source,
+      publishedAt: old,
+    });
+
+    it('never outweighs a third of the strongest keyword weight', () => {
+      for (const weight of Object.values(sources)) {
+        expect(weight).toBeGreaterThanOrEqual(0);
+        expect(weight).toBeLessThanOrEqual(strongestKeyword / 3);
+      }
+    });
+
+    it('keeps the high-volume source below the official QA sources', () => {
+      expect(sources['Ministry of Testing']).toBeLessThan(sources['Google Testing']);
+      expect(sources['Ministry of Testing']).toBeGreaterThan(0);
+    });
+
+    it('lets a strong keyword beat a weighted source with weaker relevance', () => {
+      const relevant = scoreArticle(art('Test automation guide', 'InfoQ'));
+      const weighted = scoreArticle(art('Some QA news', 'Ministry of Testing'));
+      expect(relevant.score).toBeGreaterThan(weighted.score);
+    });
+
+    it('ranks QA sources only slightly above other sources at equal relevance', () => {
+      const qa = scoreArticle(art('Testing news', 'Martin Fowler'));
+      const other = scoreArticle(art('Testing news', 'InfoQ'));
+      expect(qa.score).toBeGreaterThan(other.score);
+      expect(qa.score - other.score).toBeLessThanOrEqual(strongestKeyword / 3);
+    });
+
+    it('keeps top-3 diverse when one source has many equally relevant articles', () => {
+      const flood = Array.from({ length: 10 }, (_, i) =>
+        art(`Testing deep dive ${i}`, 'Ministry of Testing'),
+      );
+      const others = [
+        art('Testing in practice', 'Martin Fowler'),
+        art('Testing in practice 2', 'Google Testing Blog'),
+        art('Testing in practice 3', 'Cypress'),
+      ];
+      const top3 = scoreArticles([...flood, ...others])
+        .slice(0, 3)
+        .map((a) => a.source);
+      expect(new Set(top3).size).toBeGreaterThan(1);
+      expect(top3).not.toContain('Ministry of Testing');
     });
   });
 

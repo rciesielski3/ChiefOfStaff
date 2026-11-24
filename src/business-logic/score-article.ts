@@ -57,26 +57,19 @@ export const DEFAULT_CONFIG: ScoringConfig = {
       'ci/cd': 15,
       release: 20,
     },
+    // Source weights are a small prior about source quality, NOT a ranking driver:
+    // every value stays well below the strongest keyword weight (a third at most),
+    // so keyword relevance decides. Keys are substring-matched against the article
+    // source (case-insensitive). Sources without a key get no bonus.
     sources: {
-      // QA/Testing sources (HIGH WEIGHT)
-      'Ministry of Testing': 50,
-      'Google Testing': 45,
-      'Martin Fowler': 40,
-      InfoQ: 30,
-      Cypress: 40,
-      Playwright: 45,
-
-      // Existing (adjusted)
-      'github-release': 35,
-      'github-trending': 25,
-      'hacker-news': 15,
-      'ai-radar': 20,
-      devto: 15,
-      openai: 15,
-      google: 15,
-      cloudflare: 10,
-      github: 15,
-      lobsters: 8,
+      // Official project / editorial QA voices
+      'Google Testing': 10,
+      'Martin Fowler': 10,
+      Cypress: 10,
+      Playwright: 10,
+      // High signal, but ~44% of the corpus: volume already supplies candidates,
+      // so the prior is deliberately the smallest.
+      'Ministry of Testing': 5,
     },
   },
   priority: {
