@@ -125,6 +125,28 @@ describe('fetchRSS', () => {
     expect(result[0].content).toBe('This is the description');
   });
 
+  it('should fallback to summary when content, contentSnippet and description are missing', async () => {
+    const mockParserInstance = {
+      parseURL: jest.fn().mockResolvedValue({
+        items: [
+          {
+            link: 'https://example.com/atom-entry',
+            title: 'Atom entry with summary only',
+            pubDate: '2026-07-14T10:00:00Z',
+            summary: 'This is the Atom summary',
+          },
+        ],
+      }),
+    };
+
+    (Parser as jest.MockedClass<typeof Parser>).mockImplementation(() => mockParserInstance as any);
+
+    const result = await fetchRSS(mockSourceUrl, mockSourceName);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].content).toBe('This is the Atom summary');
+  });
+
   it('should handle missing link field gracefully', async () => {
     const mockFeedItems = [
       {
