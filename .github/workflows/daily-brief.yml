@@ -9,7 +9,8 @@ concurrency:
   cancel-in-progress: false
 
 # RACE CONDITION ACKNOWLEDGEMENT:
-# This workflow runs at 08:00 UTC daily and updates the knowledge layer.
+# This workflow is scheduled early in the morning UTC (see the cron below; GitHub may
+# start scheduled runs late) and updates the knowledge layer.
 # It uses a pull request + auto-merge strategy to minimize latency before M4 export.
 #
 # Race condition mitigation strategy:
@@ -25,7 +26,10 @@ concurrency:
 
 on:
   schedule:
-    - cron: '0 8 * * *'  # 08:00 UTC daily
+    # Early morning UTC so the digest is ready before the owner's working day. An off-peak
+    # minute is used on purpose: GitHub delays scheduled runs most right after the full hour
+    # (runs scheduled for 08:00 UTC started between 14:35 and 19:34 UTC).
+    - cron: '37 2 * * *'  # 02:37 UTC daily
   workflow_dispatch:  # Manual trigger
 
 jobs:
