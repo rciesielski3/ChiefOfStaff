@@ -8,7 +8,7 @@ Automated intelligence aggregation and synthesis pipeline. Fetches RSS feeds, ge
 
 **M4 (Knowledge Layer)** — Exports top articles from the store, validates data integrity, writes to JSON for downstream consumption.
 
-**CI/CD** — GitHub Actions workflows orchestrate M3→M4 pipeline on schedule (08:00 & 08:05 UTC daily).
+**CI/CD** — GitHub Actions workflows orchestrate M3→M4 pipeline on schedule (daily, early morning UTC).
 
 ## Quick Start
 
@@ -108,8 +108,8 @@ npx tsc --noEmit      # Type checking
 ## Deployment
 
 Workflows run automatically via GitHub Actions:
-- `daily-brief.yml` — Executes M3 at 08:00 UTC
-- `export-latest-news.yml` — Executes M4 at 08:05 UTC
+- `daily-brief.yml` — Executes M3 daily at 02:37 UTC (GitHub may start it later); the data pull request merges after tests (`merge-daily-brief.yml`)
+- `export-qa-news.yml` — Exports to the QA News site once the data pull request is merged
 
 All output is committed to the repository for version control.
 
